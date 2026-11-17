@@ -1,0 +1,4 @@
+const SOURCE: &str = "src/main.lkj";
+const ENTRY: &str = "main";
+const GRANTS: &[&str] = &[];
+const CASES: &[&str] = &["src/main.lkj"];

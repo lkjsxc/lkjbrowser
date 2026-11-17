@@ -1,0 +1,1269 @@
++ date -u +%Y-%m-%dT%H:%M:%SZ
++ cp target/lkjbrowser /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/lkjbrowser
+++ sha256sum /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/lkjbrowser
+++ cut '-d ' -f1
++ test 73b03dd2d77cf55c243259680caf00032b61fad9589c6fc36bc2959a1d3e8e98 = 73b03dd2d77cf55c243259680caf00032b61fad9589c6fc36bc2959a1d3e8e98
++ cp target/byte-descriptor-bridge /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/byte-descriptor-bridge
++ cp target/fixture-server /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/fixture-server
++ cp -a fixtures /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/fixtures
++ cp review/motion/integrated-events.script /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/events.script
++ cp toolchain.lock /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/toolchain.lock
++ sha256sum target/lkjbrowser target/byte-descriptor-bridge target/fixture-server .toolchain/lkjscript-x86_64-linux
++ sha256sum /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/lkjbrowser /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/byte-descriptor-bridge /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/fixture-server
++ sha256sum src/animate.lkj src/config_probe.lkj src/css.lkj src/dns_probe.lkj src/fetch_probe.lkj src/fixture_server.lkj src/font.lkj src/font_probe.lkj src/html.lkj src/layout.lkj src/main.lkj src/net.lkj src/paint.lkj src/pixel_compare.lkj src/png.lkj src/png_probe.lkj src/wayland_input_probe.lkj src/wayland.lkj src/wayland_peer.lkj src/wayland_smoke.lkj program.lkj toolchain.lock bridge/byte_descriptor_bridge.c fixtures/article.html fixtures/error.html fixtures/simple.html fixtures/workshop.png
++ sha256sum .deps/root/usr/bin/weston .deps/root/usr/bin/weston-screenshooter
++ font_dir=/usr/share/fonts/truetype/liberation
++ test -f /usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf
++ sha256sum /usr/share/fonts/truetype/liberation/LiberationSans-BoldItalic.ttf /usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf /usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf /usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf
++ mkdir -m 700 /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/r
++ export XDG_RUNTIME_DIR=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/r
++ XDG_RUNTIME_DIR=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/r
++ export WAYLAND_DISPLAY=wl
++ WAYLAND_DISPLAY=wl
++ export LD_LIBRARY_PATH=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu:/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston
++ LD_LIBRARY_PATH=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu:/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston
++ export 'WESTON_MODULE_MAP=headless-backend.so=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so;kiosk-shell.so=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so'
++ WESTON_MODULE_MAP='headless-backend.so=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so;kiosk-shell.so=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so'
++ weston_pid=
++ server_pid=
++ bridge_pid=
++ client_pid=
++ trap cleanup EXIT
++ trap 'exit 130' HUP INT TERM
++ /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston --version
++ weston_pid=3583302
++ (( attempt=0 ))
++ /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston --backend=headless --renderer=pixman --width=1000 --height=760 --shell=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so --socket=wl --idle-time=0 --no-config --debug --log=/home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/weston.log
++ (( attempt<100 ))
++ test -S /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/r/wl
++ kill -0 3583302
++ sleep 0.05
++ (( attempt++ ))
++ (( attempt<100 ))
++ test -S /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/r/wl
++ break
++ test -S /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/r/wl
++ server_pid=3583319
++ (( attempt=0 ))
++ /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/fixture-server /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/fixtures /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/http-port
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/http-port
++ kill -0 3583319
++ sleep 0.05
++ (( attempt++ ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/http-port
++ break
+++ cat /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/http-port
++ port=44881
++ printf '%s\n' 44881
++ truncate -s 6082304 /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/frame.bgra
++ bridge_pid=3583598
++ (( attempt=0 ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/bridge-port
++ /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/byte-descriptor-bridge /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/r/wl /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/frame.bgra
++ kill -0 3583598
++ sleep 0.05
++ (( attempt++ ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/bridge-port
++ break
+++ cat /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/bridge-port
++ bridge_port=48759
+++ date +%s%N
++ browser_started_ns=1794937037365049744
++ client_pid=3583610
++ printf '%s\n' 3583610
++ /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/lkjbrowser --wayland 48759 --frame-file /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/frame.bgra --font-dir /usr/share/fonts/truetype/liberation --live-script /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/events.script --layout /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/final.layout --max-ms 15000 http://127.0.0.1:44881/article.html
++ sleep 0.25
+++ date +%s%N
++ capture_started_ns=1794937037617352868
++ (( index=0 ))
++ (( index<55 ))
++ deadline_ns=1794937037617352868
+++ date +%s%N
++ now_ns=1794937037618246286
++ test 1794937037618246286 -lt 1794937037617352868
++ kill -0 3583610
++ printf -v number %04d 0
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0000
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0000
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0000
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937037663626218
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0000/wayland-screenshot-2026-11-17_17-37-17.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0000.png
++ printf '%s\tframes/%s.png\n' 298 0000
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937037817352868
+++ date +%s%N
++ now_ns=1794937037676401678
++ test 1794937037676401678 -lt 1794937037817352868
++ remaining=140951190
++ printf -v delay %d.%09d 0 140951190
++ sleep 0.140951190
++ kill -0 3583610
++ printf -v number %04d 1
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0001
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0001
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0001
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937037871327221
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0001/wayland-screenshot-2026-11-17_17-37-17.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0001.png
++ printf '%s\tframes/%s.png\n' 506 0001
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937038017352868
+++ date +%s%N
++ now_ns=1794937037874425411
++ test 1794937037874425411 -lt 1794937038017352868
++ remaining=142927457
++ printf -v delay %d.%09d 0 142927457
++ sleep 0.142927457
++ kill -0 3583610
++ printf -v number %04d 2
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0002
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0002
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0002
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937038061941774
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0002/wayland-screenshot-2026-11-17_17-37-18.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0002.png
++ printf '%s\tframes/%s.png\n' 696 0002
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937038217352868
+++ date +%s%N
++ now_ns=1794937038065923154
++ test 1794937038065923154 -lt 1794937038217352868
++ remaining=151429714
++ printf -v delay %d.%09d 0 151429714
++ sleep 0.151429714
++ kill -0 3583610
++ printf -v number %04d 3
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0003
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0003
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0003
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937038267944637
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0003/wayland-screenshot-2026-11-17_17-37-18.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0003.png
++ printf '%s\tframes/%s.png\n' 902 0003
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937038417352868
+++ date +%s%N
++ now_ns=1794937038273449318
++ test 1794937038273449318 -lt 1794937038417352868
++ remaining=143903550
++ printf -v delay %d.%09d 0 143903550
++ sleep 0.143903550
++ kill -0 3583610
++ printf -v number %04d 4
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0004
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0004
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0004
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937038465707730
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0004/wayland-screenshot-2026-11-17_17-37-18.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0004.png
++ printf '%s\tframes/%s.png\n' 1100 0004
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937038617352868
+++ date +%s%N
++ now_ns=1794937038469401368
++ test 1794937038469401368 -lt 1794937038617352868
++ remaining=147951500
++ printf -v delay %d.%09d 0 147951500
++ sleep 0.147951500
++ kill -0 3583610
++ printf -v number %04d 5
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0005
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0005
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0005
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937038680620320
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0005/wayland-screenshot-2026-11-17_17-37-18.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0005.png
++ printf '%s\tframes/%s.png\n' 1315 0005
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937038817352868
+++ date +%s%N
++ now_ns=1794937038683373131
++ test 1794937038683373131 -lt 1794937038817352868
++ remaining=133979737
++ printf -v delay %d.%09d 0 133979737
++ sleep 0.133979737
++ kill -0 3583610
++ printf -v number %04d 6
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0006
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0006
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0006
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937038879577015
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0006/wayland-screenshot-2026-11-17_17-37-18.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0006.png
++ printf '%s\tframes/%s.png\n' 1514 0006
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937039017352868
+++ date +%s%N
++ now_ns=1794937038885931723
++ test 1794937038885931723 -lt 1794937039017352868
++ remaining=131421145
++ printf -v delay %d.%09d 0 131421145
++ sleep 0.131421145
++ kill -0 3583610
++ printf -v number %04d 7
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0007
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0007
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0007
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937039065421287
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0007/wayland-screenshot-2026-11-17_17-37-19.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0007.png
++ printf '%s\tframes/%s.png\n' 1700 0007
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937039217352868
+++ date +%s%N
++ now_ns=1794937039068832205
++ test 1794937039068832205 -lt 1794937039217352868
++ remaining=148520663
++ printf -v delay %d.%09d 0 148520663
++ sleep 0.148520663
++ kill -0 3583610
++ printf -v number %04d 8
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0008
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0008
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0008
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937039276075999
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0008/wayland-screenshot-2026-11-17_17-37-19.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0008.png
++ printf '%s\tframes/%s.png\n' 1911 0008
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937039417352868
+++ date +%s%N
++ now_ns=1794937039278901096
++ test 1794937039278901096 -lt 1794937039417352868
++ remaining=138451772
++ printf -v delay %d.%09d 0 138451772
++ sleep 0.138451772
++ kill -0 3583610
++ printf -v number %04d 9
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0009
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0009
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0009
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937039462326544
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0009/wayland-screenshot-2026-11-17_17-37-19.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0009.png
++ printf '%s\tframes/%s.png\n' 2097 0009
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937039617352868
+++ date +%s%N
++ now_ns=1794937039474898351
++ test 1794937039474898351 -lt 1794937039617352868
++ remaining=142454517
++ printf -v delay %d.%09d 0 142454517
++ sleep 0.142454517
++ kill -0 3583610
++ printf -v number %04d 10
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0010
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0010
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0010
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937039670735777
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0010/wayland-screenshot-2026-11-17_17-37-19.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0010.png
++ printf '%s\tframes/%s.png\n' 2305 0010
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937039817352868
+++ date +%s%N
++ now_ns=1794937039672876559
++ test 1794937039672876559 -lt 1794937039817352868
++ remaining=144476309
++ printf -v delay %d.%09d 0 144476309
++ sleep 0.144476309
++ kill -0 3583610
++ printf -v number %04d 11
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0011
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0011
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0011
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937039864233597
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0011/wayland-screenshot-2026-11-17_17-37-19.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0011.png
++ printf '%s\tframes/%s.png\n' 2499 0011
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937040017352868
+++ date +%s%N
++ now_ns=1794937039866566540
++ test 1794937039866566540 -lt 1794937040017352868
++ remaining=150786328
++ printf -v delay %d.%09d 0 150786328
++ sleep 0.150786328
++ kill -0 3583610
++ printf -v number %04d 12
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0012
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0012
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0012
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937040060326612
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0012/wayland-screenshot-2026-11-17_17-37-20.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0012.png
++ printf '%s\tframes/%s.png\n' 2695 0012
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937040217352868
+++ date +%s%N
++ now_ns=1794937040063654805
++ test 1794937040063654805 -lt 1794937040217352868
++ remaining=153698063
++ printf -v delay %d.%09d 0 153698063
++ sleep 0.153698063
++ kill -0 3583610
++ printf -v number %04d 13
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0013
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0013
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0013
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937040266324746
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0013/wayland-screenshot-2026-11-17_17-37-20.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0013.png
++ printf '%s\tframes/%s.png\n' 2901 0013
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937040417352868
+++ date +%s%N
++ now_ns=1794937040269183837
++ test 1794937040269183837 -lt 1794937040417352868
++ remaining=148169031
++ printf -v delay %d.%09d 0 148169031
++ sleep 0.148169031
++ kill -0 3583610
++ printf -v number %04d 14
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0014
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0014
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0014
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937040464535199
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0014/wayland-screenshot-2026-11-17_17-37-20.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0014.png
++ printf '%s\tframes/%s.png\n' 3099 0014
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937040617352868
+++ date +%s%N
++ now_ns=1794937040468580950
++ test 1794937040468580950 -lt 1794937040617352868
++ remaining=148771918
++ printf -v delay %d.%09d 0 148771918
++ sleep 0.148771918
++ kill -0 3583610
++ printf -v number %04d 15
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0015
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0015
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0015
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937040664893107
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0015/wayland-screenshot-2026-11-17_17-37-20.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0015.png
++ printf '%s\tframes/%s.png\n' 3299 0015
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937040817352868
+++ date +%s%N
++ now_ns=1794937040667287565
++ test 1794937040667287565 -lt 1794937040817352868
++ remaining=150065303
++ printf -v delay %d.%09d 0 150065303
++ sleep 0.150065303
++ kill -0 3583610
++ printf -v number %04d 16
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0016
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0016
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0016
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937040860072466
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0016/wayland-screenshot-2026-11-17_17-37-20.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0016.png
++ printf '%s\tframes/%s.png\n' 3495 0016
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937041017352868
+++ date +%s%N
++ now_ns=1794937040862165578
++ test 1794937040862165578 -lt 1794937041017352868
++ remaining=155187290
++ printf -v delay %d.%09d 0 155187290
++ sleep 0.155187290
++ kill -0 3583610
++ printf -v number %04d 17
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0017
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0017
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0017
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937041059328023
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0017/wayland-screenshot-2026-11-17_17-37-21.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0017.png
++ printf '%s\tframes/%s.png\n' 3694 0017
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937041217352868
+++ date +%s%N
++ now_ns=1794937041061303484
++ test 1794937041061303484 -lt 1794937041217352868
++ remaining=156049384
++ printf -v delay %d.%09d 0 156049384
++ sleep 0.156049384
++ kill -0 3583610
++ printf -v number %04d 18
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0018
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0018
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0018
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937041262241983
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0018/wayland-screenshot-2026-11-17_17-37-21.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0018.png
++ printf '%s\tframes/%s.png\n' 3897 0018
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937041417352868
+++ date +%s%N
++ now_ns=1794937041264615121
++ test 1794937041264615121 -lt 1794937041417352868
++ remaining=152737747
++ printf -v delay %d.%09d 0 152737747
++ sleep 0.152737747
++ kill -0 3583610
++ printf -v number %04d 19
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0019
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0019
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0019
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937041468318854
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0019/wayland-screenshot-2026-11-17_17-37-21.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0019.png
++ printf '%s\tframes/%s.png\n' 4103 0019
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937041617352868
+++ date +%s%N
++ now_ns=1794937041477267365
++ test 1794937041477267365 -lt 1794937041617352868
++ remaining=140085503
++ printf -v delay %d.%09d 0 140085503
++ sleep 0.140085503
++ kill -0 3583610
++ printf -v number %04d 20
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0020
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0020
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0020
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937041671712094
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0020/wayland-screenshot-2026-11-17_17-37-21.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0020.png
++ printf '%s\tframes/%s.png\n' 4306 0020
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937041817352868
+++ date +%s%N
++ now_ns=1794937041677140843
++ test 1794937041677140843 -lt 1794937041817352868
++ remaining=140212025
++ printf -v delay %d.%09d 0 140212025
++ sleep 0.140212025
++ kill -0 3583610
++ printf -v number %04d 21
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0021
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0021
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0021
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937041869533647
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0021/wayland-screenshot-2026-11-17_17-37-21.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0021.png
++ printf '%s\tframes/%s.png\n' 4504 0021
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937042017352868
+++ date +%s%N
++ now_ns=1794937041871856751
++ test 1794937041871856751 -lt 1794937042017352868
++ remaining=145496117
++ printf -v delay %d.%09d 0 145496117
++ sleep 0.145496117
++ kill -0 3583610
++ printf -v number %04d 22
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0022
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0022
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0022
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937042063169496
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0022/wayland-screenshot-2026-11-17_17-37-22.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0022.png
++ printf '%s\tframes/%s.png\n' 4698 0022
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937042217352868
+++ date +%s%N
++ now_ns=1794937042066130218
++ test 1794937042066130218 -lt 1794937042217352868
++ remaining=151222650
++ printf -v delay %d.%09d 0 151222650
++ sleep 0.151222650
++ kill -0 3583610
++ printf -v number %04d 23
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0023
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0023
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0023
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937042257172726
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0023/wayland-screenshot-2026-11-17_17-37-22.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0023.png
++ printf '%s\tframes/%s.png\n' 4892 0023
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937042417352868
+++ date +%s%N
++ now_ns=1794937042263786451
++ test 1794937042263786451 -lt 1794937042417352868
++ remaining=153566417
++ printf -v delay %d.%09d 0 153566417
++ sleep 0.153566417
++ kill -0 3583610
++ printf -v number %04d 24
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0024
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0024
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0024
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937042467595973
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0024/wayland-screenshot-2026-11-17_17-37-22.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0024.png
++ printf '%s\tframes/%s.png\n' 5102 0024
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937042617352868
+++ date +%s%N
++ now_ns=1794937042470430177
++ test 1794937042470430177 -lt 1794937042617352868
++ remaining=146922691
++ printf -v delay %d.%09d 0 146922691
++ sleep 0.146922691
++ kill -0 3583610
++ printf -v number %04d 25
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0025
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0025
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0025
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937042671182636
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0025/wayland-screenshot-2026-11-17_17-37-22.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0025.png
++ printf '%s\tframes/%s.png\n' 5306 0025
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937042817352868
+++ date +%s%N
++ now_ns=1794937042673567196
++ test 1794937042673567196 -lt 1794937042817352868
++ remaining=143785672
++ printf -v delay %d.%09d 0 143785672
++ sleep 0.143785672
++ kill -0 3583610
++ printf -v number %04d 26
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0026
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0026
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0026
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937042866009322
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0026/wayland-screenshot-2026-11-17_17-37-22.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0026.png
++ printf '%s\tframes/%s.png\n' 5500 0026
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937043017352868
+++ date +%s%N
++ now_ns=1794937042868576986
++ test 1794937042868576986 -lt 1794937043017352868
++ remaining=148775882
++ printf -v delay %d.%09d 0 148775882
++ sleep 0.148775882
++ kill -0 3583610
++ printf -v number %04d 27
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0027
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0027
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0027
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937043064377963
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0027/wayland-screenshot-2026-11-17_17-37-23.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0027.png
++ printf '%s\tframes/%s.png\n' 5699 0027
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937043217352868
+++ date +%s%N
++ now_ns=1794937043068343533
++ test 1794937043068343533 -lt 1794937043217352868
++ remaining=149009335
++ printf -v delay %d.%09d 0 149009335
++ sleep 0.149009335
++ kill -0 3583610
++ printf -v number %04d 28
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0028
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0028
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0028
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937043262295216
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0028/wayland-screenshot-2026-11-17_17-37-23.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0028.png
++ printf '%s\tframes/%s.png\n' 5897 0028
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937043417352868
+++ date +%s%N
++ now_ns=1794937043264604815
++ test 1794937043264604815 -lt 1794937043417352868
++ remaining=152748053
++ printf -v delay %d.%09d 0 152748053
++ sleep 0.152748053
++ kill -0 3583610
++ printf -v number %04d 29
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0029
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0029
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0029
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937043463606023
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0029/wayland-screenshot-2026-11-17_17-37-23.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0029.png
++ printf '%s\tframes/%s.png\n' 6098 0029
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937043617352868
+++ date +%s%N
++ now_ns=1794937043466836112
++ test 1794937043466836112 -lt 1794937043617352868
++ remaining=150516756
++ printf -v delay %d.%09d 0 150516756
++ sleep 0.150516756
++ kill -0 3583610
++ printf -v number %04d 30
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0030
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0030
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0030
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937043661473162
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0030/wayland-screenshot-2026-11-17_17-37-23.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0030.png
++ printf '%s\tframes/%s.png\n' 6296 0030
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937043817352868
+++ date +%s%N
++ now_ns=1794937043664513303
++ test 1794937043664513303 -lt 1794937043817352868
++ remaining=152839565
++ printf -v delay %d.%09d 0 152839565
++ sleep 0.152839565
++ kill -0 3583610
++ printf -v number %04d 31
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0031
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0031
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0031
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937043856157481
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0031/wayland-screenshot-2026-11-17_17-37-23.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0031.png
++ printf '%s\tframes/%s.png\n' 6491 0031
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937044017352868
+++ date +%s%N
++ now_ns=1794937043858317299
++ test 1794937043858317299 -lt 1794937044017352868
++ remaining=159035569
++ printf -v delay %d.%09d 0 159035569
++ sleep 0.159035569
++ kill -0 3583610
++ printf -v number %04d 32
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0032
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0032
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0032
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937044063259008
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0032/wayland-screenshot-2026-11-17_17-37-24.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0032.png
++ printf '%s\tframes/%s.png\n' 6698 0032
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937044217352868
+++ date +%s%N
++ now_ns=1794937044066783930
++ test 1794937044066783930 -lt 1794937044217352868
++ remaining=150568938
++ printf -v delay %d.%09d 0 150568938
++ sleep 0.150568938
++ kill -0 3583610
++ printf -v number %04d 33
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0033
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0033
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0033
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937044261049392
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0033/wayland-screenshot-2026-11-17_17-37-24.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0033.png
++ printf '%s\tframes/%s.png\n' 6895 0033
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937044417352868
+++ date +%s%N
++ now_ns=1794937044263398986
++ test 1794937044263398986 -lt 1794937044417352868
++ remaining=153953882
++ printf -v delay %d.%09d 0 153953882
++ sleep 0.153953882
++ kill -0 3583610
++ printf -v number %04d 34
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0034
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0034
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0034
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937044466974729
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0034/wayland-screenshot-2026-11-17_17-37-24.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0034.png
++ printf '%s\tframes/%s.png\n' 7101 0034
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937044617352868
+++ date +%s%N
++ now_ns=1794937044469130028
++ test 1794937044469130028 -lt 1794937044617352868
++ remaining=148222840
++ printf -v delay %d.%09d 0 148222840
++ sleep 0.148222840
++ kill -0 3583610
++ printf -v number %04d 35
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0035
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0035
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0035
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937044660650423
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0035/wayland-screenshot-2026-11-17_17-37-24.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0035.png
++ printf '%s\tframes/%s.png\n' 7295 0035
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937044817352868
+++ date +%s%N
++ now_ns=1794937044662553999
++ test 1794937044662553999 -lt 1794937044817352868
++ remaining=154798869
++ printf -v delay %d.%09d 0 154798869
++ sleep 0.154798869
++ kill -0 3583610
++ printf -v number %04d 36
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0036
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0036
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0036
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937044861048667
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0036/wayland-screenshot-2026-11-17_17-37-24.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0036.png
++ printf '%s\tframes/%s.png\n' 7495 0036
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937045017352868
+++ date +%s%N
++ now_ns=1794937044863561858
++ test 1794937044863561858 -lt 1794937045017352868
++ remaining=153791010
++ printf -v delay %d.%09d 0 153791010
++ sleep 0.153791010
++ kill -0 3583610
++ printf -v number %04d 37
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0037
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0037
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0037
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937045055824177
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0037/wayland-screenshot-2026-11-17_17-37-25.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0037.png
++ printf '%s\tframes/%s.png\n' 7690 0037
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937045217352868
+++ date +%s%N
++ now_ns=1794937045059636429
++ test 1794937045059636429 -lt 1794937045217352868
++ remaining=157716439
++ printf -v delay %d.%09d 0 157716439
++ sleep 0.157716439
++ kill -0 3583610
++ printf -v number %04d 38
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0038
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0038
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0038
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937045264513226
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0038/wayland-screenshot-2026-11-17_17-37-25.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0038.png
++ printf '%s\tframes/%s.png\n' 7899 0038
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937045417352868
+++ date +%s%N
++ now_ns=1794937045267385542
++ test 1794937045267385542 -lt 1794937045417352868
++ remaining=149967326
++ printf -v delay %d.%09d 0 149967326
++ sleep 0.149967326
++ kill -0 3583610
++ printf -v number %04d 39
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0039
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0039
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0039
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937045461879023
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0039/wayland-screenshot-2026-11-17_17-37-25.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0039.png
++ printf '%s\tframes/%s.png\n' 8096 0039
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937045617352868
+++ date +%s%N
++ now_ns=1794937045464176529
++ test 1794937045464176529 -lt 1794937045617352868
++ remaining=153176339
++ printf -v delay %d.%09d 0 153176339
++ sleep 0.153176339
++ kill -0 3583610
++ printf -v number %04d 40
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0040
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0040
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0040
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937045653863620
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0040/wayland-screenshot-2026-11-17_17-37-25.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0040.png
++ printf '%s\tframes/%s.png\n' 8288 0040
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937045817352868
+++ date +%s%N
++ now_ns=1794937045657055516
++ test 1794937045657055516 -lt 1794937045817352868
++ remaining=160297352
++ printf -v delay %d.%09d 0 160297352
++ sleep 0.160297352
++ kill -0 3583610
++ printf -v number %04d 41
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0041
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0041
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0041
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937045866593129
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0041/wayland-screenshot-2026-11-17_17-37-25.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0041.png
++ printf '%s\tframes/%s.png\n' 8501 0041
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937046017352868
+++ date +%s%N
++ now_ns=1794937045869586563
++ test 1794937045869586563 -lt 1794937046017352868
++ remaining=147766305
++ printf -v delay %d.%09d 0 147766305
++ sleep 0.147766305
++ kill -0 3583610
++ printf -v number %04d 42
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0042
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0042
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0042
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937046055570748
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0042/wayland-screenshot-2026-11-17_17-37-26.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0042.png
++ printf '%s\tframes/%s.png\n' 8690 0042
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937046217352868
+++ date +%s%N
++ now_ns=1794937046057834851
++ test 1794937046057834851 -lt 1794937046217352868
++ remaining=159518017
++ printf -v delay %d.%09d 0 159518017
++ sleep 0.159518017
++ kill -0 3583610
++ printf -v number %04d 43
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0043
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0043
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0043
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937046260810246
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0043/wayland-screenshot-2026-11-17_17-37-26.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0043.png
++ printf '%s\tframes/%s.png\n' 8895 0043
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937046417352868
+++ date +%s%N
++ now_ns=1794937046263067026
++ test 1794937046263067026 -lt 1794937046417352868
++ remaining=154285842
++ printf -v delay %d.%09d 0 154285842
++ sleep 0.154285842
++ kill -0 3583610
++ printf -v number %04d 44
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0044
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0044
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0044
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937046457420974
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0044/wayland-screenshot-2026-11-17_17-37-26.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0044.png
++ printf '%s\tframes/%s.png\n' 9092 0044
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937046617352868
+++ date +%s%N
++ now_ns=1794937046460551345
++ test 1794937046460551345 -lt 1794937046617352868
++ remaining=156801523
++ printf -v delay %d.%09d 0 156801523
++ sleep 0.156801523
++ kill -0 3583610
++ printf -v number %04d 45
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0045
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0045
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0045
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937046690355572
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0045/wayland-screenshot-2026-11-17_17-37-26.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0045.png
++ printf '%s\tframes/%s.png\n' 9325 0045
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937046817352868
+++ date +%s%N
++ now_ns=1794937046692836883
++ test 1794937046692836883 -lt 1794937046817352868
++ remaining=124515985
++ printf -v delay %d.%09d 0 124515985
++ sleep 0.124515985
++ kill -0 3583610
++ printf -v number %04d 46
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0046
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0046
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0046
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937046853338987
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0046/wayland-screenshot-2026-11-17_17-37-26.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0046.png
++ printf '%s\tframes/%s.png\n' 9488 0046
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937047017352868
+++ date +%s%N
++ now_ns=1794937046886868877
++ test 1794937046886868877 -lt 1794937047017352868
++ remaining=130483991
++ printf -v delay %d.%09d 0 130483991
++ sleep 0.130483991
++ kill -0 3583610
++ printf -v number %04d 47
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0047
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0047
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0047
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937047054243622
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0047/wayland-screenshot-2026-11-17_17-37-27.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0047.png
++ printf '%s\tframes/%s.png\n' 9689 0047
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937047217352868
+++ date +%s%N
++ now_ns=1794937047056459334
++ test 1794937047056459334 -lt 1794937047217352868
++ remaining=160893534
++ printf -v delay %d.%09d 0 160893534
++ sleep 0.160893534
++ kill -0 3583610
++ printf -v number %04d 48
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0048
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0048
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0048
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937047267679468
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0048/wayland-screenshot-2026-11-17_17-37-27.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0048.png
++ printf '%s\tframes/%s.png\n' 9902 0048
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937047417352868
+++ date +%s%N
++ now_ns=1794937047270667702
++ test 1794937047270667702 -lt 1794937047417352868
++ remaining=146685166
++ printf -v delay %d.%09d 0 146685166
++ sleep 0.146685166
++ kill -0 3583610
++ printf -v number %04d 49
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0049
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0049
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0049
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937047456651826
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0049/wayland-screenshot-2026-11-17_17-37-27.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0049.png
++ printf '%s\tframes/%s.png\n' 10091 0049
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937047617352868
+++ date +%s%N
++ now_ns=1794937047458839196
++ test 1794937047458839196 -lt 1794937047617352868
++ remaining=158513672
++ printf -v delay %d.%09d 0 158513672
++ sleep 0.158513672
++ kill -0 3583610
++ printf -v number %04d 50
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0050
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0050
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0050
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937047659320555
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0050/wayland-screenshot-2026-11-17_17-37-27.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0050.png
++ printf '%s\tframes/%s.png\n' 10294 0050
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937047817352868
+++ date +%s%N
++ now_ns=1794937047661812276
++ test 1794937047661812276 -lt 1794937047817352868
++ remaining=155540592
++ printf -v delay %d.%09d 0 155540592
++ sleep 0.155540592
++ kill -0 3583610
++ printf -v number %04d 51
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0051
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0051
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0051
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937047855261786
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0051/wayland-screenshot-2026-11-17_17-37-27.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0051.png
++ printf '%s\tframes/%s.png\n' 10490 0051
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937048017352868
+++ date +%s%N
++ now_ns=1794937047857474002
++ test 1794937047857474002 -lt 1794937048017352868
++ remaining=159878866
++ printf -v delay %d.%09d 0 159878866
++ sleep 0.159878866
++ kill -0 3583610
++ printf -v number %04d 52
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0052
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0052
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0052
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937048062682462
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0052/wayland-screenshot-2026-11-17_17-37-28.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0052.png
++ printf '%s\tframes/%s.png\n' 10697 0052
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937048217352868
+++ date +%s%N
++ now_ns=1794937048065039630
++ test 1794937048065039630 -lt 1794937048217352868
++ remaining=152313238
++ printf -v delay %d.%09d 0 152313238
++ sleep 0.152313238
++ kill -0 3583610
++ printf -v number %04d 53
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0053
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0053
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0053
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937048273134854
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0053/wayland-screenshot-2026-11-17_17-37-28.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0053.png
++ printf '%s\tframes/%s.png\n' 10908 0053
++ (( index++ ))
++ (( index<55 ))
++ deadline_ns=1794937048417352868
+++ date +%s%N
++ now_ns=1794937048275247663
++ test 1794937048275247663 -lt 1794937048417352868
++ remaining=142105205
++ printf -v delay %d.%09d 0 142105205
++ sleep 0.142105205
++ kill -0 3583610
++ printf -v number %04d 54
++ frame_dir=/home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0054
++ mkdir /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0054
++ cd /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0054
++ timeout 2 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
+++ date +%s%N
++ captured_ns=1794937048452232842
++ captures=("$frame_dir"/wayland-screenshot-*.png)
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/capture-0054/wayland-screenshot-2026-11-17_17-37-28.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0054.png
++ printf '%s\tframes/%s.png\n' 11087 0054
++ (( index++ ))
++ (( index<55 ))
++ wait 3583610
++ client_pid=
++ wait 3583598
++ bridge_pid=
++ grep -Fx 'URL http://127.0.0.1:44881/simple.html' /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/final.layout
++ grep -Fx 'VIEW 1000 760 SCROLL 0' /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/final.layout
++ grep -Fx 'Script 6200ms: click 130 120' /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/browser.log
+++ grep -c '^Script ' /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/browser.log
++ test 10 = 10
++ test '!' -s /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/browser.err
++ /home/coder/workspace/lkjbrowser/target/independent-review-motion-capture-wQWDXO/lkjbrowser --headless --font-dir /usr/share/fonts/truetype/liberation http://127.0.0.1:44881/shutdown
++ wait 3583319
++ server_pid=
++ kill 3583302
++ wait 3583302
++ weston_pid=
++ node /home/coder/workspace/lkjbrowser/review/motion/encode-apng.mjs /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames.tsv /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/scroll-and-link.png
++ sha256sum /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0000.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0001.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0002.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0003.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0004.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0005.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0006.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0007.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0008.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0009.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0010.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0011.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0012.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0013.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0014.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0015.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0016.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0017.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0018.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0019.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0020.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0021.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0022.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0023.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0024.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0025.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0026.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0027.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0028.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0029.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0030.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0031.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0032.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0033.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0034.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0035.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0036.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0037.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0038.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0039.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0040.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0041.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0042.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0043.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0044.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0045.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0046.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0047.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0048.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0049.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0050.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0051.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0052.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0053.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/frames/0054.png /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/scroll-and-link.png
++ sha256sum src/animate.lkj src/config_probe.lkj src/css.lkj src/dns_probe.lkj src/fetch_probe.lkj src/fixture_server.lkj src/font.lkj src/font_probe.lkj src/html.lkj src/layout.lkj src/main.lkj src/net.lkj src/paint.lkj src/pixel_compare.lkj src/png.lkj src/png_probe.lkj src/wayland_input_probe.lkj src/wayland.lkj src/wayland_peer.lkj src/wayland_smoke.lkj program.lkj toolchain.lock bridge/byte_descriptor_bridge.c fixtures/article.html fixtures/error.html fixtures/simple.html fixtures/workshop.png
++ cmp -s /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/source-fixtures.sha256 /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/source-fixtures-after.sha256
++ printf 'Sources and fixtures stayed unchanged during capture.\n'
++ printf 'PASS: one browser process, ten timed ordinary-handler events, 55 actual compositor frames.\n'
++ printf 'Capture: %s\n' /home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO
++ cleanup
++ set +e
++ for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"
++ test -n ''
++ for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"
++ test -n ''
++ for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"
++ test -n ''
++ for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"
++ test -n ''
++ date -u +%Y-%m-%dT%H:%M:%SZ

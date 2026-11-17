@@ -1,0 +1,694 @@
+//! TrueType glyf outlines decoded at run time. No platform font library.
+//! Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/
+
+#[derive(Clone, Copy)]
+struct Point { x: f64, y: f64, on: bool }
+
+#[derive(Clone, Copy)]
+struct Matrix { a: f64, b: f64, c: f64, d: f64, x: f64, y: f64 }
+
+struct Outline { points: Vec<Point>, ends: Vec<usize>, visits: usize, failed: bool }
+
+const MAX_GLYPH_POINTS: usize = 16384usize;
+const MAX_GLYPH_CONTOURS: usize = 4096usize;
+const MAX_GLYPH_VISITS: usize = 4096usize;
+const MAX_GLYPH_EDGES: usize = 65536usize;
+const MAX_GLYPH_MASK: usize = 1048576usize;
+const MAX_GLYPH_SCAN_WORK: usize = 2000000usize;
+const MAX_FONT_CACHE: usize = 33554432usize;
+
+#[derive(Clone, Copy)]
+struct Edge { x0: f64, y0: f64, x1: f64, y1: f64 }
+
+#[derive(Clone, Copy)]
+struct Crossing { x: f64, direction: i32 }
+
+pub struct Glyph {
+    pub id: usize,
+    pub size: i32,
+    pub left: i32,
+    pub top: i32,
+    pub width: usize,
+    pub height: usize,
+    pub mask: Vec<u8>,
+}
+
+pub struct Font {
+    data: Vec<u8>,
+    units: i32,
+    ascent_units: i32,
+    descent_units: i32,
+    loca: usize,
+    glyf: usize,
+    glyf_length: usize,
+    cmap: usize,
+    cmap_format: u16,
+    hmtx: usize,
+    glyphs: usize,
+    metrics: usize,
+    long_loca: bool,
+    pub cache: Vec<Glyph>,
+    cache_bytes: usize,
+}
+
+fn byte(data: &[u8], at: usize) -> u8 {
+    if at < data.len() { data[at] } else { 0u8 }
+}
+fn u16be(data: &[u8], at: usize) -> u16 {
+    ((byte(data, at) as u16) << 8) | byte(data, at + 1usize) as u16
+}
+fn i16be(data: &[u8], at: usize) -> i32 { (u16be(data, at) as i16) as i32 }
+fn u32be(data: &[u8], at: usize) -> u32 {
+    ((u16be(data, at) as u32) << 16) | u16be(data, at + 2usize) as u32
+}
+fn table(data: &[u8], tag: u32) -> Option<(usize, usize)> {
+    let count = u16be(data, 4usize) as usize;
+    let mut i = 0usize;
+    while i < count {
+        let p = 12usize + i * 16usize;
+        if u32be(data, p) == tag {
+            let offset = u32be(data, p + 8usize) as usize;
+            let length = u32be(data, p + 12usize) as usize;
+            if offset <= data.len() && length <= data.len() - offset {
+                return Some((offset, length));
+            }
+            return None;
+        }
+        i += 1usize;
+    }
+    None
+}
+fn absolute(v: f64) -> f64 { if v < 0.0 { -v } else { v } }
+fn floor_i(v: f64) -> i32 {
+    let n = v as i32;
+    if (n as f64) > v { n - 1i32 } else { n }
+}
+fn ceil_i(v: f64) -> i32 { -floor_i(-v) }
+fn transform(m: Matrix, p: Point) -> Point {
+    Point { x: m.a * p.x + m.c * p.y + m.x,
+        y: m.b * p.x + m.d * p.y + m.y, on: p.on }
+}
+fn compose(parent: Matrix, child: Matrix) -> Matrix {
+    Matrix {
+        a: parent.a * child.a + parent.c * child.b,
+        b: parent.b * child.a + parent.d * child.b,
+        c: parent.a * child.c + parent.c * child.d,
+        d: parent.b * child.c + parent.d * child.d,
+        x: parent.a * child.x + parent.c * child.y + parent.x,
+        y: parent.b * child.x + parent.d * child.y + parent.y,
+    }
+}
+fn midpoint(a: Point, b: Point) -> Point {
+    Point { x: (a.x + b.x) * 0.5, y: (a.y + b.y) * 0.5, on: true }
+}
+fn line(edges: &mut Vec<Edge>, a: Point, b: Point) {
+    if edges.len() < MAX_GLYPH_EDGES && a.y != b.y { edges.push(Edge { x0: a.x, y0: a.y, x1: b.x, y1: b.y }); }
+}
+fn quadratic(edges: &mut Vec<Edge>, a: Point, control: Point, b: Point) {
+    let curvature = absolute(a.x - 2.0 * control.x + b.x)
+        + absolute(a.y - 2.0 * control.y + b.y);
+    let mut steps = 1i32;
+    while curvature > (steps * steps) as f64 * 0.6 && steps < 64i32 {
+        steps *= 2i32;
+    }
+    let mut last = a;
+    let mut i = 1i32;
+    while i <= steps {
+        let t = i as f64 / steps as f64;
+        let u = 1.0 - t;
+        let next = Point {
+            x: u * u * a.x + 2.0 * u * t * control.x + t * t * b.x,
+            y: u * u * a.y + 2.0 * u * t * control.y + t * t * b.y,
+            on: true,
+        };
+        line(edges, last, next);
+        last = next;
+        i += 1i32;
+    }
+}
+
+impl Font {
+    pub fn parse(data: Vec<u8>) -> Result<Font, String> {
+        if data.len() < 12usize || u32be(&data, 0usize) != 0x00010000u32 {
+            return Err("font must be a TrueType SFNT with glyf outlines".to_string());
+        }
+        let count = u16be(&data, 4usize) as usize;
+        if count > (data.len() - 12usize) / 16usize {
+            return Err("truncated font table directory".to_string());
+        }
+        let head = table(&data, 0x68656164u32).ok_or("font has no head table".to_string())?;
+        let hhea = table(&data, 0x68686561u32).ok_or("font has no hhea table".to_string())?;
+        let maxp = table(&data, 0x6d617870u32).ok_or("font has no maxp table".to_string())?;
+        let loca = table(&data, 0x6c6f6361u32).ok_or("font has no loca table".to_string())?;
+        let glyf = table(&data, 0x676c7966u32).ok_or("font has no glyf table".to_string())?;
+        let hmtx = table(&data, 0x686d7478u32).ok_or("font has no hmtx table".to_string())?;
+        let cmap = table(&data, 0x636d6170u32).ok_or("font has no cmap table".to_string())?;
+        if head.1 < 54usize || hhea.1 < 36usize || maxp.1 < 6usize || cmap.1 < 4usize {
+            return Err("truncated required font table".to_string());
+        }
+        let units = u16be(&data, head.0 + 18usize) as i32;
+        let glyphs = u16be(&data, maxp.0 + 4usize) as usize;
+        let metrics = u16be(&data, hhea.0 + 34usize) as usize;
+        let loca_kind = i16be(&data, head.0 + 50usize);
+        let long_loca = loca_kind == 1i32;
+        let loca_width = if long_loca { 4usize } else { 2usize };
+        if units < 16i32 || units > 16384i32 || glyphs == 0usize || metrics == 0usize
+            || metrics > glyphs || hmtx.1 < metrics * 4usize + (glyphs - metrics) * 2usize
+            || loca.1 < (glyphs + 1usize) * loca_width
+            || (loca_kind != 0i32 && loca_kind != 1i32) {
+            return Err("invalid font metrics or glyph locations".to_string());
+        }
+        let mut selected = 0usize;
+        let mut selected_format = 0u16;
+        let records = u16be(&data, cmap.0 + 2usize) as usize;
+        if records > (cmap.1 - 4usize) / 8usize {
+            return Err("truncated cmap encoding records".to_string());
+        }
+        let mut i = 0usize;
+        while i < records {
+            let record = cmap.0 + 4usize + i * 8usize;
+            let platform = u16be(&data, record);
+            let encoding = u16be(&data, record + 2usize);
+            let offset = u32be(&data, record + 4usize) as usize;
+            if offset < cmap.1 && (platform == 0u16 || (platform == 3u16 && (encoding == 1u16 || encoding == 10u16))) {
+                let p = cmap.0 + offset;
+                let format = u16be(&data, p);
+                if format == 12u16 && offset + 16usize <= cmap.1 {
+                    let length = u32be(&data, p + 4usize) as usize;
+                    let groups = u32be(&data, p + 12usize) as usize;
+                    if length >= 16usize && length <= cmap.1 - offset && groups <= (length - 16usize) / 12usize {
+                        selected = p;
+                        selected_format = 12u16;
+                    }
+                } else if format == 4u16 && selected_format != 12u16 && offset + 16usize <= cmap.1 {
+                    let length = u16be(&data, p + 2usize) as usize;
+                    let segments = u16be(&data, p + 6usize) as usize / 2usize;
+                    if length >= 16usize && length <= cmap.1 - offset && segments <= (length - 16usize) / 8usize {
+                        selected = p;
+                        selected_format = 4u16;
+                    }
+                }
+            }
+            i += 1usize;
+        }
+        if selected_format == 0u16 {
+            return Err("font needs a Unicode cmap format 4 or 12".to_string());
+        }
+        let ascent_units = i16be(&data, hhea.0 + 4usize);
+        let descent_units = i16be(&data, hhea.0 + 6usize);
+        Ok(Font { data, units, ascent_units, descent_units, loca: loca.0,
+            glyf: glyf.0, glyf_length: glyf.1, cmap: selected, cmap_format: selected_format,
+            hmtx: hmtx.0, glyphs, metrics, long_loca, cache: Vec::new(), cache_bytes: 0usize })
+    }
+
+    pub fn glyph_id(&self, codepoint: u32) -> usize {
+        let p = self.cmap;
+        if self.cmap_format == 12u16 {
+            let mut low = 0usize;
+            let mut high = u32be(&self.data, p + 12usize) as usize;
+            while low < high {
+                let mid = low + (high - low) / 2usize;
+                let group = p + 16usize + mid * 12usize;
+                let first = u32be(&self.data, group);
+                let last = u32be(&self.data, group + 4usize);
+                if codepoint < first { high = mid; }
+                else if codepoint > last { low = mid + 1usize; }
+                else {
+                    let glyph = (u32be(&self.data, group + 8usize) as u64 + (codepoint - first) as u64) as usize;
+                    return if glyph < self.glyphs { glyph } else { 0usize };
+                }
+            }
+            return 0usize;
+        }
+        if codepoint > 65535u32 { return 0usize; }
+        let segments = u16be(&self.data, p + 6usize) as usize / 2usize;
+        let mut i = 0usize;
+        while i < segments {
+            let end = u16be(&self.data, p + 14usize + i * 2usize) as u32;
+            let start = u16be(&self.data, p + 16usize + segments * 2usize + i * 2usize) as u32;
+            if codepoint >= start && codepoint <= end {
+                let delta = u16be(&self.data, p + 16usize + segments * 4usize + i * 2usize);
+                let range_at = p + 16usize + segments * 6usize + i * 2usize;
+                let range = u16be(&self.data, range_at) as usize;
+                let mut glyph = if range == 0usize { codepoint as u16 }
+                    else { u16be(&self.data, range_at + range + (codepoint - start) as usize * 2usize) };
+                if range == 0usize || glyph != 0u16 { glyph = glyph.wrapping_add(delta); }
+                return if (glyph as usize) < self.glyphs { glyph as usize } else { 0usize };
+            }
+            i += 1usize;
+        }
+        0usize
+    }
+
+    pub fn advance(&self, codepoint: u32, size: i32) -> i32 {
+        let id = self.glyph_id(codepoint);
+        let metric = if id < self.metrics { id } else { self.metrics - 1usize };
+        let width = u16be(&self.data, self.hmtx + metric * 4usize) as i32;
+        (width * size + self.units / 2i32) / self.units
+    }
+    pub fn ascent(&self, size: i32) -> i32 {
+        (self.ascent_units * size + self.units - 1i32) / self.units
+    }
+    pub fn descent(&self, size: i32) -> i32 {
+        (-self.descent_units * size + self.units - 1i32) / self.units
+    }
+    pub fn text_width(&self, text: &str, size: i32) -> i32 {
+        let mut width = 0i32;
+        for c in text.chars() { width += self.advance(c as u32, size); }
+        width
+    }
+
+    fn glyph_offset(&self, id: usize) -> usize {
+        if self.long_loca { u32be(&self.data, self.loca + id * 4usize) as usize }
+        else { u16be(&self.data, self.loca + id * 2usize) as usize * 2usize }
+    }
+
+    fn outline(&self, id: usize, m: Matrix, depth: usize, out: &mut Outline) {
+        if out.failed { return; }
+        if id >= self.glyphs || depth > 16usize || out.visits >= MAX_GLYPH_VISITS {
+            out.failed = true;
+            return;
+        }
+        out.visits += 1usize;
+        let offset = self.glyph_offset(id);
+        let end = self.glyph_offset(id + 1usize);
+        if offset >= end || end > self.glyf_length || end - offset < 10usize { return; }
+        let start = self.glyf + offset;
+        let limit = self.glyf + end;
+        let contours = i16be(&self.data, start);
+        let mut p = start + 10usize;
+        if contours >= 0i32 {
+            let count = contours as usize;
+            if count == 0usize || count > (limit - p) / 2usize { return; }
+            let point_count = u16be(&self.data, p + (count - 1usize) * 2usize) as usize + 1usize;
+            if point_count > MAX_GLYPH_POINTS - out.points.len()
+                || count > MAX_GLYPH_CONTOURS - out.ends.len() {
+                out.failed = true;
+                return;
+            }
+            let mut ends = Vec::<usize>::new();
+            let mut i = 0usize;
+            while i < count {
+                let e = u16be(&self.data, p) as usize;
+                if e >= point_count || (i > 0usize && e <= ends[i - 1usize]) { return; }
+                ends.push(e);
+                p += 2usize;
+                i += 1usize;
+            }
+            if p + 2usize > limit { return; }
+            let instructions = u16be(&self.data, p) as usize;
+            p += 2usize;
+            if instructions > limit - p { return; }
+            p += instructions;
+            let mut flags = Vec::<u8>::new();
+            while flags.len() < point_count {
+                if p >= limit { return; }
+                let flag = byte(&self.data, p);
+                p += 1usize;
+                let mut repeat = 1usize;
+                if flag & 8u8 != 0u8 {
+                    if p >= limit { return; }
+                    repeat += byte(&self.data, p) as usize;
+                    p += 1usize;
+                }
+                if repeat > point_count - flags.len() { return; }
+                let mut j = 0usize;
+                while j < repeat { flags.push(flag); j += 1usize; }
+            }
+            let mut points = Vec::<Point>::new();
+            let mut x = 0i32;
+            i = 0usize;
+            while i < point_count {
+                let f = flags[i];
+                let mut delta = 0i32;
+                if f & 2u8 != 0u8 {
+                    if p >= limit { return; }
+                    delta = byte(&self.data, p) as i32;
+                    p += 1usize;
+                    if f & 16u8 == 0u8 { delta = -delta; }
+                } else if f & 16u8 == 0u8 {
+                    if p + 2usize > limit { return; }
+                    delta = i16be(&self.data, p);
+                    p += 2usize;
+                }
+                x += delta;
+                points.push(Point { x: x as f64, y: 0.0, on: f & 1u8 != 0u8 });
+                i += 1usize;
+            }
+            let mut y = 0i32;
+            i = 0usize;
+            while i < point_count {
+                let f = flags[i];
+                let mut delta = 0i32;
+                if f & 4u8 != 0u8 {
+                    if p >= limit { return; }
+                    delta = byte(&self.data, p) as i32;
+                    p += 1usize;
+                    if f & 32u8 == 0u8 { delta = -delta; }
+                } else if f & 32u8 == 0u8 {
+                    if p + 2usize > limit { return; }
+                    delta = i16be(&self.data, p);
+                    p += 2usize;
+                }
+                y += delta;
+                points[i].y = y as f64;
+                i += 1usize;
+            }
+            let base = out.points.len();
+            i = 0usize;
+            while i < points.len() { out.points.push(transform(m, points[i])); i += 1usize; }
+            i = 0usize;
+            while i < ends.len() { out.ends.push(base + ends[i]); i += 1usize; }
+        } else {
+            let base = out.points.len();
+            loop {
+                if p + 4usize > limit { return; }
+                let flags = u16be(&self.data, p);
+                let component = u16be(&self.data, p + 2usize) as usize;
+                p += 4usize;
+                let words = flags & 1u16 != 0u16;
+                let xy = flags & 2u16 != 0u16;
+                let mut arg1 = 0i32;
+                let mut arg2 = 0i32;
+                if words {
+                    if p + 4usize > limit { return; }
+                    arg1 = if xy { i16be(&self.data, p) } else { u16be(&self.data, p) as i32 };
+                    arg2 = if xy { i16be(&self.data, p + 2usize) } else { u16be(&self.data, p + 2usize) as i32 };
+                    p += 4usize;
+                } else {
+                    if p + 2usize > limit { return; }
+                    arg1 = if xy { (byte(&self.data, p) as i8) as i32 } else { byte(&self.data, p) as i32 };
+                    arg2 = if xy { (byte(&self.data, p + 1usize) as i8) as i32 } else { byte(&self.data, p + 1usize) as i32 };
+                    p += 2usize;
+                }
+                let mut child = Matrix { a: 1.0, b: 0.0, c: 0.0, d: 1.0, x: 0.0, y: 0.0 };
+                if xy { child.x = arg1 as f64; child.y = arg2 as f64; }
+                if flags & 8u16 != 0u16 {
+                    if p + 2usize > limit { return; }
+                    child.a = i16be(&self.data, p) as f64 / 16384.0;
+                    child.d = child.a;
+                    p += 2usize;
+                } else if flags & 64u16 != 0u16 {
+                    if p + 4usize > limit { return; }
+                    child.a = i16be(&self.data, p) as f64 / 16384.0;
+                    child.d = i16be(&self.data, p + 2usize) as f64 / 16384.0;
+                    p += 4usize;
+                } else if flags & 128u16 != 0u16 {
+                    if p + 8usize > limit { return; }
+                    child.a = i16be(&self.data, p) as f64 / 16384.0;
+                    child.b = i16be(&self.data, p + 2usize) as f64 / 16384.0;
+                    child.c = i16be(&self.data, p + 4usize) as f64 / 16384.0;
+                    child.d = i16be(&self.data, p + 6usize) as f64 / 16384.0;
+                    p += 8usize;
+                }
+                if xy && flags & 2048u16 != 0u16 {
+                    let x = child.a * child.x + child.c * child.y;
+                    let y = child.b * child.x + child.d * child.y;
+                    child.x = x;
+                    child.y = y;
+                }
+                let component_start = out.points.len();
+                self.outline(component, compose(m, child), depth + 1usize, out);
+                if out.failed { return; }
+                if !xy && (arg1 as usize) < component_start - base
+                    && (arg2 as usize) < out.points.len() - component_start {
+                    let parent_point = out.points[base + arg1 as usize];
+                    let child_point = out.points[component_start + arg2 as usize];
+                    let dx = parent_point.x - child_point.x;
+                    let dy = parent_point.y - child_point.y;
+                    let mut i = component_start;
+                    while i < out.points.len() { out.points[i].x += dx; out.points[i].y += dy; i += 1usize; }
+                }
+                if flags & 32u16 == 0u16 { break; }
+            }
+        }
+    }
+
+    pub fn raster(&mut self, codepoint: u32, size: i32) -> usize {
+        let id = self.glyph_id(codepoint);
+        let safe_size = if size < 1i32 { 1i32 } else if size > 512i32 { 512i32 } else { size };
+        let mut i = 0usize;
+        while i < self.cache.len() {
+            if self.cache[i].id == id && self.cache[i].size == safe_size { return i; }
+            i += 1usize;
+        }
+        let glyph = self.make_raster(id, safe_size);
+        let bytes = glyph.mask.len();
+        if self.cache.len() >= 4096usize || self.cache_bytes > MAX_FONT_CACHE - bytes {
+            self.cache.clear();
+            self.cache_bytes = 0usize;
+        }
+        self.cache_bytes += bytes;
+        let index = self.cache.len();
+        self.cache.push(glyph);
+        index
+    }
+
+    fn make_raster(&self, id: usize, size: i32) -> Glyph {
+        let mut outline = Outline { points: Vec::new(), ends: Vec::new(), visits: 0usize, failed: false };
+        let scale = size as f64 / self.units as f64;
+        self.outline(id, Matrix { a: scale, b: 0.0, c: 0.0, d: -scale, x: 0.0, y: 0.0 }, 0usize, &mut outline);
+        if outline.failed || outline.points.len() == 0usize {
+            return Glyph { id, size, left: 0i32, top: 0i32, width: 0usize, height: 0usize, mask: Vec::new() };
+        }
+        let mut min_x = outline.points[0usize].x;
+        let mut max_x = min_x;
+        let mut min_y = outline.points[0usize].y;
+        let mut max_y = min_y;
+        let mut i = 1usize;
+        while i < outline.points.len() {
+            let p = outline.points[i];
+            if p.x < min_x { min_x = p.x; }
+            if p.x > max_x { max_x = p.x; }
+            if p.y < min_y { min_y = p.y; }
+            if p.y > max_y { max_y = p.y; }
+            i += 1usize;
+        }
+        // Reject oversized bearings before f64-to-i32 conversion or padding arithmetic.
+        if min_x < -4096.0 || max_x > 4096.0 || min_y < -4096.0 || max_y > 4096.0 {
+            return Glyph { id, size, left: 0i32, top: 0i32, width: 0usize, height: 0usize, mask: Vec::new() };
+        }
+        let left = floor_i(min_x) - 1i32;
+        let top = floor_i(min_y) - 1i32;
+        let width = (ceil_i(max_x) + 1i32 - left) as usize;
+        let height = (ceil_i(max_y) + 1i32 - top) as usize;
+        // Defensive resource bound on malformed local fonts, never a layout limit.
+        if width > 4096usize || height > 4096usize || width * height > MAX_GLYPH_MASK {
+            return Glyph { id, size, left: 0i32, top: 0i32, width: 0usize, height: 0usize, mask: Vec::new() };
+        }
+        let mut edges = Vec::<Edge>::new();
+        let mut start = 0usize;
+        let mut contour = 0usize;
+        while contour < outline.ends.len() {
+            let end = outline.ends[contour];
+            if end >= start && end < outline.points.len() {
+                let first = outline.points[start];
+                let last = outline.points[end];
+                let origin = if first.on { first } else if last.on { last } else { midpoint(last, first) };
+                let mut previous = origin;
+                let mut control = origin;
+                let mut pending = false;
+                i = if first.on { start + 1usize } else { start };
+                let stop = if !first.on && last.on { end } else { end + 1usize };
+                while i < stop {
+                    let point = outline.points[i];
+                    if point.on {
+                        if pending { quadratic(&mut edges, previous, control, point); }
+                        else { line(&mut edges, previous, point); }
+                        previous = point;
+                        pending = false;
+                    } else {
+                        if pending {
+                            let middle = midpoint(control, point);
+                            quadratic(&mut edges, previous, control, middle);
+                            previous = middle;
+                        }
+                        control = point;
+                        pending = true;
+                    }
+                    i += 1usize;
+                }
+                if pending { quadratic(&mut edges, previous, control, origin); }
+                else { line(&mut edges, previous, origin); }
+            }
+            start = end + 1usize;
+            contour += 1usize;
+        }
+        if edges.len() >= MAX_GLYPH_EDGES || edges.len() * height > MAX_GLYPH_SCAN_WORK {
+            return Glyph { id, size, left: 0i32, top: 0i32, width: 0usize, height: 0usize, mask: Vec::new() };
+        }
+        let mut mask = vec![0u8; width * height];
+        let mut crossings = Vec::<Crossing>::new();
+        let mut row = 0usize;
+        while row < height * 4usize {
+            let sample_y = top as f64 + (row as f64 + 0.5) * 0.25;
+            crossings.clear();
+            i = 0usize;
+            while i < edges.len() {
+                let e = edges[i];
+                if (sample_y >= e.y0 && sample_y < e.y1) || (sample_y >= e.y1 && sample_y < e.y0) {
+                    let x = e.x0 + (sample_y - e.y0) * (e.x1 - e.x0) / (e.y1 - e.y0);
+                    let direction = if e.y1 > e.y0 { 1i32 } else { -1i32 };
+                    crossings.push(Crossing { x, direction });
+                    let mut j = crossings.len() - 1usize;
+                    while j > 0usize && crossings[j - 1usize].x > x {
+                        let previous = crossings[j - 1usize];
+                        crossings[j] = previous;
+                        j -= 1usize;
+                    }
+                    crossings[j] = Crossing { x, direction };
+                }
+                i += 1usize;
+            }
+            let mut winding = 0i32;
+            let mut previous_x = 0.0;
+            i = 0usize;
+            while i < crossings.len() {
+                let crossing = crossings[i];
+                if winding != 0i32 {
+                    let mut x0 = ceil_i((previous_x - left as f64) * 4.0 - 0.5);
+                    let mut x1 = ceil_i((crossing.x - left as f64) * 4.0 - 0.5);
+                    if x0 < 0i32 { x0 = 0i32; }
+                    if x1 > (width * 4usize) as i32 { x1 = (width * 4usize) as i32; }
+                    while x0 < x1 {
+                        let pixel = (row / 4usize) * width + (x0 as usize) / 4usize;
+                        if mask[pixel] < 16u8 { mask[pixel] += 1u8; }
+                        x0 += 1i32;
+                    }
+                }
+                winding += crossing.direction;
+                previous_x = crossing.x;
+                i += 1usize;
+            }
+            row += 1usize;
+        }
+        i = 0usize;
+        while i < mask.len() { mask[i] = ((mask[i] as u16 * 255u16 + 8u16) / 16u16) as u8; i += 1usize; }
+        Glyph { id, size, left, top, width, height, mask }
+    }
+}
+
+#[test]
+fn rejects_truncated_font() {
+    assert!(Font::parse(vec![0u8; 11usize]).is_err());
+}
+#[test]
+fn rejects_cff_instead_of_silently_rendering_it() {
+    assert!(Font::parse(vec![79u8,84u8,84u8,79u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8]).is_err());
+}
+#[test]
+fn rejects_missing_tables() {
+    assert!(Font::parse(vec![0u8,1u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8]).is_err());
+}
+#[test]
+fn rejects_out_of_bounds_table_directory() {
+    assert!(Font::parse(vec![0u8,1u8,0u8,0u8,255u8,255u8,0u8,0u8,0u8,0u8,0u8,0u8]).is_err());
+}
+
+/// Deterministic metrics for layout-only unit tests, not browser font data.
+pub fn metric_test_font() -> Font {
+    Font { data: vec![2u8,88u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8],
+        units:1000i32, ascent_units:800i32, descent_units:-200i32,
+        loca:2usize, glyf:4usize, glyf_length:0usize, cmap:0usize, cmap_format:12u16,
+        hmtx:0usize, glyphs:1usize, metrics:1usize, long_loca:false, cache:Vec::new(), cache_bytes:0usize }
+}
+
+fn test_put16(bytes: &mut Vec<u8>, at: usize, value: u16) {
+    bytes[at] = (value >> 8) as u8; bytes[at + 1usize] = value as u8;
+}
+fn test_put32(bytes: &mut Vec<u8>, at: usize, value: u32) {
+    bytes[at] = (value >> 24) as u8; bytes[at + 1usize] = (value >> 16) as u8;
+    bytes[at + 2usize] = (value >> 8) as u8; bytes[at + 3usize] = value as u8;
+}
+fn test_append32(bytes: &mut Vec<u8>, value: u32) {
+    bytes.push((value >> 24) as u8); bytes.push((value >> 16) as u8);
+    bytes.push((value >> 8) as u8); bytes.push(value as u8);
+}
+fn test_add_table(font: &mut Vec<u8>, index: usize, tag: u32, bytes: &[u8]) {
+    let at = 12usize + index * 16usize;
+    let offset = font.len();
+    test_put32(font,at,tag); test_put32(font,at + 8usize,offset as u32);
+    test_put32(font,at + 12usize,bytes.len() as u32);
+    font.extend_from_slice(bytes);
+}
+/// Complete small SFNT witness; compound glyphs are intentionally malicious.
+fn synthetic_font(levels: usize, branching: bool) -> Font {
+    let mut glyf = Vec::<u8>::new();
+    let mut loca = Vec::<u8>::new();
+    let mut index = 0usize;
+    while index < levels {
+        test_append32(&mut loca,glyf.len() as u32);
+        glyf.extend_from_slice(&[255u8,255u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8]);
+        let mut part = 0usize;
+        let parts = if branching { 2usize } else { 1usize };
+        while part < parts {
+            let flags = if part + 1usize < parts { 43u8 } else { 11u8 };
+            glyf.push(0u8); glyf.push(flags);
+            glyf.push(((index + 1usize) >> 8) as u8); glyf.push((index + 1usize) as u8);
+            let offset = if branching { 0u16 } else { 32767u16 };
+            glyf.push((offset >> 8) as u8); glyf.push(offset as u8);
+            glyf.push((offset >> 8) as u8); glyf.push(offset as u8);
+            let scale = if branching { 16384u16 } else { 32767u16 };
+            glyf.push((scale >> 8) as u8); glyf.push(scale as u8);
+            part += 1usize;
+        }
+        index += 1usize;
+    }
+    test_append32(&mut loca,glyf.len() as u32);
+    let extent = if branching { 10u16 } else { 32767u16 };
+    glyf.extend_from_slice(&[0u8,1u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,0u8,2u8,0u8,0u8,49u8,33u8,17u8]);
+    glyf.push((extent >> 8) as u8); glyf.push(extent as u8);
+    glyf.push((extent >> 8) as u8); glyf.push(extent as u8);
+    test_append32(&mut loca,glyf.len() as u32);
+    let mut head = vec![0u8;54usize];
+    test_put16(&mut head,18usize,1000u16); test_put16(&mut head,50usize,1u16);
+    let mut hhea = vec![0u8;36usize];
+    test_put16(&mut hhea,4usize,800u16); test_put16(&mut hhea,6usize,65336u16); test_put16(&mut hhea,34usize,1u16);
+    let mut hmtx = vec![0u8;4usize + levels * 2usize]; test_put16(&mut hmtx,0usize,600u16);
+    let mut maxp = vec![0u8;6usize]; test_put16(&mut maxp,4usize,(levels + 1usize) as u16);
+    let mut cmap = vec![0u8;40usize];
+    test_put16(&mut cmap,2usize,1u16); test_put16(&mut cmap,4usize,3u16); test_put16(&mut cmap,6usize,10u16);
+    test_put32(&mut cmap,8usize,12u32); test_put16(&mut cmap,12usize,12u16); test_put32(&mut cmap,16usize,28u32);
+    test_put32(&mut cmap,24usize,1u32); test_put32(&mut cmap,28usize,65u32); test_put32(&mut cmap,32usize,65u32);
+    let mut bytes = vec![0u8;124usize]; test_put32(&mut bytes,0usize,0x00010000u32); test_put16(&mut bytes,4usize,7u16);
+    test_add_table(&mut bytes,0usize,0x68656164u32,&head);
+    test_add_table(&mut bytes,1usize,0x68686561u32,&hhea);
+    test_add_table(&mut bytes,2usize,0x6d617870u32,&maxp);
+    test_add_table(&mut bytes,3usize,0x6c6f6361u32,&loca);
+    test_add_table(&mut bytes,4usize,0x676c7966u32,&glyf);
+    test_add_table(&mut bytes,5usize,0x686d7478u32,&hmtx);
+    test_add_table(&mut bytes,6usize,0x636d6170u32,&cmap);
+    Font::parse(bytes).unwrap()
+}
+#[test]
+fn oversized_composite_coordinates_do_not_overflow() {
+    let mut font = synthetic_font(16usize,false);
+    let index = font.raster(65u32,512i32);
+    assert!(font.cache[index].mask.is_empty());
+}
+#[test]
+fn compound_branch_expansion_is_bounded() {
+    // Exercise the last part of a larger glyph's budget without a slow interpreter corpus.
+    // tools/font-security.sh retains the full native 4096-visit witness.
+    let font = synthetic_font(12usize,true);
+    let mut outline = Outline { points: Vec::new(), ends: Vec::new(), visits: MAX_GLYPH_VISITS - 24usize, failed: false };
+    font.outline(0usize,Matrix { a:0.016,b:0.0,c:0.0,d:-0.016,x:0.0,y:0.0 },0usize,&mut outline);
+    assert!(outline.failed);
+    assert_eq!(outline.visits,MAX_GLYPH_VISITS);
+    assert!(outline.points.len() < MAX_GLYPH_POINTS);
+}
+#[test]
+fn glyph_mask_allocation_is_bounded() {
+    let mut font = synthetic_font(0usize,false);
+    let index = font.raster(65u32,96i32);
+    assert!(font.cache[index].mask.is_empty());
+}
+#[test]
+fn cache_budget_rebuilds_on_demand() {
+    let mut font = synthetic_font(0usize,true);
+    font.cache_bytes = MAX_FONT_CACHE;
+    let index = font.raster(65u32,64i32);
+    assert_eq!(index,0usize);
+    assert!(font.cache_bytes < MAX_FONT_CACHE);
+    assert_eq!(font.cache.len(),1usize);
+}

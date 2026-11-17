@@ -1,0 +1,167 @@
+--- a/src/layout.lkj
++++ b/src/layout.lkj
+@@ -112,6 +112,7 @@
+     style: Style,
+     href: String,
+     node: usize,
++    link_owner: usize,
+     offset: i32,
+ }
+ 
+@@ -186,9 +187,20 @@
+                 text: item.text.clone(), href: item.href.clone(), node: item.node,
+             }));
+             if item.style.underline {
++                let mut start = x;
++                if i > 0usize && item.link_owner != 0usize {
++                    let previous = &flow.items[i - 1usize];
++                    if previous.kind == 0u8 && previous.style.underline
++                        && previous.link_owner == item.link_owner {
++                        // Collapsed spaces advance offsets without becoming text
++                        // fragments. Cover only the gap inside this same anchor
++                        // on this line, never trailing space or another link.
++                        start = flow.left + previous.offset + previous.width + alignment;
++                    }
++                }
+                 page.commands.push(Command::Rect(Rect {
+-                    x, y: baseline + max(2, item.style.font_size / 10),
+-                    width: item.width, height: max(1, item.style.font_size / 18),
++                    x: start, y: baseline + max(2, item.style.font_size / 10),
++                    width: x + item.width - start, height: max(1, item.style.font_size / 18),
+                     color: item.style.color,
+                 }));
+             }
+@@ -202,17 +214,18 @@
+     flow.word_start = 0usize; flow.word_before = 0; flow.word_offset = 0;
+ }
+ 
+-fn fragment(flow: &mut Flow, text: &str, width: i32, style: Style, href: &str, node: usize) {
++fn fragment(flow: &mut Flow, text: &str, width: i32, style: Style, href: &str,
++    node: usize, link_owner: usize) {
+     let offset = flow.used;
+     flow.items.push(Fragment {
+         kind: 0u8, text: text.to_string(), src: String::new(), width, image_height: 0,
+-        style, href: href.to_string(), node, offset,
++        style, href: href.to_string(), node, link_owner, offset,
+     });
+     flow.used += width;
+ }
+ 
+ fn word(flow: &mut Flow, text: &str, style: Style, href: &str, node: usize,
+-    fonts: &Fonts, page: &mut Page) {
++    link_owner: usize, fonts: &Fonts, page: &mut Page) {
+     if text.is_empty() { return; }
+     let font = selected(fonts, style.bold, style.italic);
+     let width = measured(font, text, style.font_size);
+@@ -259,7 +272,7 @@
+             flow.word_offset = flow.used + space;
+         }
+         flow.used += space;
+-        fragment(flow, text, width, style, href, node);
++        fragment(flow, text, width, style, href, node, link_owner);
+         return;
+     }
+     let mut part = String::new();
+@@ -267,7 +280,7 @@
+     for ch in text.chars() {
+         let advance = font.advance(ch as u32, style.font_size);
+         if !part.is_empty() && part_width + advance > flow.width {
+-            fragment(flow, part.as_str(), part_width, style, href, node);
++            fragment(flow, part.as_str(), part_width, style, href, node, link_owner);
+             flush(flow, fonts, page, false);
+             part.clear();
+             part_width = 0;
+@@ -275,11 +288,11 @@
+         part.push(ch);
+         part_width += advance;
+     }
+-    if !part.is_empty() { fragment(flow, part.as_str(), part_width, style, href, node); }
++    if !part.is_empty() { fragment(flow, part.as_str(), part_width, style, href, node, link_owner); }
+ }
+ 
+ fn text(flow: &mut Flow, value: &str, style: Style, href: &str, node: usize,
+-    fonts: &Fonts, page: &mut Page) {
++    link_owner: usize, fonts: &Fonts, page: &mut Page) {
+     let mut pending = String::new();
+     if style.pre {
+         let font = selected(fonts, style.bold, style.italic);
+@@ -288,7 +301,7 @@
+             if ch == '\n' {
+                 if !pending.is_empty() {
+                     let width = measured(font, pending.as_str(), style.font_size);
+-                    fragment(flow, pending.as_str(), width, style, href, node);
++                    fragment(flow, pending.as_str(), width, style, href, node, link_owner);
+                     pending.clear();
+                 }
+                 flush(flow, fonts, page, true);
+@@ -297,7 +310,7 @@
+                 let width = measured(font, token.as_str(), style.font_size);
+                 let pending_width = measured(font, pending.as_str(), style.font_size);
+                 if !pending.is_empty() && flow.used + pending_width + width > flow.width {
+-                    fragment(flow, pending.as_str(), pending_width, style, href, node);
++                    fragment(flow, pending.as_str(), pending_width, style, href, node, link_owner);
+                     pending.clear();
+                     flush(flow, fonts, page, false);
+                 }
+@@ -306,7 +319,7 @@
+         }
+         if !pending.is_empty() {
+             let width = measured(font, pending.as_str(), style.font_size);
+-            fragment(flow, pending.as_str(), width, style, href, node);
++            fragment(flow, pending.as_str(), width, style, href, node, link_owner);
+         }
+         flow.word_start = flow.items.len();
+         flow.word_before = flow.used;
+@@ -317,7 +330,7 @@
+         let code = ch as u32;
+         if code == 32u32 || code == 9u32 || code == 10u32 || code == 12u32 || code == 13u32 {
+             if !pending.is_empty() {
+-                word(flow, pending.as_str(), style, href, node, fonts, page);
++                word(flow, pending.as_str(), style, href, node, link_owner, fonts, page);
+                 pending.clear();
+             }
+             flow.pending_space = true;
+@@ -325,7 +338,7 @@
+             pending.push(ch);
+         }
+     }
+-    if !pending.is_empty() { word(flow, pending.as_str(), style, href, node, fonts, page); }
++    if !pending.is_empty() { word(flow, pending.as_str(), style, href, node, link_owner, fonts, page); }
+ }
+ 
+ fn image_size(doc: &Document, node: usize, style: Style, available: i32) -> (i32, i32) {
+@@ -342,6 +355,15 @@
+     (width, height)
+ }
+ 
++fn anchor_for(doc: &Document, node: usize) -> usize {
++    let mut at = node;
++    while at != 0usize {
++        if doc.nodes[at].tag == "a" { return at; }
++        at = doc.nodes[at].parent;
++    }
++    0usize
++}
++
+ fn feed(doc: &Document, styles: &[Style], node: usize, flow: &mut Flow,
+     fonts: &Fonts, page: &mut Page) {
+     let style = styles[node];
+@@ -357,7 +379,8 @@
+     let name = doc.nodes[node].tag.as_str();
+     if name == "#text" {
+         let href = doc.href_for(node);
+-        text(flow, doc.nodes[node].text.as_str(), style, href.as_str(), node, fonts, page);
++        let owner = anchor_for(doc, node);
++        text(flow, doc.nodes[node].text.as_str(), style, href.as_str(), node, owner, fonts, page);
+         return;
+     }
+     let anchor = doc.attribute(node, "id");
+@@ -372,7 +395,7 @@
+         flow.items.push(Fragment {
+             kind: 1u8, text: doc.attribute(node, "alt"), src: doc.attribute(node, "src"),
+             width: dimensions.0, image_height: dimensions.1, style,
+-            href: doc.href_for(node), node, offset,
++            href: doc.href_for(node), node, link_owner: anchor_for(doc, node), offset,
+         });
+         flow.used += dimensions.0;
+         flow.pending_space = false;

@@ -1,0 +1,1 @@
+pub fn probe() -> bool { let value = "prefix".to_string(); value.strip_prefix("pre").is_some() }

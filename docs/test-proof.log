@@ -1,0 +1,44 @@
+ok 52 tests
+ok program ./program.lkj: 1 case paths
+unix-socket: probes/unix-socket.lkj:1:47: E_UNSUPPORTED method unix_connect on World has 0 applicable implementations; help: use an implemented method or write an explicit loop
+send-descriptor: probes/send-descriptor.lkj:1:162: E_UNSUPPORTED method send_file on File has 0 applicable implementations; help: use an implemented method or write an explicit loop
+writable-mapping: probes/writable-mapping.lkj:1:95: E_UNSUPPORTED method map_writable on File has 0 applicable implementations; help: use an implemented method or write an explicit loop
+destination-authority: probes/destination-authority.lkj:1:54: E_UNSUPPORTED method for_destination on Connector has 0 applicable implementations; help: use an implemented method or write an explicit loop
+connect-deadline: probes/connect-deadline.lkj:1:113: E_UNSUPPORTED method connect_deadline on Connector has 0 applicable implementations; help: use an implemented method or write an explicit loop
+array-to-vec: probes/array-to-vec.lkj:1:29: E_UNSUPPORTED array.to_vec requires a slice receiver and Clone elements; help: write array[..].to_vec() (docs/language.md, Source library)
+empty-slice: probes/empty-slice.lkj:2:27: E_TYPE empty array literal [] needs an element type; help: write &[0u32; 0] for an empty &[u32] argument (docs/language.md, Scalars and evaluation)
+string-strip-prefix: probes/string-strip-prefix.lkj:1:60: E_UNSUPPORTED method strip_prefix on string::String has 0 applicable implementations; help: use an implemented method or write an explicit loop
+tls-library: probes/tls-library.lkj:1:1: E_IMPORT unresolved or cyclic import std::tls
+html-loop-view: probes/html-loop-view.lkj:9:45: E_BORROW loop backedge changes the reference holders or origins required at loop entry
+owner-replacement: probes/owner-replacement.lkj:3:2: E_BORROW bytes conflicts with shared borrow held by $ (created at 3:8); self-slice assignment keeps the source view alive while replacing its owner; help: create the owned to_vec copy in a separate lexical block before the assignment (docs/language.md, Ownership, storage and views)
+html-cfg-test: probes/html-cfg-test.lkj:7:16: E_NAME unresolved name helper; declaration helper at probes/html-cfg-test.lkj:3 is excluded by #[cfg(test)], including under lkjscript test; help: make the helper unconditional and keep the test entry separate (docs/language.md, Source graph and names)
+Accepted the two documented loop-view rewrites.
+input PASS motion=120,220 click=120,220 scroll=24 key=press+release resize=900x700 focus=clear+restore close=true
+peer PASS requests=31 shm_fd=true pong=true configure_ack=true cursor=true
+LiberationSans-Regular.ttf: OK
+LiberationSans-Bold.ttf: OK
+LiberationSans-Italic.ttf: OK
+LiberationSans-BoldItalic.ttf: OK
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 1000x760, document height 2294, scroll 0
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 1000x760, document height 2294, scroll 600
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/simple.html: 1000x760, document height 937, scroll 0
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 620x760, document height 2733, scroll 0
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/error.html: 1000x760, document height 535, scroll 0
+Rendered http://127.0.0.1:34197/article.html: 1000x760, document height 2294, scroll 0
+Rendered http://127.0.0.1:34197/chunked: 1000x760, document height 2294, scroll 0
+Rendered http://127.0.0.1:34197/article.html: 1000x760, document height 2294, scroll 0
+Rendered http://127.0.0.1:34197/simple.html: 1000x760, document height 937, scroll 0
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 1000x760, document height 2294, scroll 600
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/simple.html: 1000x760, document height 937, scroll 0
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 1000x760, document height 2294, scroll 0
+Rendered about:welcome: 1000x760, document height 642, scroll 0
+Rendered http://127.0.0.1:34197/truncated: 1000x760, document height 474, scroll 0
+Rendered http://127.0.0.1:34197/ambiguous: 1000x760, document height 474, scroll 0
+Rendered http://127.0.0.1:34197/invalid-status: 1000x760, document height 474, scroll 0
+Rendered http://127.0.0.1:34197/large-header: 1000x760, document height 474, scroll 0
+Rendered http://127.0.0.1:35243/unreachable: 1000x760, document height 474, scroll 0
+Rendered http://127.0.0.1:34197/plain: 1000x760, document height 166, scroll 0
+Rendered http://127.0.0.1:34197/plain-case: 1000x760, document height 166, scroll 0
+PASS: typed/local links, regular-file checks, remote file redirects/links/images, reload and history authority.
+PASS: native unit cases, capability probes, Wayland input peer, 5 layout/pixel goldens, HTTP framing, PNG, click, history, scroll and typed address.
+Evidence: /home/coder/workspace/lkjbrowser/target/browser-tests.073KGi6K

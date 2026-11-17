@@ -1,0 +1,124 @@
+//! Native protocol test peer. Never part of browser runtime.
+fn push(v: &mut Vec<u8>, n: u32) {
+    v.push((n & 255u32) as u8); v.push(((n >> 8u32) & 255u32) as u8);
+    v.push(((n >> 16u32) & 255u32) as u8); v.push((n >> 24u32) as u8);
+}
+fn num(v: &[u8], n: usize) -> u32 {
+    v[n] as u32 | ((v[n+1usize] as u32)<<8u32) | ((v[n+2usize] as u32)<<16u32) | ((v[n+3usize] as u32)<<24u32)
+}
+fn string(v: &mut Vec<u8>, s: &str) {
+    push(v,(s.len()+1usize) as u32); v.extend_from_slice(s.as_bytes()); v.push(0u8);
+    while v.len()%4usize!=0usize { v.push(0u8); }
+}
+fn event(s: &mut File, id: u32, op: u32, payload: &[u8]) {
+    let mut v=Vec::new();push(&mut v,id);push(&mut v,(((payload.len()+8usize) as u32)<<16u32)|op);
+    v.extend_from_slice(payload);s.write_all(&v).unwrap();
+}
+fn ints(s:&mut File,id:u32,op:u32,args:&[u32]) {
+    let mut v=Vec::new();for a in args {push(&mut v,*a);}event(s,id,op,&v);
+}
+fn global(s:&mut File,id:u32,name:u32,label:&str,version:u32) {
+    let mut v=Vec::new();push(&mut v,name);string(&mut v,label);push(&mut v,version);event(s,id,0u32,&v);
+}
+fn exact(s:&mut File,v:&mut [u8])->bool {
+    let mut at=0usize;while at<v.len() {
+        let n=s.read(&mut v[at..]).unwrap(); if n==0usize{return false;} at+=n;
+    } true
+}
+fn put(kinds:&mut Vec<u32>,id:u32,kind:u32) {
+    while kinds.len()<=id as usize {kinds.push(0u32);} kinds[id as usize]=kind;
+}
+pub fn main(mut world:World) {
+    let mut listener=world.listen("127.0.0.1",0u16).unwrap();
+    let port=listener.port().unwrap();
+    world.stdout().write(format!("{}\n",port).as_bytes());
+    let mut stream=listener.accept_nodelay().unwrap();
+    let mut kinds=vec![0u32,1u32];
+    let mut wm=0u32;let mut surface=0u32;let mut xdg=0u32;let mut top=0u32;
+    let mut pointer=0u32;let mut keyboard=0u32;
+    let mut mapped=false;let mut attached=false;let mut configured=false;let mut injected=false;
+    let mut pong=false;let mut ack=false;let mut cursor=false;let mut fd=false;
+    let mut requests=0usize;
+    loop {
+        let mut header=[0u8;8]; if !exact(&mut stream,&mut header){break;}
+        let size=num(&header,0usize) as usize;
+        assert!(size>=8usize && size<65536usize);
+        let flag=num(&header,4usize);
+        let mut bytes=vec![0u8;size]; assert!(exact(&mut stream,&mut bytes));
+        let id=num(&bytes,0usize); let op=num(&bytes,4usize)&65535u32;
+        assert!((num(&bytes,4usize)>>16u32) as usize==size);
+        let data=&bytes[8usize..];
+        assert!((id as usize)<kinds.len());
+        let kind=kinds[id as usize];requests+=1usize;
+        if kind==1u32 && op==1u32 {
+            let registry=num(data,0usize);put(&mut kinds,registry,2u32);
+            global(&mut stream,registry,1u32,"wl_compositor",4u32);
+            global(&mut stream,registry,2u32,"wl_shm",1u32);
+            global(&mut stream,registry,3u32,"xdg_wm_base",1u32);
+            global(&mut stream,registry,4u32,"wl_seat",5u32);
+        } else if kind==1u32 && op==0u32 {
+            let cb=num(data,0usize);put(&mut kinds,cb,14u32);
+            ints(&mut stream,cb,0u32,&[1u32]);ints(&mut stream,1u32,1u32,&[cb]);
+        } else if kind==2u32 && op==0u32 {
+            let name=num(data,0usize); let n=num(data,4usize) as usize;
+            let at=8usize+(n+3usize)/4usize*4usize;
+            let new=num(data,at+4usize);
+            let k=match name {1u32=>3u32,2u32=>4u32,3u32=>5u32,4u32=>6u32,_=>0u32};
+            put(&mut kinds,new,k);
+            if k==5u32 {wm=new;}
+            if k==6u32 {ints(&mut stream,new,0u32,&[3u32]);}
+        } else if kind==3u32 && op==0u32 {
+            put(&mut kinds,num(data,0usize),7u32);
+        } else if kind==5u32 && op==2u32 {
+            xdg=num(data,0usize);surface=num(data,4usize);put(&mut kinds,xdg,8u32);
+        } else if kind==5u32 && op==3u32 {
+            assert!(num(data,0usize)==99u32);pong=true;
+        } else if kind==8u32 && op==1u32 {
+            top=num(data,0usize);put(&mut kinds,top,9u32);
+        } else if kind==8u32 && op==4u32 {
+            let serial=num(data,0usize); assert!(serial==11u32||serial==12u32);
+            if serial==12u32 {ack=true;}
+        } else if kind==4u32 && op==0u32 {
+            assert!(flag==1u32);fd=true;put(&mut kinds,num(data,0usize),10u32);
+        } else if kind==10u32 && op==0u32 {
+            put(&mut kinds,num(data,0usize),11u32);
+        } else if kind==6u32 && op==0u32 {
+            pointer=num(data,0usize);put(&mut kinds,pointer,12u32);
+        } else if kind==6u32 && op==1u32 {
+            keyboard=num(data,0usize);put(&mut kinds,keyboard,13u32);
+        } else if kind==7u32 && id==surface && op==1u32 {
+            attached=true;
+        } else if kind==7u32 && id==surface && op==6u32 {
+            if !configured {
+                ints(&mut stream,top,0u32,&[1000u32,760u32,0u32]);
+                ints(&mut stream,xdg,0u32,&[11u32]); configured=true;
+            } else if attached {mapped=true;}
+        } else if kind==12u32 && op==0u32 {
+            assert!(num(data,0usize)==7u32);cursor=true;
+        }
+        if mapped && pointer!=0u32 && keyboard!=0u32 && !injected {
+            ints(&mut stream,wm,0u32,&[99u32]);
+            ints(&mut stream,pointer,0u32,&[7u32,surface,40u32*256u32,220u32*256u32]);
+            ints(&mut stream,pointer,2u32,&[1u32,120u32*256u32,220u32*256u32]);
+            ints(&mut stream,pointer,3u32,&[8u32,1u32,272u32,1u32]);
+            ints(&mut stream,pointer,4u32,&[1u32,0u32,24u32*256u32]);
+            ints(&mut stream,pointer,5u32,&[0u32;0]);
+            ints(&mut stream,keyboard,1u32,&[9u32,surface,4u32,42u32]);
+            ints(&mut stream,keyboard,3u32,&[10u32,1u32,30u32,1u32]);
+            ints(&mut stream,keyboard,3u32,&[11u32,1u32,30u32,0u32]);
+            ints(&mut stream,keyboard,2u32,&[12u32,surface]);
+            ints(&mut stream,keyboard,1u32,&[13u32,surface,12u32,29u32,54u32,16u32]);
+            ints(&mut stream,keyboard,2u32,&[14u32,surface]);
+            ints(&mut stream,top,0u32,&[900u32,700u32,0u32]);
+            ints(&mut stream,xdg,0u32,&[12u32]);
+            injected=true;
+        }
+        if injected && pong && ack && cursor {
+            assert!(fd);
+            ints(&mut stream,top,1u32,&[0u32;0]);
+            world.stdout().write(format!("peer PASS requests={} shm_fd=true pong=true configure_ack=true cursor=true\n",requests).as_bytes());
+            return;
+        }
+    }
+    panic!("peer ended before the protocol obligations were met");
+}

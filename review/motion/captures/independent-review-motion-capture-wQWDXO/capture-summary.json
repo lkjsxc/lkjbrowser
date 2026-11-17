@@ -1,0 +1,36 @@
+{
+  "directory": "/home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO",
+  "browser_pid": "3583610",
+  "frames": 55,
+  "first_frame_ms": 298,
+  "last_frame_ms": 11087,
+  "animation_duration_ms": 11789,
+  "animation_bytes": 2677918,
+  "keyframes": [
+    {
+      "name": "01-article",
+      "time_ms": 696,
+      "source": "frames/0002.png"
+    },
+    {
+      "name": "02-article-scrolled",
+      "time_ms": 4504,
+      "source": "frames/0021.png"
+    },
+    {
+      "name": "03-home",
+      "time_ms": 5500,
+      "source": "frames/0026.png"
+    },
+    {
+      "name": "04-clicked-workshop",
+      "time_ms": 7101,
+      "source": "frames/0034.png"
+    },
+    {
+      "name": "05-workshop-scrolled",
+      "time_ms": 8288,
+      "source": "frames/0040.png"
+    }
+  ]
+}

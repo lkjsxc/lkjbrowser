@@ -1,0 +1,6 @@
+FAIL target/independent-review-underline-base-20261118/underline_probe.lkj two_word_link_has_one_continuous_pixel_band native
+target/independent-review-underline-base-20261118/underline_probe.lkj:54: R0005 assertion failed
+FAIL target/independent-review-underline-base-20261118/underline_probe.lkj bold_span_inside_link_keeps_continuous_decoration native
+target/independent-review-underline-base-20261118/underline_probe.lkj:85: R0005 assertion failed
+FAIL target/independent-review-underline-base-20261118/underline_probe.lkj trailing_non_link_whitespace_and_text_stay_undecorated native
+target/independent-review-underline-base-20261118/underline_probe.lkj:97: R0005 assertion failed

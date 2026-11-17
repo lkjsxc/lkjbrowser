@@ -1,0 +1,29 @@
+Date: 2026-11-17 UTC
+[17:37:17.206] weston 13.0.0
+               https://wayland.freedesktop.org
+               Bug reports to: https://gitlab.freedesktop.org/wayland/weston/issues/
+               Build: 13.0.0
+[17:37:17.206] Command line: /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston --backend=headless --renderer=pixman --width=1000 --height=760 --shell=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so --socket=wl --idle-time=0 --no-config --debug --log=/home/coder/workspace/lkjbrowser/review/motion/captures/independent-review-motion-capture-wQWDXO/weston.log
+[17:37:17.206] OS: Linux, 7.3.4-arch1-1, #1 SMP PREEMPT_DYNAMIC Wed, 11 Nov 2026 19:02:39 +0000, x86_64
+[17:37:17.206] Flight recorder: enabled
+[17:37:17.206] Starting with no config file.
+[17:37:17.206] Output repaint window is 7 ms maximum.
+[17:37:17.206] Loading module '/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so'
+[17:37:17.216] Using Pixman renderer
+[17:37:17.216] Registered plugin API 'weston_windowed_output_api_v2' of size 16
+[17:37:17.216] Color manager: no-op
+[17:37:17.216] Output 'headless' attempts EOTF mode: SDR
+[17:37:17.216] Output 'headless' using color profile: stock sRGB color profile
+[17:37:17.216] Output 'headless' enabled with head(s) headless
+[17:37:17.216] Compositor capabilities:
+               arbitrary surface rotation: yes
+               screen capture uses y-flip: no
+               cursor planes: no
+               arbitrary resolutions: no
+               view mask clipping: yes
+               explicit sync: no
+               color operations: no
+               presentation clock: CLOCK_MONOTONIC_RAW, id 4
+               presentation clock resolution: 0.000000001 s
+[17:37:17.216] Loading module '/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so'
+[17:37:32.483] caught signal 15

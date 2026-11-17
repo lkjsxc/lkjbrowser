@@ -1,0 +1,1 @@
+Sources and fixtures stayed unchanged during capture.

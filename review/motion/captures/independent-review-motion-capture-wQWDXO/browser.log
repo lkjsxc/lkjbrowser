@@ -1,0 +1,11 @@
+Script 1600ms: scroll 120
+Script 2100ms: scroll 120
+Script 2600ms: scroll 120
+Script 3100ms: scroll 120
+Script 3600ms: scroll 120
+Script 4100ms: scroll 120
+Script 5000ms: key 102
+Script 6200ms: click 130 120
+Script 7600ms: scroll 180
+Script 8500ms: key 102
+Wayland: sent 55 messages, received 44, presented 11 frames

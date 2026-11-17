@@ -1,0 +1,27 @@
+mod html;
+mod css;
+mod net;
+fn main(mut world: World) {
+    let doc = html::parse("<body style='font-size:20px'><p id='before' style='margin-left:1em;font-size:40px'>x</p><p id='after' style='font-size:40px;margin-left:1em'>x</p></body>");
+    let styles = css::compute(&doc);
+    let mut out = world.stdout();
+    let mut failures = 0usize;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" {
+            let id = doc.attribute(i, "id");
+            out.write(format!("CSS {} font={} margin_left={} expected=40\n", id, styles[i].font_size, styles[i].margin_left).as_bytes());
+            if styles[i].font_size != 40 || styles[i].margin_left != 40 { failures += 1; }
+        }
+        i += 1;
+    }
+    let base = "http://host/a/page.html?x=1#old";
+    let empty = net::resolve(base, "");
+    out.write(format!("URL empty reference={} expected=http://host/a/page.html?x=1\n", empty).as_bytes());
+    if empty != "http://host/a/page.html?x=1" { failures += 1; }
+    let malformed = net::parse_headers("HTTP/1.1 éé\r\n\r\n".as_bytes()).is_err();
+    out.write(format!("HTTP malformed UTF-8 status rejected={} expected=true\n", malformed).as_bytes());
+    if !malformed { failures += 1; }
+    out.write(format!("REVIEW failures={}\n", failures).as_bytes());
+    if failures > 0usize { world.set_exit_status(1u8); }
+}

@@ -1,0 +1,852 @@
+//! CSS for the browser's first document slice.
+//! Supported selectors: type, universal, class, id, compounds, descendants and children.
+//! Unsupported selectors and at-rules do not accidentally broaden a match.
+
+use crate::html::{Document, trim, whitespace};
+
+pub const NONE: u8 = 0u8;
+pub const INLINE: u8 = 1u8;
+pub const BLOCK: u8 = 2u8;
+
+#[derive(Copy, Clone)]
+pub struct Style {
+    pub display: u8,
+    pub color: u32,
+    pub background: u32,
+    pub has_background: bool,
+    pub font_size: i32,
+    pub line_height: i32,
+    pub line_height_scale: i32,
+    pub bold: bool,
+    pub italic: bool,
+    pub underline: bool,
+    pub pre: bool,
+    pub margin_top: i32,
+    pub margin_right: i32,
+    pub margin_bottom: i32,
+    pub margin_left: i32,
+    pub padding_top: i32,
+    pub padding_right: i32,
+    pub padding_bottom: i32,
+    pub padding_left: i32,
+    pub border_width: i32,
+    pub border_color: u32,
+    pub width: i32,
+    pub max_width: i32,
+    pub height: i32,
+    pub auto_left: bool,
+    pub auto_right: bool,
+    pub align: u8,
+}
+
+pub struct Declaration {
+    pub name: String,
+    pub value: String,
+    pub important: bool,
+}
+
+pub struct Rule {
+    pub parts: Vec<String>,
+    pub specificity: [usize; 3],
+    pub declarations: Vec<Declaration>,
+}
+
+pub fn initial() -> Style {
+    Style {
+        display: INLINE, color: 0xff263342u32, background: 0xffffffffu32, has_background: false,
+        font_size: 18, line_height: 0, line_height_scale: 1500, bold: false, italic: false, underline: false, pre: false,
+        margin_top: 0, margin_right: 0, margin_bottom: 0, margin_left: 0,
+        padding_top: 0, padding_right: 0, padding_bottom: 0, padding_left: 0,
+        border_width: 0, border_color: 0xffd8e0e7u32, width: -1, max_width: -1, height: -1,
+        auto_left: false, auto_right: false, align: 0u8,
+    }
+}
+
+fn inherited(parent: Style) -> Style {
+    let mut result = initial();
+    result.color = parent.color;
+    result.font_size = parent.font_size;
+    result.line_height = parent.line_height;
+    result.line_height_scale = parent.line_height_scale;
+    result.bold = parent.bold;
+    result.italic = parent.italic;
+    result.underline = parent.underline;
+    result.pre = parent.pre;
+    result.align = parent.align;
+    result
+}
+
+fn ua_style(tag: &str, parent: Style) -> Style {
+    let mut s = inherited(parent);
+    match tag {
+        "#document" | "html" | "body" | "main" | "article" | "section" | "div" | "header" |
+        "footer" | "nav" | "aside" | "address" | "form" | "figure" | "figcaption" | "details" |
+        "summary" | "dl" | "dt" | "dd" | "fieldset" => { s.display = BLOCK; },
+        "head" | "style" | "script" | "title" | "meta" | "link" | "base" | "template" | "noscript" => {
+            s.display = NONE;
+        },
+        "p" => { s.display = BLOCK; s.margin_bottom = 18; },
+        "h1" => { s.display = BLOCK; s.font_size = 38; s.bold = true;
+            s.margin_top = 14; s.margin_bottom = 18; s.line_height = 47; s.line_height_scale = 0; },
+        "h2" => { s.display = BLOCK; s.font_size = 27; s.bold = true;
+            s.margin_top = 25; s.margin_bottom = 13; s.line_height = 35; s.line_height_scale = 0; },
+        "h3" => { s.display = BLOCK; s.font_size = 22; s.bold = true;
+            s.margin_top = 21; s.margin_bottom = 11; s.line_height = 30; s.line_height_scale = 0; },
+        "h4" | "h5" | "h6" => { s.display = BLOCK; s.font_size = 19; s.bold = true;
+            s.margin_top = 18; s.margin_bottom = 10; s.line_height = 27; s.line_height_scale = 0; },
+        "ul" | "ol" => { s.display = BLOCK; s.padding_left = 26; s.margin_bottom = 18; },
+        "li" => { s.display = BLOCK; s.margin_bottom = 8; },
+        "blockquote" => { s.display = BLOCK; s.margin_top = 10; s.margin_bottom = 20;
+            s.padding_left = 22; s.padding_right = 22; s.padding_top = 16; s.padding_bottom = 8;
+            s.background = 0xfff1f5f7u32; s.has_background = true; },
+        "pre" => { s.display = BLOCK; s.pre = true; s.font_size = 16; s.line_height = 24; s.line_height_scale = 0;
+            s.padding_top = 16; s.padding_right = 18; s.padding_bottom = 16; s.padding_left = 18;
+            s.margin_bottom = 18; s.background = 0xfff1f5f7u32; s.has_background = true; },
+        "hr" => { s.display = BLOCK; s.margin_top = 18; s.margin_bottom = 18; s.border_width = 1; s.height = 0; },
+        "a" => { s.color = 0xff1769a4u32; s.underline = true; },
+        "strong" | "b" => { s.bold = true; },
+        "em" | "i" | "cite" => { s.italic = true; },
+        "small" => { s.font_size = clamp((s.font_size * 5) / 6, 6, 160); },
+        "big" => { s.font_size = clamp((s.font_size * 6) / 5, 6, 160); },
+        _ => {},
+    }
+    if s.display == INLINE && parent.display == INLINE && parent.has_background {
+        s.background = parent.background;
+        s.has_background = true;
+    }
+    if tag == "body" {
+        s.margin_top = 28;
+        s.margin_right = 40;
+        s.margin_bottom = 40;
+        s.margin_left = 40;
+    }
+    s
+}
+
+pub fn words(value: &str) -> Vec<String> {
+    let mut result: Vec<String> = Vec::new();
+    let bytes = value.as_bytes();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        while i < bytes.len() && whitespace(bytes[i]) { i += 1; }
+        let start = i;
+        while i < bytes.len() && !whitespace(bytes[i]) { i += 1; }
+        if i > start { result.push(value[start..i].to_string()); }
+    }
+    result
+}
+
+fn number_milli(value: &str) -> Option<i32> {
+    let bytes = value.as_bytes();
+    if bytes.is_empty() { return None; }
+    let mut at = 0usize;
+    let mut negative = false;
+    if bytes[at] == 45u8 { negative = true; at += 1; }
+    else if bytes[at] == 43u8 { at += 1; }
+    let mut whole = 0i32;
+    let mut fraction = 0i32;
+    let mut factor = 100i32;
+    let mut point = false;
+    let mut digits = 0usize;
+    while at < bytes.len() {
+        let b = bytes[at];
+        if b == 46u8 && !point { point = true; at += 1; continue; }
+        if b < 48u8 || b > 57u8 { return None; }
+        let digit = (b - 48u8) as i32;
+        if point {
+            fraction += digit * factor;
+            factor /= 10;
+        } else {
+            if whole > 100000i32 { return None; }
+            whole = whole * 10 + digit;
+        }
+        digits += 1;
+        at += 1;
+    }
+    if digits == 0usize { return None; }
+    let value = whole * 1000 + fraction;
+    Some(if negative { -value } else { value })
+}
+
+fn clamp(value: i32, low: i32, high: i32) -> i32 {
+    if value < low { low } else if value > high { high } else { value }
+}
+
+pub fn length(value: &str, font_size: i32) -> Option<i32> {
+    let text = trim(value);
+    let mut end = text.len();
+    let mut scale = 1000i32;
+    if text.ends_with("px") { end -= 2usize; }
+    else if text.ends_with("rem") { end -= 3usize; scale = 18000; }
+    else if text.ends_with("em") { end -= 2usize; scale = font_size * 1000; }
+    else if text.ends_with('%') { end -= 1usize; scale = font_size * 10; }
+    let parsed = number_milli(&text[..end])?;
+    let scaled = (parsed as i64 * scale as i64) / 1000000i64;
+    if scaled < -8192i64 || scaled > 8192i64 { return None; }
+    Some(scaled as i32)
+}
+
+fn hex_digit(b: u8) -> u32 {
+    if b >= 48u8 && b <= 57u8 { (b - 48u8) as u32 }
+    else if b >= 65u8 && b <= 70u8 { (b - 55u8) as u32 }
+    else if b >= 97u8 && b <= 102u8 { (b - 87u8) as u32 }
+    else { 256u32 }
+}
+
+pub fn color(value: &str) -> Option<u32> {
+    let lowered = trim(value).to_ascii_lowercase();
+    let text = lowered.as_str();
+    match text {
+        "black" => return Some(0xff000000u32), "white" => return Some(0xffffffffu32),
+        "red" => return Some(0xffff0000u32), "green" => return Some(0xff008000u32),
+        "blue" => return Some(0xff0000ffu32), "gray" | "grey" => return Some(0xff808080u32),
+        "silver" => return Some(0xffc0c0c0u32), "navy" => return Some(0xff000080u32),
+        "teal" => return Some(0xff008080u32), "purple" => return Some(0xff800080u32),
+        "orange" => return Some(0xffffa500u32), "yellow" => return Some(0xffffff00u32),
+        "aliceblue" => return Some(0xfff0f8ffu32), "whitesmoke" => return Some(0xfff5f5f5u32),
+        "rebeccapurple" => return Some(0xff663399u32),
+        _ => {},
+    }
+    let bytes = text.as_bytes();
+    if bytes.len() == 4usize && bytes[0] == 35u8 {
+        let r = hex_digit(bytes[1]); let g = hex_digit(bytes[2]); let b = hex_digit(bytes[3]);
+        if r > 15u32 || g > 15u32 || b > 15u32 { return None; }
+        return Some(0xff000000u32 | ((r * 17u32) << 16) | ((g * 17u32) << 8) | (b * 17u32));
+    }
+    if bytes.len() == 7usize && bytes[0] == 35u8 {
+        let mut result = 0u32;
+        let mut i = 1usize;
+        while i < bytes.len() {
+            let digit = hex_digit(bytes[i]);
+            if digit > 15u32 { return None; }
+            result = result * 16u32 + digit;
+            i += 1;
+        }
+        return Some(0xff000000u32 | result);
+    }
+    if text.starts_with("rgb(") && text.ends_with(')') {
+        let inner = &text[4usize..text.len() - 1usize];
+        let mut parts: Vec<String> = Vec::new();
+        let mut start = 0usize;
+        let b = inner.as_bytes();
+        let mut i = 0usize;
+        while i <= b.len() {
+            if i == b.len() || b[i] == 44u8 {
+                parts.push(trim(&inner[start..i]).to_string());
+                start = i + 1usize;
+            }
+            i += 1;
+        }
+        if parts.len() != 3usize { return None; }
+        let r = number_milli(parts[0].as_str())? / 1000;
+        let g = number_milli(parts[1].as_str())? / 1000;
+        let b = number_milli(parts[2].as_str())? / 1000;
+        if r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 { return None; }
+        return Some(0xff000000u32 | ((r as u32) << 16) | ((g as u32) << 8) | b as u32);
+    }
+    None
+}
+
+pub fn declarations(source: &str) -> Vec<Declaration> {
+    let mut result: Vec<Declaration> = Vec::new();
+    let bytes = source.as_bytes();
+    let mut start = 0usize;
+    let mut at = 0usize;
+    while at <= bytes.len() {
+        if at == bytes.len() || bytes[at] == 59u8 {
+            let piece = trim(&source[start..at]);
+            if let Some(colon) = piece.find(':') {
+                let name = trim(&piece[..colon]).to_ascii_lowercase();
+                let raw = trim(&piece[colon + 1usize..]);
+                let mut end = raw.len();
+                let mut important = false;
+                if raw.ends_with("!important") {
+                    end -= 10usize;
+                    important = true;
+                }
+                let value = trim(&raw[..end]).to_string();
+                if !name.is_empty() && !value.is_empty() {
+                    result.push(Declaration { name, value, important });
+                }
+            }
+            start = at + 1usize;
+        }
+        at += 1;
+    }
+    result
+}
+
+fn strip_comments(source: &str) -> String {
+    let mut result = String::new();
+    let b = source.as_bytes();
+    let mut at = 0usize;
+    let mut start = 0usize;
+    while at + 1usize < b.len() {
+        if b[at] == 47u8 && b[at + 1usize] == 42u8 {
+            result.push_str(&source[start..at]);
+            at += 2usize;
+            while at + 1usize < b.len() && !(b[at] == 42u8 && b[at + 1usize] == 47u8) { at += 1; }
+            at = if at + 1usize < b.len() { at + 2usize } else { b.len() };
+            start = at;
+        } else { at += 1; }
+    }
+    result.push_str(&source[start..]);
+    result
+}
+
+fn selector_parts(selector: &str) -> Vec<String> {
+    let mut result: Vec<String> = Vec::new();
+    let bytes = selector.as_bytes();
+    let mut at = 0usize;
+    while at < bytes.len() {
+        while at < bytes.len() && whitespace(bytes[at]) { at += 1; }
+        if at == bytes.len() { break; }
+        if bytes[at] == 62u8 { result.push(">".to_string()); at += 1; continue; }
+        let start = at;
+        while at < bytes.len() && !whitespace(bytes[at]) && bytes[at] != 62u8 { at += 1; }
+        result.push(selector[start..at].to_string());
+    }
+    result
+}
+
+fn specificity(parts: &[String]) -> [usize; 3] {
+    // Lexicographic ID, class and type counts; no finite weight trades one tier
+    // for another. Each count is bounded by the already allocated selector.
+    let mut result = [0usize; 3];
+    let mut p = 0usize;
+    while p < parts.len() {
+        let bytes = parts[p].as_bytes();
+        if !bytes.is_empty() && bytes[0] != 46u8 && bytes[0] != 35u8 && bytes[0] != 42u8 && bytes[0] != 62u8 {
+            result[2] += 1usize;
+        }
+        let mut i = 0usize;
+        while i < bytes.len() {
+            if bytes[i] == 35u8 { result[0] += 1usize; }
+            if bytes[i] == 46u8 { result[1] += 1usize; }
+            i += 1;
+        }
+        p += 1;
+    }
+    result
+}
+
+fn specificity_greater(left: [usize; 3], right: [usize; 3]) -> bool {
+    if left[0] != right[0] { left[0] > right[0] }
+    else if left[1] != right[1] { left[1] > right[1] }
+    else { left[2] > right[2] }
+}
+
+pub fn parse(source: &str) -> Vec<Rule> {
+    let cleaned = strip_comments(source);
+    let source = cleaned.as_str();
+    let bytes = source.as_bytes();
+    let mut result: Vec<Rule> = Vec::new();
+    let mut at = 0usize;
+    while at < bytes.len() {
+        let selector_start = at;
+        while at < bytes.len() && bytes[at] != 123u8 { at += 1; }
+        if at == bytes.len() { break; }
+        let selector_end = at;
+        at += 1;
+        let body_start = at;
+        let mut depth = 1usize;
+        while at < bytes.len() && depth > 0usize {
+            if bytes[at] == 123u8 { depth += 1; }
+            if bytes[at] == 125u8 { depth -= 1; }
+            if depth == 0usize { break; }
+            at += 1;
+        }
+        let body_end = at;
+        if at < bytes.len() { at += 1; }
+        let selectors = trim(&source[selector_start..selector_end]);
+        if selectors.starts_with('@') { continue; }
+        let sb = selectors.as_bytes();
+        let mut start = 0usize;
+        let mut i = 0usize;
+        while i <= sb.len() {
+            if i == sb.len() || sb[i] == 44u8 {
+                let selector = trim(&selectors[start..i]);
+                let parts = selector_parts(selector);
+                if !parts.is_empty() {
+                    let score = specificity(&parts);
+                    result.push(Rule { parts, specificity: score,
+                        declarations: declarations(&source[body_start..body_end]) });
+                }
+                start = i + 1usize;
+            }
+            i += 1;
+        }
+    }
+    result
+}
+
+fn selector_name_byte(b: u8) -> bool {
+    (b >= 65u8 && b <= 90u8) || (b >= 97u8 && b <= 122u8)
+        || (b >= 48u8 && b <= 57u8) || b == 45u8 || b == 95u8
+}
+
+fn compound_matches(doc: &Document, node: usize, selector: &str) -> bool {
+    let bytes = selector.as_bytes();
+    if bytes.is_empty() || doc.nodes[node].tag.starts_with('#') { return false; }
+    let mut at = 0usize;
+    if bytes[at] == 42u8 { at += 1; }
+    else if selector_name_byte(bytes[at]) {
+        while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1; }
+        if !doc.nodes[node].tag.eq_ignore_ascii_case(&selector[..at]) { return false; }
+    }
+    while at < bytes.len() {
+        let kind = bytes[at];
+        if kind != 46u8 && kind != 35u8 { return false; }
+        at += 1;
+        let start = at;
+        while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1; }
+        if at == start { return false; }
+        let value = &selector[start..at];
+        if kind == 35u8 {
+            if doc.attribute(node, "id") != value { return false; }
+        } else {
+            let classes = doc.attribute(node, "class");
+            let tokens = words(classes.as_str());
+            let mut found = false;
+            let mut i = 0usize;
+            while i < tokens.len() {
+                if tokens[i] == value { found = true; }
+                i += 1;
+            }
+            if !found { return false; }
+        }
+    }
+    true
+}
+
+pub fn matches(doc: &Document, node: usize, rule: &Rule) -> bool {
+    if rule.parts.is_empty() { return false; }
+    let mut pos = rule.parts.len() - 1usize;
+    let mut current = node;
+    if !compound_matches(doc, current, rule.parts[pos].as_str()) { return false; }
+    while pos > 0usize {
+        pos -= 1usize;
+        if rule.parts[pos] == ">" {
+            if pos == 0usize || current == 0usize { return false; }
+            pos -= 1usize;
+            current = doc.nodes[current].parent;
+            if !compound_matches(doc, current, rule.parts[pos].as_str()) { return false; }
+        } else {
+            let mut found = false;
+            while current > 0usize {
+                current = doc.nodes[current].parent;
+                if compound_matches(doc, current, rule.parts[pos].as_str()) { found = true; break; }
+            }
+            if !found { return false; }
+        }
+    }
+    true
+}
+
+fn box_values(value: &str, size: i32) -> Option<[i32; 4]> {
+    let tokens = words(value);
+    if tokens.len() == 0usize || tokens.len() > 4usize { return None; }
+    let mut values = [0i32; 4];
+    let mut i = 0usize;
+    while i < tokens.len() {
+        values[i] = if tokens[i] == "auto" { 0 } else { box_length(tokens[i].as_str(), size)? };
+        i += 1;
+    }
+    if tokens.len() == 1usize { values[1] = values[0]; values[2] = values[0]; values[3] = values[0]; }
+    if tokens.len() == 2usize { values[2] = values[0]; values[3] = values[1]; }
+    if tokens.len() == 3usize { values[3] = values[1]; }
+    Some(values)
+}
+
+fn box_length(value: &str, size: i32) -> Option<i32> {
+    if trim(value).ends_with('%') { None } else { length(value, size) }
+}
+
+fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32) {
+    let size = style.font_size;
+    match name {
+        "display" => match value {
+            "none" => { style.display = NONE; },
+            "block" | "list-item" => { style.display = BLOCK; },
+            "inline" => { style.display = INLINE; },
+            _ => {},
+        },
+        "color" => { if let Some(c) = color(value) { style.color = c; } },
+        "background" | "background-color" => {
+            if value == "transparent" { style.has_background = false; }
+            else if let Some(c) = color(value) { style.background = c; style.has_background = true; }
+        },
+        "font-size" => {
+            if let Some(v) = length(value, parent_size) { style.font_size = clamp(v, 6, 160); }
+        },
+        "font-weight" => {
+            if value == "bold" || value == "bolder" || value == "600" || value == "700" || value == "800" || value == "900" {
+                style.bold = true;
+            } else if value == "normal" || value == "400" || value == "300" || value == "200" || value == "100" {
+                style.bold = false;
+            }
+        },
+        "font-style" => {
+            if value == "italic" || value == "oblique" { style.italic = true; }
+            else if value == "normal" { style.italic = false; }
+        },
+        "text-decoration" | "text-decoration-line" => {
+            if value == "none" { style.underline = false; }
+            else if value.contains("underline") { style.underline = true; }
+        },
+        "white-space" => {
+            if value == "pre" || value == "pre-wrap" { style.pre = true; }
+            else if value == "normal" { style.pre = false; }
+        },
+        "text-align" => match value {
+            "left" | "start" => { style.align = 0u8; },
+            "center" => { style.align = 1u8; },
+            "right" | "end" => { style.align = 2u8; },
+            _ => {},
+        },
+        "line-height" => {
+            if value == "normal" { style.line_height = 0; style.line_height_scale = 1500; }
+            else if let Some(n) = number_milli(value) {
+                style.line_height_scale = clamp(n, 100, 10000);
+                style.line_height = 0;
+            } else if let Some(v) = box_length(value, size) {
+                style.line_height = clamp(v, 6, 256);
+                style.line_height_scale = 0;
+            }
+        },
+        "margin" => {
+            if let Some(v) = box_values(value, size) {
+                style.margin_top = v[0]; style.margin_right = v[1];
+                style.margin_bottom = v[2]; style.margin_left = v[3];
+                let tokens = words(value);
+                let left = if tokens.len() == 4usize { 3usize }
+                    else if tokens.len() >= 2usize { 1usize } else { 0usize };
+                let right = if tokens.len() >= 2usize { 1usize } else { 0usize };
+                style.auto_left = tokens[left] == "auto";
+                style.auto_right = tokens[right] == "auto";
+            }
+        },
+        "padding" => {
+            if let Some(v) = box_values(value, size) {
+                style.padding_top = clamp(v[0], 0, 8192); style.padding_right = clamp(v[1], 0, 8192);
+                style.padding_bottom = clamp(v[2], 0, 8192); style.padding_left = clamp(v[3], 0, 8192);
+            }
+        },
+        "margin-top" => { if let Some(v) = box_length(value, size) { style.margin_top = v; } },
+        "margin-bottom" => { if let Some(v) = box_length(value, size) { style.margin_bottom = v; } },
+        "margin-left" => {
+            style.auto_left = value == "auto";
+            if style.auto_left { style.margin_left = 0; }
+            else if let Some(v) = box_length(value, size) { style.margin_left = v; }
+        },
+        "margin-right" => {
+            style.auto_right = value == "auto";
+            if style.auto_right { style.margin_right = 0; }
+            else if let Some(v) = box_length(value, size) { style.margin_right = v; }
+        },
+        "padding-top" => { if let Some(v) = box_length(value, size) { style.padding_top = clamp(v, 0, 8192); } },
+        "padding-right" => { if let Some(v) = box_length(value, size) { style.padding_right = clamp(v, 0, 8192); } },
+        "padding-bottom" => { if let Some(v) = box_length(value, size) { style.padding_bottom = clamp(v, 0, 8192); } },
+        "padding-left" => { if let Some(v) = box_length(value, size) { style.padding_left = clamp(v, 0, 8192); } },
+        "width" => { if let Some(v) = box_length(value, size) { style.width = clamp(v, 1, 8192); } },
+        "max-width" => { if let Some(v) = box_length(value, size) { style.max_width = clamp(v, 1, 8192); } },
+        "height" | "min-height" => { if let Some(v) = box_length(value, size) { style.height = clamp(v, 0, 8192); } },
+        "border-width" => { if let Some(v) = box_length(value, size) { style.border_width = clamp(v, 0, 16); } },
+        "border-color" => { if let Some(c) = color(value) { style.border_color = c; } },
+        "border" => {
+            if value == "none" || value == "0" { style.border_width = 0; }
+            else {
+                let tokens = words(value);
+                let mut i = 0usize;
+                while i < tokens.len() {
+                    if let Some(v) = length(tokens[i].as_str(), size) { style.border_width = clamp(v, 0, 16); }
+                    if let Some(c) = color(tokens[i].as_str()) { style.border_color = c; }
+                    i += 1;
+                }
+            }
+        },
+        _ => {},
+    }
+}
+
+fn apply_declarations(style: &mut Style, values: &[Declaration], important: bool,
+    parent_size: i32, font_only: bool) {
+    let mut i = 0usize;
+    while i < values.len() {
+        if values[i].important == important && (values[i].name == "font-size") == font_only {
+            apply(style, values[i].name.as_str(), values[i].value.as_str(), parent_size);
+        }
+        i += 1;
+    }
+}
+
+pub fn compute(doc: &Document) -> Vec<Style> {
+    let rules = parse(doc.styles.as_str());
+    let mut result: Vec<Style> = Vec::new();
+    let mut node = 0usize;
+    while node < doc.nodes.len() {
+        let parent = if node == 0usize { initial() } else { result[doc.nodes[node].parent] };
+        let mut style = ua_style(doc.nodes[node].tag.as_str(), parent);
+        let mut matching: Vec<(usize, [usize; 3])> = Vec::new();
+        let mut i = 0usize;
+        while i < rules.len() {
+            if matches(doc, node, &rules[i]) { matching.push((i, rules[i].specificity)); }
+            i += 1;
+        }
+        let mut i = 1usize;
+        while i < matching.len() {
+            let entry = matching[i];
+            let mut j = i;
+            while j > 0usize && specificity_greater(matching[j - 1usize].1, entry.1) {
+                matching[j] = matching[j - 1usize];
+                j -= 1usize;
+            }
+            matching[j] = entry;
+            i += 1;
+        }
+        let inline = declarations(doc.attribute(node, "style").as_str());
+        // Resolve the winning font size before em lengths in any other property.
+        // Both passes retain the same specificity, source order and importance.
+        let mut pass = 0usize;
+        while pass < 2usize {
+            let mut phase = 0usize;
+            while phase < 2usize {
+                let mut i = 0usize;
+                while i < matching.len() {
+                    apply_declarations(&mut style, &rules[matching[i].0].declarations,
+                        phase == 1usize, parent.font_size, pass == 0usize);
+                    i += 1;
+                }
+                apply_declarations(&mut style, &inline, phase == 1usize,
+                    parent.font_size, pass == 0usize);
+                phase += 1;
+            }
+            pass += 1;
+        }
+        if doc.has_attribute(node, "hidden") { style.display = NONE; }
+        result.push(style);
+        node += 1;
+    }
+    result
+}
+
+#[test]
+fn cascade_specificity_inheritance_and_important() {
+    let doc = crate::html::parse("<style>p { color: red; } .note { color: blue; } #x { color: #123456; } p.note { font-size: 24px; } main > p { padding: 2px 4px; } .note { margin: 0 auto; } p { color: green !important; }</style><main><p id='x' class='note' style='color: black'><b>Hi</b></p></main>");
+    let styles = compute(&doc);
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" {
+            assert_eq!(styles[i].color, 0xff008000u32);
+            assert_eq!(styles[i].font_size, 24);
+            assert_eq!(styles[i].padding_left, 4);
+            assert!(styles[i].auto_left);
+        }
+        if doc.nodes[i].tag == "b" {
+            assert!(styles[i].bold);
+            assert_eq!(styles[i].font_size, 24);
+        }
+        i += 1;
+    }
+}
+
+#[test]
+fn colors_and_lengths_are_checked() {
+    assert_eq!(color("#aBc"), Some(0xffaabbccu32));
+    assert_eq!(color("rgb(17, 34, 51)"), Some(0xff112233u32));
+    assert_eq!(color("#gg0000"), None);
+    assert_eq!(length("1.5em", 20), Some(30));
+    assert_eq!(length("125%", 20), Some(25));
+    assert_eq!(length("100000000000000px", 20), None);
+}
+
+
+#[test]
+fn relative_font_sizes_use_parent_and_box_percentages_are_ignored() {
+    let doc = crate::html::parse("<style>body { font-size: 20px; line-height: 1.5; } h1 { font-size: 2em; } p { width: 100%; } small { font-size: 50%; }</style><body><h1>Title</h1><p>Text <small>small</small></p><p hidden>Hidden</p></body>");
+    let styles = compute(&doc);
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "h1" { assert_eq!(styles[i].font_size, 40); }
+        if doc.nodes[i].tag == "small" {
+            assert_eq!(styles[i].font_size, 10);
+            assert_eq!(styles[i].line_height_scale, 1500);
+        }
+        if doc.nodes[i].tag == "p" {
+            assert_eq!(styles[i].width, -1);
+            if doc.has_attribute(i, "hidden") { assert_eq!(styles[i].display, NONE); }
+        }
+        i += 1;
+    }
+}
+
+#[test]
+fn unsupported_selectors_do_not_broaden_matches() {
+    let doc = crate::html::parse("<style>p:hover { color: red; } div + p { color: green; } [title] { font-size: 80px; }</style><p title='hello'>Readable</p>");
+    let styles = compute(&doc);
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" {
+            assert_eq!(styles[i].color, initial().color);
+            assert_eq!(styles[i].font_size, 18);
+        }
+        i += 1;
+    }
+}
+
+#[test]
+fn em_lengths_use_final_font_size_in_either_declaration_order() {
+    let doc = crate::html::parse("<body style='font-size:20px'><p style='margin-left:1em;padding-left:2em;width:4em;line-height:1.5em;font-size:40px'>Before</p><p style='font-size:40px;margin-left:1em;padding-left:2em;width:4em;line-height:1.5em'>After</p></body>");
+    let styles = compute(&doc);
+    let mut found = 0usize;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" {
+            assert_eq!(styles[i].font_size, 40);
+            assert_eq!(styles[i].margin_left, 40);
+            assert_eq!(styles[i].padding_left, 80);
+            assert_eq!(styles[i].width, 160);
+            assert_eq!(styles[i].line_height, 60);
+            assert_eq!(styles[i].line_height_scale, 0);
+            found += 1usize;
+        }
+        i += 1usize;
+    }
+    assert_eq!(found, 2usize);
+}
+
+#[test]
+fn em_lengths_use_font_size_from_the_winning_specificity() {
+    let doc = crate::html::parse("<style>body{font-size:20px}p{margin-left:1em;padding-left:2em;width:4em;line-height:1.5em;font-size:2em}.target{font-size:3em}#target{font-size:2.5em}</style><body><p id='target' class='target'>Specificity</p></body>");
+    let styles = compute(&doc);
+    let mut found = 0usize;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" {
+            assert_eq!(styles[i].font_size, 50);
+            assert_eq!(styles[i].margin_left, 50);
+            assert_eq!(styles[i].padding_left, 100);
+            assert_eq!(styles[i].width, 200);
+            assert_eq!(styles[i].line_height, 75);
+            assert_eq!(styles[i].line_height_scale, 0);
+            found += 1usize;
+        }
+        i += 1usize;
+    }
+    assert_eq!(found, 1usize);
+}
+
+#[test]
+fn em_lengths_respect_important_font_and_inline_precedence() {
+    let doc = crate::html::parse("<style>body{font-size:20px}p{margin-left:1em;padding-left:2em;width:4em;line-height:1.5em;font-size:2em!important}#target{font-size:70px}</style><body><p id='target' style='font-size:90px'>Stylesheet important</p><p id='override' style='font-size:3em!important'>Inline important</p></body>");
+    let styles = compute(&doc);
+    let mut found = 0usize;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" {
+            let size = if doc.attribute(i, "id") == "target" { 40 } else { 60 };
+            assert_eq!(styles[i].font_size, size);
+            assert_eq!(styles[i].margin_left, size);
+            assert_eq!(styles[i].padding_left, size * 2);
+            assert_eq!(styles[i].width, size * 4);
+            assert_eq!(styles[i].line_height, size * 3 / 2);
+            assert_eq!(styles[i].line_height_scale, 0);
+            found += 1usize;
+        }
+        i += 1usize;
+    }
+    assert_eq!(found, 2usize);
+}
+
+#[test]
+fn specificity_keeps_id_priority_over_many_matching_classes() {
+    let mut source = "<style>#target{color:red}".to_string();
+    let mut i = 0usize;
+    while i < 100usize { source.push_str(".c"); i += 1usize; }
+    source.push_str("{color:blue}</style><p id='target' class='c'>x</p>");
+    let doc = crate::html::parse(source.as_str());
+    let styles = compute(&doc);
+    let mut found = false;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" {
+            assert_eq!(styles[i].color, 0xffff0000u32);
+            found = true;
+        }
+        i += 1usize;
+    }
+    assert!(found);
+}
+
+#[test]
+fn specificity_keeps_class_priority_over_many_matching_types() {
+    let mut source = "<style>.chosen{color:red}".to_string();
+    let mut i = 0usize;
+    while i < 100usize { source.push_str("div "); i += 1usize; }
+    source.push_str("{color:blue}</style>");
+    let mut i = 0usize;
+    while i < 99usize { source.push_str("<div>"); i += 1usize; }
+    source.push_str("<div class='chosen'>x</div>");
+    let mut i = 0usize;
+    while i < 99usize { source.push_str("</div>"); i += 1usize; }
+    let doc = crate::html::parse(source.as_str());
+    let styles = compute(&doc);
+    let mut found = false;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.attribute(i, "class") == "chosen" {
+            assert_eq!(styles[i].color, 0xffff0000u32);
+            found = true;
+        }
+        i += 1usize;
+    }
+    assert!(found);
+}
+
+#[test]
+fn long_valid_id_selector_does_not_overflow_specificity() {
+    let mut source = String::new();
+    let mut i = 0usize;
+    while i < 214749usize { source.push_str("#x"); i += 1usize; }
+    source.push_str("{color:red}");
+    let rules = parse(source.as_str());
+    assert_eq!(rules.len(), 1usize);
+    assert_eq!(rules[0].specificity[0], 214749usize);
+    assert_eq!(rules[0].specificity[1], 0usize);
+    assert_eq!(rules[0].specificity[2], 0usize);
+}
+
+#[test]
+fn nested_big_and_small_defaults_keep_the_font_size_policy() {
+    let mut source = "<body>".to_string();
+    let mut i = 0usize;
+    while i < 99usize { source.push_str("<big>"); i += 1usize; }
+    source.push_str("<big id='largest' style='margin-left:1em'>");
+    let mut i = 0usize;
+    while i < 64usize { source.push_str("<small>"); i += 1usize; }
+    source.push_str("x");
+    let mut i = 0usize;
+    while i < 64usize { source.push_str("</small>"); i += 1usize; }
+    let mut i = 0usize;
+    while i < 100usize { source.push_str("</big>"); i += 1usize; }
+    source.push_str("</body>");
+    let doc = crate::html::parse(source.as_str());
+    let styles = compute(&doc);
+    let mut largest = false;
+    let mut smallest = false;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        assert!(styles[i].font_size >= 6 && styles[i].font_size <= 160);
+        if doc.attribute(i, "id") == "largest" {
+            assert_eq!(styles[i].font_size, 160);
+            assert_eq!(styles[i].margin_left, 160);
+            largest = true;
+        }
+        if doc.nodes[i].tag == "#text" {
+            assert_eq!(styles[i].font_size, 6);
+            smallest = true;
+        }
+        i += 1usize;
+    }
+    assert!(largest && smallest);
+}

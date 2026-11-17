@@ -1,0 +1,38 @@
+mod wayland;
+pub fn main(mut world: World) {
+    let args = world.args();
+    let port = std::str::from_utf8(&args[0]).unwrap().parse::<u16>().unwrap();
+    let mut directory = world.directory("/home/coder/workspace/lkjbrowser/target").unwrap();
+    let mut frame = directory.create("wayland-smoke.bgra").unwrap();
+    let mut pixels = Vec::new();
+    let mut y = 0usize;
+    while y < 760usize {
+        let mut x = 0usize;
+        while x < 1000usize {
+            pixels.push((140usize + y / 10usize) as u8);
+            pixels.push((30usize + x / 6usize) as u8);
+            pixels.push((20usize + y / 5usize) as u8);
+            pixels.push(255u8);
+            x += 1usize;
+        }
+        y += 1usize;
+    }
+    frame.write_all(&pixels).unwrap();
+    frame.write_all(&pixels).unwrap();
+    frame.write_all(&wayland::cursor_bytes()).unwrap();
+    let mut client = match wayland::Wayland::open(&mut world, port, 1000i32, 760i32, "lkjbrowser: native Wayland proof") {
+        Ok(c) => c, Err(e) => { world.stderr().write(e.as_bytes()); world.set_exit_status(1u8); return; },
+    };
+    client.present(0u32).unwrap();
+    let mut rounds = 0usize;
+    while rounds < 100usize {
+        match client.poll(100usize) {
+            Ok(_events) => (),
+            Err(e) => { world.stderr().write(e.as_bytes()); world.set_exit_status(1u8); return; },
+        }
+        if rounds == 10usize { client.present(1u32).unwrap(); }
+        rounds += 1usize;
+    }
+    world.stdout().write(format!("Wayland proof: sent={} received={} committed={} released0={} released1={}\n",
+      client.sent_messages, client.received_messages, client.committed_frames, client.available(0u32), client.available(1u32)).as_bytes());
+}

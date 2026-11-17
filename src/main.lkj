@@ -1,0 +1,482 @@
+//! lkjbrowser: native UI, navigation and rendering are lkjscript.
+mod net;
+mod font;
+mod paint;
+mod html;
+mod css;
+mod layout;
+mod wayland;
+mod png;
+
+use font::Font;
+use paint::Canvas;
+use wayland::Event;
+const TOP: i32 = 72i32;
+const BOTTOM: i32 = 26i32;
+
+struct Fonts { normal:Font,bold:Font,italic:Font,bolditalic:Font }
+fn load_face(world:&mut World,filename:&str,fallback:&str,override_dir:&str)->Result<Font,String>{
+    if !override_dir.is_empty(){
+        return Font::parse(net::read_path(world,format!("{}/{}",override_dir,filename).as_str())?);
+    }
+    let candidates=vec![
+        format!("/usr/share/fonts/truetype/liberation/{}",filename),
+        format!("/usr/share/fonts/truetype/liberation2/{}",filename),
+        format!("/usr/share/fonts/truetype/dejavu/{}",fallback),
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf".to_string(),
+    ];
+    for path in candidates {
+        if let Ok(bytes)=net::read_path(world,path.as_str()){return Font::parse(bytes);}
+    }
+    Err("No usable TrueType font found. Install Liberation Sans or pass --font-dir DIRECTORY.".to_string())
+}
+fn fonts(world:&mut World,directory:&str)->Result<Fonts,String>{
+    let normal=load_face(world,"LiberationSans-Regular.ttf","DejaVuSans.ttf",directory)?;
+    let bold=load_face(world,"LiberationSans-Bold.ttf","DejaVuSans-Bold.ttf",directory)?;
+    let italic=load_face(world,"LiberationSans-Italic.ttf","DejaVuSans-Oblique.ttf",directory)?;
+    let bolditalic=load_face(world,"LiberationSans-BoldItalic.ttf","DejaVuSans-BoldOblique.ttf",directory)?;
+    Ok(Fonts{normal,bold,italic,bolditalic})
+}
+fn escape(value:&str)->String {
+    value.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;").replace('"',"&quot;")
+}
+fn error_html(address:&str,problem:&str)->String{
+    let explanation=if problem.contains("ECONNREFUSED"){
+        "The server is not accepting connections at this address. Check the address or try again later.".to_string()
+    }else if problem.contains("deadline") || problem.contains("ETIMEDOUT"){
+        "The server took too long to respond. Try again later.".to_string()
+    }else if problem.contains("Open regular file") && (problem.contains("EINVAL") || problem.contains("ELOOP")){
+        "This address does not point to a regular file. Choose a normal file and try again.".to_string()
+    }else if problem.contains("ENOENT"){
+        "The file or folder could not be found. Check the path and try again.".to_string()
+    }else{problem.to_string()};
+    format!("<!doctype html><html><head><title>Unable to open this page</title><style>body {{ background:#f5f7f8; color:#213d4a; font-size:18px; margin:48px; }} h1 {{ font-size:38px; color:#18343f; margin-bottom:20px; }} .tag {{ color:#a34132; font-size:14px; font-weight:bold; }} .panel {{ background:#ffffff; padding:24px; border:1px solid #d5e0e5; margin-top:24px; margin-bottom:24px; }} p {{ margin-bottom:14px; }} a {{color:#087b90;}}</style></head><body><p class=\"tag\">PAGE UNAVAILABLE</p><h1>We could not open this page.</h1><p>{}</p><div class=\"panel\"><p><strong>Address</strong></p><p>{}</p></div><p><a href=\"about:welcome\">Return to the start page</a></p></body></html>",escape(explanation.as_str()),escape(address))
+}
+fn welcome()->String{
+    "<!doctype html><html><head><title>lkjbrowser</title><style>body {margin:60px;background:#f8fafb;color:#203d48;font-size:19px;} h1 {font-size:44px;color:#126d7e;} p {margin-bottom:24px;} a {color:#087b90;}</style></head><body><h1>A clear place to read.</h1><p>Open a local document or a web page, then follow the links at your own pace.</p><h2>Open a page</h2><p>Press <strong>Ctrl+L</strong>, enter a <strong>file://</strong> or <strong>http://</strong> address, and press Enter.</p><p><a href=\"http://example.com/\">Visit example.com</a></p><h2>Move around</h2><p>Scroll with the wheel, arrow keys, Page Up, Page Down, Home and End. Click a link to follow it. The back button returns to the previous address.</p><p>HTTPS pages and JavaScript are not supported.</p></body></html>".to_string()
+}
+fn fit(font:&Font,text:&str,size:i32,max_width:i32)->String{
+    let mut total=0i32;for c in text.chars(){total+=font.advance(c as u32,size);}
+    if total<=max_width{return text.to_string();}
+    let budget=(max_width-font.advance(8230u32,size)).max(0i32);
+    let mut out=String::new();let mut width=0i32;
+    for c in text.chars(){
+        let next=font.advance(c as u32,size);
+        if width+next>budget{break;}out.push(c);width+=next;
+    }
+    out.push('…');out
+}
+fn fit_end(font:&Font,text:&str,size:i32,max_width:i32)->String{
+    let mut total=0i32;for c in text.chars(){total+=font.advance(c as u32,size);}
+    if total<=max_width{return text.to_string();}
+    let budget=(max_width-font.advance(8230u32,size)).max(0i32);
+    let mut offset=0usize;
+    for c in text.chars(){
+        if total<=budget{break;}
+        total-=font.advance(c as u32,size);offset+=c.len_utf8();
+    }
+    format!("…{}",&text[offset..])
+}
+struct Modifiers {shift:u8,ctrl:u8}
+impl Modifiers{
+    fn update(&mut self,key:u32,pressed:bool)->bool{
+        let mask=if key==42u32 || key==29u32{1u8}else{2u8};
+        if key==42u32 || key==54u32{
+            if pressed{self.shift|=mask;}else{self.shift&=!mask;}true
+        }else if key==29u32 || key==97u32{
+            if pressed{self.ctrl|=mask;}else{self.ctrl&=!mask;}true
+        }else{false}
+    }
+}
+struct HistoryEntry {url:String,allow_file:bool}
+struct LoadedImage { src:String,image:png::Image }
+struct Browser {
+    fonts:Fonts,page:layout::Page,url:String,address:String,source:String,title:String,status:String,
+    width:i32,height:i32,scroll:i32,editing:bool,select_all:bool,modifiers:Modifiers,
+    history:Vec<HistoryEntry>,history_at:usize,hover:String,dns:String,images:Vec<LoadedImage>,file_authority:bool,
+}
+impl Browser {
+    fn new(fonts:Fonts,width:i32,height:i32,dns:String)->Browser{
+        let document=html::parse("<html><body></body></html>");
+        let page=layout::build(&document,width-12i32,&fonts.normal,&fonts.bold,&fonts.italic,&fonts.bolditalic);
+        Browser {fonts,page,url:String::new(),address:String::new(),source:String::new(),
+            title:String::new(),status:String::new(),width,height,scroll:0i32,editing:false,
+            select_all:false,modifiers:Modifiers{shift:0u8,ctrl:0u8},history:Vec::new(),history_at:0usize,
+            hover:String::new(),dns,images:Vec::new(),file_authority:true}
+    }
+    fn max_scroll(&self)->i32{
+        let value=self.page.height-(self.height-TOP-BOTTOM);
+        if value>0i32{value}else{0i32}
+    }
+    fn move_scroll(&mut self,amount:i32){
+        let max=self.max_scroll();
+        self.scroll=(self.scroll+amount).max(0i32).min(max);
+    }
+    fn relayout(&mut self){
+        let document=html::parse(self.source.as_str());
+        self.title=document.title.clone();
+        self.page=layout::build(&document,self.width-12i32,&self.fonts.normal,&self.fonts.bold,&self.fonts.italic,&self.fonts.bolditalic);
+        self.scroll=self.scroll.min(self.max_scroll());
+    }
+    fn navigate(&mut self,world:&mut World,address:&str,remember:bool){
+        self.navigate_authorized(world,address,remember,true);
+    }
+    fn local_files_allowed(&self)->bool{
+        (self.url.starts_with("file://") && self.file_authority) || self.url=="about:welcome"
+    }
+    fn navigate_authorized(&mut self,world:&mut World,address:&str,remember:bool,allow_file:bool){
+        self.file_authority=allow_file;
+        let mut final_address=address.to_string();
+        let source=if address=="about:welcome"{
+            self.status="Ready".to_string();welcome()
+        }else{
+            match net::fetch_authorized(world,address,self.dns.as_str(),allow_file){
+                Ok(response)=>{
+                    final_address=response.url;
+                    self.status=format!("HTTP {}  ·  {} bytes",response.status,response.body.len());
+                    if final_address.starts_with("file://"){self.status=format!("Local document  ·  {} bytes",response.body.len());}
+                    let text=net::text(&response.body);
+                    if response.content_type.to_ascii_lowercase().starts_with("text/plain"){
+                        format!("<html><head><title>Text document</title></head><body><pre>{}</pre></body></html>",escape(text.as_str()))
+                    }else{text}
+                }
+                Err(problem)=>{
+                    self.status="Unable to load this address".to_string();
+                    error_html(address,problem.as_str())
+                }
+            }
+        };
+        self.source=source;self.url=final_address;self.address=self.url.clone();
+        self.scroll=0i32;self.editing=false;self.select_all=false;self.hover.clear();
+        self.relayout();
+        self.load_images(world);
+        if let Some((_,fragment))=self.url.as_str().split_once('#'){
+            self.scroll=self.page.anchor(fragment).max(0i32).min(self.max_scroll());
+        }
+        if remember {
+            if !self.history.is_empty(){self.history.truncate(self.history_at+1usize);}
+            self.history.push(HistoryEntry{url:self.url.clone(),allow_file});self.history_at=self.history.len()-1usize;
+        }
+    }
+    fn load_images(&mut self,world:&mut World){
+        self.images.clear();
+        let allowed=self.local_files_allowed();
+        let mut sources:Vec<String>=Vec::new();
+        for command in &self.page.commands{
+            if let layout::Command::Image(img)=command{
+                if !img.src.is_empty() && !sources.contains(&img.src){sources.push(img.src.clone());}
+            }
+        }
+        for source in sources{
+            let url=net::resolve(self.url.as_str(),source.as_str());
+            if let Ok(response)=net::fetch_authorized(world,url.as_str(),self.dns.as_str(),allowed){
+                if let Ok(image)=png::decode(&response.body){self.images.push(LoadedImage{src:source,image});}
+            }
+        }
+    }
+    fn follow(&mut self,world:&mut World,href:&str){
+        if href.starts_with('#'){
+            self.scroll=self.page.anchor(&href[1..]).max(0i32).min(self.max_scroll());
+            self.url=net::resolve(self.url.as_str(),href);self.address=self.url.clone();
+        }else{
+            let address=if href.starts_with("about:"){href.to_string()}else{net::resolve(self.url.as_str(),href)};
+            let allowed=self.local_files_allowed();
+            self.navigate_authorized(world,address.as_str(),true,allowed);
+        }
+    }
+    fn back(&mut self,world:&mut World){
+        if self.history_at>0usize{
+            self.history_at-=1usize;let address=self.history[self.history_at].url.clone();
+            let allowed=self.history[self.history_at].allow_file;
+            self.navigate_authorized(world,address.as_str(),false,allowed);
+        }
+    }
+    fn key(&mut self,world:&mut World,key:u32,pressed:bool)->bool{
+        if self.modifiers.update(key,pressed){return true;}
+        if !pressed{return true;}
+        if self.modifiers.ctrl!=0u8 && (key==16u32 || key==17u32){return false;}
+        if self.modifiers.ctrl!=0u8 && key==38u32{self.editing=true;self.select_all=true;return true;}
+        if self.modifiers.ctrl!=0u8 && key==19u32{let address=self.url.clone();let allowed=self.file_authority;self.navigate_authorized(world,address.as_str(),false,allowed);return true;}
+        if self.editing{
+            if key==1u32{self.editing=false;self.select_all=false;self.address=self.url.clone();}
+            else if key==28u32{
+                let address=self.address.clone();self.navigate(world,address.as_str(),true);
+            }else if key==14u32{
+                if self.select_all {self.address.clear();self.select_all=false;}
+                else if !self.address.is_empty(){
+                    let mut last=0usize;let mut offset=0usize;
+                    for c in self.address.as_str().chars(){last=offset;offset+=c.len_utf8();}
+                    let shortened={self.address.as_str()[..last].to_string()};
+                    self.address=shortened;
+                }
+            }else if self.modifiers.ctrl==0u8{
+                let byte=wayland::key_ascii(key,self.modifiers.shift!=0u8);
+                if byte>=32u8 && byte<127u8{
+                    if self.select_all{self.address.clear();self.select_all=false;}
+                    self.address.push(byte as char);
+                }
+            }
+        }else{
+            if key==108u32{self.move_scroll(72i32);}
+            else if key==103u32{self.move_scroll(-72i32);}
+            else if key==109u32 || key==57u32{let step=self.height-TOP-BOTTOM-48i32;self.move_scroll(step);}
+            else if key==104u32{let step=-(self.height-TOP-BOTTOM-48i32);self.move_scroll(step);}
+            else if key==102u32{self.scroll=0i32;}
+            else if key==107u32{self.scroll=self.max_scroll();}
+            else if key==105u32 && self.modifiers.ctrl!=0u8{self.back(world);}
+        }
+        true
+    }
+    fn event(&mut self,world:&mut World,event:Event)->bool{
+        match event{
+            Event::Close=>false,
+            Event::Scroll(delta)=>{self.move_scroll(delta);true}
+            Event::Key(key,pressed)=>self.key(world,key,pressed),
+            Event::Motion(x,y)=>{
+                self.hover=if y>=TOP && y<self.height-BOTTOM{self.page.hit(x,y-TOP+self.scroll)}else{String::new()};
+                true
+            }
+            Event::Click(x,y)=>{
+                if y<TOP{
+                    if x>=62i32 && x<98i32{self.back(world);}
+                    else if x>=104i32{self.editing=true;self.select_all=true;}
+                }else if y<self.height-BOTTOM{
+                    self.editing=false;
+                    let href=self.page.hit(x,y-TOP+self.scroll);
+                    if !href.is_empty(){self.follow(world,href.as_str());}
+                }
+                true
+            }
+            Event::Resize(_,_)=>true, // First slice advertises fixed minimum/maximum size.
+        }
+    }
+    fn paint(&mut self)->Canvas{
+        let mut canvas=Canvas::new(self.width as usize,self.height as usize,self.page.background);
+        let mut i=0usize;
+        while i<self.page.commands.len(){
+            match &self.page.commands[i]{
+                layout::Command::Rect(r)=>{
+                    canvas.rect(r.x,r.y+TOP-self.scroll,r.width,r.height,r.color);
+                }
+                layout::Command::Text(run)=>{
+                    let baseline=run.baseline+TOP-self.scroll;
+                    if baseline+run.size>TOP && run.top+TOP-self.scroll<self.height-BOTTOM{
+                        let font=if run.bold && run.italic{&mut self.fonts.bolditalic}
+                            else if run.bold{&mut self.fonts.bold}else if run.italic{&mut self.fonts.italic}else{&mut self.fonts.normal};
+                        canvas.text(font,run.text.as_str(),run.size,run.x,baseline,run.color);
+                    }
+                }
+                layout::Command::Image(img)=>{
+                    let y=img.y+TOP-self.scroll;
+                    let mut found=false;
+                    for loaded in &self.images{
+                        if loaded.src==img.src{
+                            canvas.image(loaded.image.width,loaded.image.height,&loaded.image.pixels,img.x,y,img.width,img.height);
+                            found=true;break;
+                        }
+                    }
+                    if !found{
+                        canvas.rect(img.x,y,img.width,img.height,0xe6eef0u32);
+                        canvas.rect(img.x,y,img.width,1i32,0xbacbd1u32);
+                        let label=fit(&self.fonts.normal,img.alt.as_str(),15i32,img.width-24i32);
+                        canvas.text(&mut self.fonts.normal,label.as_str(),15i32,img.x+12i32,y+28i32,0x54717du32);
+                    }
+                }
+            }
+            i+=1;
+        }
+        // Chrome is painted last, so scrolled content cannot overlap it.
+        canvas.rect(0i32,0i32,self.width,TOP,0x173744u32);
+        canvas.rect(0i32,TOP-2i32,self.width,2i32,0x30a5a8u32);
+        canvas.text(&mut self.fonts.bold,"lkj",24i32,18i32,44i32,0xffffffu32);
+        canvas.rect(62i32,15i32,34i32,41i32,0x274b59u32);
+        canvas.text(&mut self.fonts.normal,"<",24i32,72i32,43i32,if self.history_at>0usize{0xffffffu32}else{0x829da8u32});
+        canvas.rect(104i32,14i32,self.width-124i32,43i32,if self.editing{0xe1f5f7u32}else{0xf7fafbu32});
+        if self.select_all{canvas.rect(115i32,22i32,self.width-150i32,25i32,0xb7dfe6u32);}
+        let address=if self.editing{fit_end(&self.fonts.normal,self.address.as_str(),16i32,self.width-160i32)}
+            else{fit(&self.fonts.normal,self.address.as_str(),16i32,self.width-160i32)};
+        let drawn=canvas.text(&mut self.fonts.normal,address.as_str(),16i32,117i32,41i32,0x234652u32);
+        if self.editing && !self.select_all{canvas.rect(118i32+drawn,24i32,1i32,20i32,0x15758au32);}
+        let view=self.height-TOP-BOTTOM;
+        if self.max_scroll()>0i32{
+            canvas.rect(self.width-10i32,TOP,10i32,view,0xe8eff1u32);
+            let thumb=(view*view/self.page.height).max(28i32);
+            let y=TOP+self.scroll*(view-thumb)/self.max_scroll();
+            canvas.rect(self.width-8i32,y,6i32,thumb,0x789aa5u32);
+        }
+        canvas.rect(0i32,self.height-BOTTOM,self.width,BOTTOM,0xedf3f5u32);
+        canvas.rect(0i32,self.height-BOTTOM,self.width,1i32,0xd5e2e7u32);
+        let message=if self.hover.is_empty(){format!("{}  ·  Ctrl+L address  ·  Ctrl+Q close",self.status)}else{self.hover.clone()};
+        let label=fit(&self.fonts.normal,message.as_str(),12i32,self.width-30i32);
+        canvas.text(&mut self.fonts.normal,label.as_str(),12i32,14i32,self.height-8i32,0x45636fu32);
+        canvas
+    }
+    fn replay(&mut self,world:&mut World,script:&str)->Result<(),String>{
+        for line in script.lines(){
+            let line=std::str::trim_ascii(line);
+            if line.is_empty() || line.starts_with('#'){continue;}
+            let (command,arg)=line.split_once(' ').unwrap_or((line,""));
+            if command=="scroll"{
+                let delta=match arg.parse::<i32>(){Ok(n)=>n,Err(_)=>return Err("Invalid script scroll".to_string())};
+                self.event(world,Event::Scroll(delta));
+            }else if command=="key"{
+                let code=match arg.parse::<u32>(){Ok(n)=>n,Err(_)=>return Err("Invalid script key".to_string())};
+                self.event(world,Event::Key(code,true));self.event(world,Event::Key(code,false));
+            }else if command=="down" || command=="up"{
+                let code=match arg.parse::<u32>(){Ok(n)=>n,Err(_)=>return Err("Invalid held key".to_string())};
+                self.event(world,Event::Key(code,command=="down"));
+            }else if command=="click"{
+                let (a,b)=match arg.split_once(' '){Some(p)=>p,None=>return Err("Script click needs x y".to_string())};
+                let x=a.parse::<i32>().unwrap();let y=b.parse::<i32>().unwrap();
+                self.event(world,Event::Click(x,y));
+            }else if command=="open"{self.navigate(world,arg,true);}
+            else if command=="follow"{self.follow(world,arg);}
+            else if command=="back"{self.back(world);}
+            else if command=="address"{self.editing=true;self.address=arg.to_string();self.select_all=false;}
+            else{return Err(format!("Unknown input script command: {}",command));}
+        }
+        Ok(())
+    }
+}
+struct Options {
+    url:String,screenshot:String,dump:String,script:String,live_script:String,font_dir:String,dns:String,
+    frame_file:String,port:u16,width:i32,height:i32,scroll:i32,max_ms:usize,help:bool,
+}
+fn options(args:Vec<Vec<u8>>)->Result<Options,String>{
+    let mut opt=Options{url:"about:welcome".to_string(),screenshot:String::new(),dump:String::new(),
+        script:String::new(),live_script:String::new(),font_dir:String::new(),dns:String::new(),frame_file:String::new(),
+        port:0u16,width:1000i32,height:760i32,scroll:0i32,max_ms:0usize,help:false};
+    let mut i=0usize;
+    while i<args.len(){
+        let arg=net::text(&args[i]);i+=1;
+        if arg=="--help" || arg=="-h"{opt.help=true;continue;}
+        if arg=="--headless"{continue;}
+        if arg.starts_with("--"){
+            if i>=args.len(){return Err(format!("Missing value after {}",arg));}
+            let value=net::text(&args[i]);i+=1;
+            if arg=="--screenshot"{opt.screenshot=value;}
+            else if arg=="--layout"{opt.dump=value;}
+            else if arg=="--script"{opt.script=value;}
+            else if arg=="--live-script"{opt.live_script=value;}
+            else if arg=="--font-dir"{opt.font_dir=value;}
+            else if arg=="--dns"{opt.dns=value;}
+            else if arg=="--frame-file"{opt.frame_file=value;}
+            else if arg=="--wayland"{opt.port=value.as_str().parse::<u16>().map_err(|_|->String{"Invalid bridge port".to_string()})?;}
+            else if arg=="--width"{opt.width=value.as_str().parse::<i32>().map_err(|_|->String{"Invalid width".to_string()})?;}
+            else if arg=="--height"{opt.height=value.as_str().parse::<i32>().map_err(|_|->String{"Invalid height".to_string()})?;}
+            else if arg=="--scroll"{opt.scroll=value.as_str().parse::<i32>().map_err(|_|->String{"Invalid scroll".to_string()})?;}
+            else if arg=="--max-ms"{opt.max_ms=value.as_str().parse::<usize>().map_err(|_|->String{"Invalid duration".to_string()})?;}
+            else{return Err(format!("Unknown option {}",arg));}
+        }else{opt.url=arg;}
+    }
+    if opt.width<320i32 || opt.width>4096i32 || opt.height<240i32 || opt.height>2160i32 {
+        return Err("Viewport must be 320..4096 by 240..2160".to_string());
+    }
+    Ok(opt)
+}
+fn save(world:&mut World,app:&mut Browser,opt:&Options,canvas:&Canvas)->Result<(),String>{
+    if !opt.screenshot.is_empty(){if opt.screenshot.ends_with(".png"){
+            let bytes=png::encode(canvas.width,canvas.height,&canvas.pixels)?;
+            net::write_path(world,opt.screenshot.as_str(),&bytes)?;
+        }else{net::write_path(world,opt.screenshot.as_str(),&canvas.ppm())?;}}
+    if !opt.dump.is_empty(){
+        let header=format!("URL {}\nVIEW {} {} SCROLL {}\nTITLE {}\nIMAGES {}\n",app.url,app.width,app.height,app.scroll,app.title,app.images.len());
+        let result=format!("{}{}",header,app.page.dump());
+        net::write_path(world,opt.dump.as_str(),result.as_bytes())?;
+    }
+    Ok(())
+}
+fn schedule(source:&str)->Result<Vec<(usize,String)>,String>{
+    let mut result=Vec::new();let mut previous=0usize;
+    for line in source.lines(){
+        let line=std::str::trim_ascii(line);
+        if !line.is_empty() && !line.starts_with('#'){
+            let (time,action)=match line.split_once(' '){Some(pair)=>pair,None=>return Err("Live script requires milliseconds and action".to_string())};
+            let ms=time.parse::<usize>().map_err(|_|->String{"Invalid live script timestamp".to_string()})?;
+            if ms<previous{return Err("Live script timestamps must be ordered".to_string());}
+            result.push((ms,action.to_string()));previous=ms;
+        }
+    }
+    Ok(result)
+}
+fn run(world:&mut World)->Result<(),String>{
+    let opt=options(world.args())?;
+    if opt.help{
+        world.stdout().write(b"lkjbrowser [URL] [--headless] [--screenshot FILE.png] [--layout FILE] [--script FILE]\n  --wayland PORT --frame-file FILE  connect through the temporary descriptor bridge\n  --width N --height N --scroll N --max-ms N --font-dir DIR --dns IPV4\n  --live-script FILE  replay timestamped events while the Wayland window is open\nUse tools/wayland-run.sh URL on a real Wayland desktop.\n");
+        return Ok(());
+    }
+    let faces=fonts(world,opt.font_dir.as_str())?;
+    let mut app=Browser::new(faces,opt.width,opt.height,opt.dns.clone());
+    app.navigate(world,opt.url.as_str(),true);
+    app.move_scroll(opt.scroll);
+    if !opt.script.is_empty(){let bytes=net::read_path(world,opt.script.as_str())?;app.replay(world,net::text(&bytes).as_str())?;}
+    let mut canvas=app.paint();save(world,&mut app,&opt,&canvas)?;
+    if opt.port==0u16 {
+        world.stdout().write(format!("Rendered {}: {}x{}, document height {}, scroll {}\n",app.url,opt.width,opt.height,app.page.height,app.scroll).as_bytes());
+        return Ok(());
+    }
+    if opt.frame_file.is_empty(){return Err("--wayland requires --frame-file".to_string());}
+    let (root,name)=if opt.frame_file.starts_with('/'){("/", &opt.frame_file.as_str()[1..])}else{(".",opt.frame_file.as_str())};
+    let mut dir=world.directory(root).map_err(|e:i64|->String{format!("Frame directory errno {}",e)})?;
+    // Resize the same backing inode once, before wl_shm.create_pool. Later frames use seek/write only.
+    let mut frame=dir.create(name).map_err(|e:i64|->String{format!("Create frame file errno {}",e)})?;
+    frame.truncate(wayland::frame_file_size(opt.width as usize,opt.height as usize)).map_err(|e:i64|->String{format!("Frame size errno {}",e)})?;
+    let slot_size=opt.width as usize*opt.height as usize*4usize;
+    frame.seek((slot_size*2usize) as i64,0u8).unwrap();
+    frame.write_all(&wayland::cursor_bytes()).unwrap();
+    let title=format!("{} — lkjbrowser",app.title);
+    let mut window=wayland::Wayland::open(world,opt.port,opt.width,opt.height,title.as_str())?;
+    let timeline=if opt.live_script.is_empty(){Vec::new()}else{
+        let bytes=net::read_path(world,opt.live_script.as_str())?;schedule(net::text(&bytes).as_str())?
+    };
+    let mut action_index=0usize;
+    let mut clock=world.clock();let start=clock.nanoseconds().unwrap();
+    let mut dirty=true;let mut alive=true;
+    while alive{
+        if dirty{
+            let slot=if window.available(0u32){0u32}else{1u32};
+            if window.available(slot){
+                frame.seek((slot as usize*slot_size) as i64,0u8).unwrap();
+                frame.write_all(&canvas.bgra()).unwrap();
+                window.present(slot)?;
+                dirty=false;
+            }
+        }
+        if opt.max_ms>0usize && clock.nanoseconds().unwrap()-start>=opt.max_ms*1000000usize{break;}
+        let events=window.poll(50usize)?;
+        let mut changed=false;
+        let elapsed=(clock.nanoseconds().unwrap()-start)/1000000usize;
+        while action_index<timeline.len() && timeline[action_index].0<=elapsed{
+            app.replay(world,timeline[action_index].1.as_str())?;
+            world.stdout().write(format!("Script {}ms: {}\n",timeline[action_index].0,timeline[action_index].1).as_bytes());
+            action_index+=1usize;changed=true;
+        }
+        for event in events{
+            if !app.event(world,event){alive=false;}
+            changed=true;
+        }
+        if changed{
+            canvas=app.paint();save(world,&mut app,&opt,&canvas)?;dirty=true;
+        }
+    }
+    world.stdout().write(format!("Wayland: sent {} messages, received {}, presented {} frames\n",window.sent_messages,window.received_messages,window.committed_frames).as_bytes());
+    Ok(())
+}
+pub fn main(mut world:World){
+    if let Err(problem)=run(&mut world){
+        world.stderr().write(format!("lkjbrowser: {}\n",problem).as_bytes());
+        world.set_exit_status(1u8);
+    }
+}
+
+#[test]
+fn both_modifier_keys_survive_one_release(){
+    let mut modifiers=Modifiers{shift:0u8,ctrl:0u8};
+    assert!(modifiers.update(42u32,true));
+    assert!(modifiers.update(54u32,true));
+    modifiers.update(42u32,false);assert!(modifiers.shift!=0u8);
+    modifiers.update(54u32,false);assert_eq!(modifiers.shift,0u8);
+    modifiers.update(29u32,true);modifiers.update(97u32,true);
+    modifiers.update(29u32,false);assert!(modifiers.ctrl!=0u8);
+    modifiers.update(97u32,false);assert_eq!(modifiers.ctrl,0u8);
+}

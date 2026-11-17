@@ -1,0 +1,128 @@
+//! Layout and actual Canvas pixel regressions for link underline continuity.
+mod html;
+mod css;
+mod font;
+mod paint;
+mod layout;
+
+fn page_for(markup: &str, width: i32) -> layout::Page {
+    let source = format!("<style>body{{margin:0;font-size:20px;line-height:30px}}p{{margin:0}}</style><body><p>{}</p></body>", markup);
+    let doc = html::parse(source.as_str());
+    let font = font::metric_test_font();
+    layout::build(&doc, width, &font, &font, &font, &font)
+}
+
+fn geometry(page: &layout::Page, label: &str) -> (i32, i32, i32, bool) {
+    for command in &page.commands {
+        if let layout::Command::Text(run) = command {
+            if run.text == label { return (run.x, run.baseline, run.width, run.bold); }
+        }
+    }
+    panic!("Expected text run is missing")
+}
+
+fn decoration_pixels(page: &layout::Page) -> paint::Canvas {
+    let mut canvas = paint::Canvas::new(page.width as usize, (page.height + 8) as usize, 0xffffffffu32);
+    for command in &page.commands {
+        if let layout::Command::Rect(rect) = command {
+            canvas.rect(rect.x, rect.y, rect.width, rect.height, rect.color);
+        }
+    }
+    canvas
+}
+
+fn span_has_color(canvas: &paint::Canvas, x0: i32, x1: i32, y: i32, color: u32) -> bool {
+    let mut x = x0;
+    while x < x1 {
+        if canvas.pixels[y as usize * canvas.width + x as usize] != color { return false; }
+        x += 1;
+    }
+    true
+}
+
+#[test]
+fn two_word_link_has_one_continuous_pixel_band() {
+    let page = page_for("<a href='next'>alpha beta</a>", 160);
+    let alpha = geometry(&page, "alpha");
+    let beta = geometry(&page, "beta");
+    assert_eq!(alpha.0, 0);
+    assert_eq!(alpha.2, 60);
+    assert_eq!(beta.0, 72);
+    assert_eq!(beta.2, 48);
+    assert_eq!(alpha.1, beta.1);
+    let canvas = decoration_pixels(&page);
+    assert!(span_has_color(&canvas, 0, 120, alpha.1 + 2, 0xff1769a4u32));
+    assert!(span_has_color(&canvas, 120, 160, alpha.1 + 2, 0xffffffffu32));
+}
+
+#[test]
+fn wrapped_link_underlines_stop_at_each_visible_line_end() {
+    let page = page_for("<a href='next'>alpha beta</a>", 80);
+    let alpha = geometry(&page, "alpha");
+    let beta = geometry(&page, "beta");
+    assert_eq!(alpha.0, 0);
+    assert_eq!(beta.0, 0);
+    assert!(beta.1 > alpha.1);
+    let canvas = decoration_pixels(&page);
+    assert!(span_has_color(&canvas, 0, 60, alpha.1 + 2, 0xff1769a4u32));
+    assert!(span_has_color(&canvas, 60, 80, alpha.1 + 2, 0xffffffffu32));
+    assert!(span_has_color(&canvas, 0, 48, beta.1 + 2, 0xff1769a4u32));
+    assert!(span_has_color(&canvas, 48, 80, beta.1 + 2, 0xffffffffu32));
+}
+
+#[test]
+fn bold_span_inside_link_keeps_continuous_decoration() {
+    let page = page_for("<a href='next'>alpha <b>beta</b> gamma</a>", 240);
+    let alpha = geometry(&page, "alpha");
+    let beta = geometry(&page, "beta");
+    let gamma = geometry(&page, "gamma");
+    assert!(!alpha.3 && beta.3 && !gamma.3);
+    assert_eq!(alpha.1, beta.1);
+    assert_eq!(beta.1, gamma.1);
+    assert_eq!(beta.0, 72);
+    assert_eq!(gamma.0, 132);
+    let canvas = decoration_pixels(&page);
+    assert!(span_has_color(&canvas, 0, 192, alpha.1 + 2, 0xff1769a4u32));
+    assert!(span_has_color(&canvas, 192, 240, alpha.1 + 2, 0xffffffffu32));
+}
+
+#[test]
+fn trailing_non_link_whitespace_and_text_stay_undecorated() {
+    let page = page_for("<a href='next'>alpha beta</a>   tail", 240);
+    let alpha = geometry(&page, "alpha");
+    let tail = geometry(&page, "tail");
+    assert_eq!(tail.0, 132);
+    assert_eq!(tail.1, alpha.1);
+    let canvas = decoration_pixels(&page);
+    assert!(span_has_color(&canvas, 0, 120, alpha.1 + 2, 0xff1769a4u32));
+    assert!(span_has_color(&canvas, 120, 240, alpha.1 + 2, 0xffffffffu32));
+}
+
+#[test]
+fn separate_anchors_with_the_same_url_do_not_join_their_underlines() {
+    let page = page_for("<a href='next'>alpha</a> <a href='next'>beta</a>", 160);
+    let alpha = geometry(&page, "alpha");
+    let beta = geometry(&page, "beta");
+    assert_eq!(beta.0, 72);
+    assert_eq!(alpha.1, beta.1);
+    let canvas = decoration_pixels(&page);
+    assert!(span_has_color(&canvas, 0, 60, alpha.1 + 2, 0xff1769a4u32));
+    assert!(span_has_color(&canvas, 60, 72, alpha.1 + 2, 0xffffffffu32));
+    assert!(span_has_color(&canvas, 72, 120, beta.1 + 2, 0xff1769a4u32));
+}
+
+#[test]
+fn explicit_line_break_keeps_two_separate_underlines() {
+    let page = page_for("<a href='next'>alpha<br>beta</a>", 160);
+    let alpha = geometry(&page, "alpha");
+    let beta = geometry(&page, "beta");
+    assert_eq!(beta.0, 0);
+    assert!(beta.1 > alpha.1);
+    let canvas = decoration_pixels(&page);
+    assert!(span_has_color(&canvas, 0, 60, alpha.1 + 2, 0xff1769a4u32));
+    assert!(span_has_color(&canvas, 60, 160, alpha.1 + 2, 0xffffffffu32));
+    assert!(span_has_color(&canvas, 0, 48, beta.1 + 2, 0xff1769a4u32));
+    assert!(span_has_color(&canvas, 48, 160, beta.1 + 2, 0xffffffffu32));
+}
+
+pub fn main() {}

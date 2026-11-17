@@ -1,0 +1,4 @@
+before_fifo_exit=124
+after_fifo_exit=1
+regular_absolute_relative_dot=PASS
+ok 5 tests

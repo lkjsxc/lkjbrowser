@@ -1,0 +1,804 @@
+//! Deterministic block boxes and baseline-aligned inline fragments.
+//! Text widths use the same loaded TrueType font and rounded advances as painting.
+
+use crate::html::Document;
+use crate::css::{Style, BLOCK, INLINE, NONE};
+use crate::font::Font;
+
+pub struct TextRun {
+    pub x: i32,
+    pub baseline: i32,
+    pub top: i32,
+    pub height: i32,
+    pub width: i32,
+    pub size: i32,
+    pub color: u32,
+    pub bold: bool,
+    pub italic: bool,
+    pub text: String,
+    pub href: String,
+    pub node: usize,
+}
+
+#[derive(Copy, Clone)]
+pub struct Rect {
+    pub x: i32,
+    pub y: i32,
+    pub width: i32,
+    pub height: i32,
+    pub color: u32,
+}
+
+pub struct ImageBox {
+    pub src: String,
+    pub alt: String,
+    pub x: i32,
+    pub y: i32,
+    pub width: i32,
+    pub height: i32,
+    pub node: usize,
+    pub href: String,
+}
+
+pub enum Command {
+    Rect(Rect),
+    Text(TextRun),
+    Image(ImageBox),
+}
+
+pub struct BoxRecord {
+    pub node: usize,
+    pub tag: String,
+    pub x: i32,
+    pub y: i32,
+    pub width: i32,
+    pub height: i32,
+}
+
+pub struct Anchor {
+    pub name: String,
+    pub y: i32,
+}
+
+pub struct Page {
+    pub width: i32,
+    pub height: i32,
+    pub background: u32,
+    pub title: String,
+    pub commands: Vec<Command>,
+    pub boxes: Vec<BoxRecord>,
+    pub anchors: Vec<Anchor>,
+}
+
+struct Fonts<'a> {
+    regular: &'a Font,
+    bold: &'a Font,
+    italic: &'a Font,
+    bolditalic: &'a Font,
+}
+
+fn selected<'a>(fonts: &Fonts<'a>, bold: bool, italic: bool) -> &'a Font {
+    if bold && italic { fonts.bolditalic }
+    else if bold { fonts.bold }
+    else if italic { fonts.italic }
+    else { fonts.regular }
+}
+
+fn max(a: i32, b: i32) -> i32 { if a > b { a } else { b } }
+fn min(a: i32, b: i32) -> i32 { if a < b { a } else { b } }
+
+fn measured(font: &Font, text: &str, size: i32) -> i32 {
+    let mut width = 0i32;
+    for ch in text.chars() { width += font.advance(ch as u32, size); }
+    width
+}
+
+fn line_height(style: Style, fonts: &Fonts) -> i32 {
+    let font = selected(fonts, style.bold, style.italic);
+    let metrics = font.ascent(style.font_size) + font.descent(style.font_size);
+    let desired = if style.line_height_scale > 0 {
+        (style.font_size * style.line_height_scale + 500) / 1000
+    } else if style.line_height > 0 { style.line_height }
+        else { (style.font_size * 3 + 1) / 2 };
+    max(metrics, desired)
+}
+
+struct Fragment {
+    kind: u8,
+    text: String,
+    src: String,
+    width: i32,
+    image_height: i32,
+    style: Style,
+    href: String,
+    node: usize,
+    link_owner: usize,
+    offset: i32,
+}
+
+struct Flow {
+    left: i32,
+    width: i32,
+    y: i32,
+    used: i32,
+    items: Vec<Fragment>,
+    pending_space: bool,
+    word_start: usize,
+    word_before: i32,
+    word_offset: i32,
+    style: Style,
+}
+
+fn empty_rect() -> Command {
+    Command::Rect(Rect { x: 0, y: 0, width: 0, height: 0, color: 0xffffffffu32 })
+}
+
+fn flush(flow: &mut Flow, fonts: &Fonts, page: &mut Page, force: bool) {
+    if flow.items.is_empty() {
+        if force { flow.y += line_height(flow.style, fonts); }
+        flow.pending_space = false;
+        flow.word_start = 0usize; flow.word_before = 0; flow.word_offset = 0;
+        return;
+    }
+    let base_font = selected(fonts, flow.style.bold, flow.style.italic);
+    let mut ascent = base_font.ascent(flow.style.font_size);
+    let mut descent = base_font.descent(flow.style.font_size);
+    let mut height = line_height(flow.style, fonts);
+    let mut i = 0usize;
+    while i < flow.items.len() {
+        let item = &flow.items[i];
+        if item.kind == 1u8 {
+            ascent = max(ascent, item.image_height);
+        } else {
+            let font = selected(fonts, item.style.bold, item.style.italic);
+            ascent = max(ascent, font.ascent(item.style.font_size));
+            descent = max(descent, font.descent(item.style.font_size));
+            height = max(height, line_height(item.style, fonts));
+        }
+        i += 1;
+    }
+    height = max(height, ascent + descent);
+    let baseline = flow.y + (height - ascent - descent) / 2 + ascent;
+    let extra = max(0, flow.width - flow.used);
+    let alignment = if flow.style.align == 1u8 { extra / 2 }
+        else if flow.style.align == 2u8 { extra } else { 0 };
+    let mut i = 0usize;
+    while i < flow.items.len() {
+        let item = &flow.items[i];
+        let x = flow.left + item.offset + alignment;
+        if item.kind == 1u8 {
+            page.commands.push(Command::Image(ImageBox {
+                src: item.src.clone(), alt: item.text.clone(),
+                x, y: baseline - item.image_height, width: item.width, height: item.image_height,
+                node: item.node, href: item.href.clone(),
+            }));
+        } else {
+            let font = selected(fonts, item.style.bold, item.style.italic);
+            let top = baseline - font.ascent(item.style.font_size);
+            let text_height = font.ascent(item.style.font_size) + font.descent(item.style.font_size);
+            if item.style.has_background {
+                page.commands.push(Command::Rect(Rect {
+                    x, y: top, width: item.width, height: text_height, color: item.style.background,
+                }));
+            }
+            page.commands.push(Command::Text(TextRun {
+                x, baseline, top, height: text_height, width: item.width, size: item.style.font_size,
+                color: item.style.color, bold: item.style.bold, italic: item.style.italic,
+                text: item.text.clone(), href: item.href.clone(), node: item.node,
+            }));
+        }
+        i += 1;
+    }
+
+    // A link's collapsed spaces belong to its decoration. Group by the actual
+    // anchor node, not just its URL: adjacent anchors may share a destination
+    // while the whitespace between them is outside both links.
+    let mut i = 0usize;
+    while i < flow.items.len() {
+        let item = &flow.items[i];
+        if item.kind != 0u8 || !item.style.underline { i += 1usize; continue; }
+        let underline_y = baseline + max(2, item.style.font_size / 10);
+        let thickness = max(1, item.style.font_size / 18);
+        let mut right = item.offset + item.width;
+        let mut next = i + 1usize;
+        while next < flow.items.len() {
+            let other = &flow.items[next];
+            if item.link_owner == 0usize || other.link_owner != item.link_owner
+                || other.kind != 0u8 || !other.style.underline || other.href != item.href {
+                break;
+            }
+            // Preserve the space even when the next span changes decoration
+            // color or metrics; start its own rectangle at that span's x.
+            right = max(right, other.offset);
+            if other.style.color != item.style.color
+                || baseline + max(2, other.style.font_size / 10) != underline_y
+                || max(1, other.style.font_size / 18) != thickness {
+                break;
+            }
+            right = other.offset + other.width;
+            next += 1usize;
+        }
+        page.commands.push(Command::Rect(Rect {
+            x: flow.left + item.offset + alignment, y: underline_y,
+            width: right - item.offset, height: thickness, color: item.style.color,
+        }));
+        i = next;
+    }
+    flow.y += height;
+    flow.items.clear();
+    flow.used = 0;
+    flow.pending_space = false;
+    flow.word_start = 0usize; flow.word_before = 0; flow.word_offset = 0;
+}
+
+fn fragment(flow: &mut Flow, text: &str, width: i32, style: Style, href: &str, node: usize, link_owner: usize) {
+    let offset = flow.used;
+    flow.items.push(Fragment {
+        kind: 0u8, text: text.to_string(), src: String::new(), width, image_height: 0,
+        style, href: href.to_string(), node, link_owner, offset,
+    });
+    flow.used += width;
+}
+
+fn word(flow: &mut Flow, text: &str, style: Style, href: &str, node: usize, link_owner: usize,
+    fonts: &Fonts, page: &mut Page) {
+    if text.is_empty() { return; }
+    let font = selected(fonts, style.bold, style.italic);
+    let width = measured(font, text, style.font_size);
+    let begins_word = flow.pending_space || flow.word_start >= flow.items.len();
+
+    // A style/link boundary is not a line-break opportunity. If the next fragment
+    // makes the current word overflow, move all its fragments to the next line.
+    // Whitespace preceding that word stays out of both rendered line ends.
+    if !begins_word && flow.word_start > 0usize && flow.used + width > flow.width {
+        let whole_width = flow.used - flow.word_offset + width;
+        if whole_width <= flow.width {
+            let origin = flow.word_offset;
+            let start = flow.word_start;
+            let before = flow.word_before;
+            let mut carried: Vec<Fragment> = Vec::new();
+            while flow.items.len() > start {
+                carried.push(flow.items.pop().unwrap());
+            }
+            flow.used = before;
+            flush(flow, fonts, page, false);
+            while let Some(mut item) = carried.pop() {
+                item.offset -= origin;
+                flow.used += item.width;
+                flow.items.push(item);
+            }
+            flow.word_start = 0usize;
+            flow.word_before = 0;
+            flow.word_offset = 0;
+        }
+    }
+
+    let mut space = if flow.pending_space && !flow.items.is_empty() {
+        font.advance(32u32, style.font_size)
+    } else { 0 };
+    if !flow.items.is_empty() && flow.used + space + width > flow.width {
+        flush(flow, fonts, page, false);
+        space = 0;
+    }
+    flow.pending_space = false;
+    if width <= flow.width {
+        if begins_word || flow.items.is_empty() {
+            flow.word_start = flow.items.len();
+            flow.word_before = flow.used;
+            flow.word_offset = flow.used + space;
+        }
+        flow.used += space;
+        fragment(flow, text, width, style, href, node, link_owner);
+        return;
+    }
+    let mut part = String::new();
+    let mut part_width = 0i32;
+    for ch in text.chars() {
+        let advance = font.advance(ch as u32, style.font_size);
+        if !part.is_empty() && part_width + advance > flow.width {
+            fragment(flow, part.as_str(), part_width, style, href, node, link_owner);
+            flush(flow, fonts, page, false);
+            part.clear();
+            part_width = 0;
+        }
+        part.push(ch);
+        part_width += advance;
+    }
+    if !part.is_empty() { fragment(flow, part.as_str(), part_width, style, href, node, link_owner); }
+}
+
+fn text(flow: &mut Flow, value: &str, style: Style, href: &str, node: usize, link_owner: usize,
+    fonts: &Fonts, page: &mut Page) {
+    let mut pending = String::new();
+    if style.pre {
+        let font = selected(fonts, style.bold, style.italic);
+        for ch in value.chars() {
+            if ch == '\r' { continue; }
+            if ch == '\n' {
+                if !pending.is_empty() {
+                    let width = measured(font, pending.as_str(), style.font_size);
+                    fragment(flow, pending.as_str(), width, style, href, node, link_owner);
+                    pending.clear();
+                }
+                flush(flow, fonts, page, true);
+            } else {
+                let token = if ch == '\t' { "    ".to_string() } else { ch.to_string() };
+                let width = measured(font, token.as_str(), style.font_size);
+                let pending_width = measured(font, pending.as_str(), style.font_size);
+                if !pending.is_empty() && flow.used + pending_width + width > flow.width {
+                    fragment(flow, pending.as_str(), pending_width, style, href, node, link_owner);
+                    pending.clear();
+                    flush(flow, fonts, page, false);
+                }
+                pending.push_str(token.as_str());
+            }
+        }
+        if !pending.is_empty() {
+            let width = measured(font, pending.as_str(), style.font_size);
+            fragment(flow, pending.as_str(), width, style, href, node, link_owner);
+        }
+        flow.word_start = flow.items.len();
+        flow.word_before = flow.used;
+        flow.word_offset = flow.used;
+        return;
+    }
+    for ch in value.chars() {
+        let code = ch as u32;
+        if code == 32u32 || code == 9u32 || code == 10u32 || code == 12u32 || code == 13u32 {
+            if !pending.is_empty() {
+                word(flow, pending.as_str(), style, href, node, link_owner, fonts, page);
+                pending.clear();
+            }
+            flow.pending_space = true;
+        } else {
+            pending.push(ch);
+        }
+    }
+    if !pending.is_empty() { word(flow, pending.as_str(), style, href, node, link_owner, fonts, page); }
+}
+
+fn image_size(doc: &Document, node: usize, style: Style, available: i32) -> (i32, i32) {
+    let mut width = 320;
+    let mut height = 180;
+    if let Ok(v) = doc.attribute(node, "width").as_str().parse::<i32>() { width = max(1, min(4096, v)); }
+    if let Ok(v) = doc.attribute(node, "height").as_str().parse::<i32>() { height = max(1, min(4096, v)); }
+    if style.width > 0 { width = style.width; }
+    if style.height > 0 { height = style.height; }
+    if width > available && available > 0 {
+        height = max(1, ((height as i64 * available as i64) / width as i64) as i32);
+        width = available;
+    }
+    (width, height)
+}
+
+fn link_root(doc: &Document, node: usize) -> usize {
+    let mut current = node;
+    while current > 0usize {
+        if doc.nodes[current].tag == "a" && !doc.attribute(current, "href").is_empty() {
+            return current;
+        }
+        current = doc.nodes[current].parent;
+    }
+    0usize
+}
+
+fn feed(doc: &Document, styles: &[Style], node: usize, flow: &mut Flow,
+    fonts: &Fonts, page: &mut Page) {
+    let style = styles[node];
+    if style.display == NONE { return; }
+    if style.display == BLOCK {
+        flush(flow, fonts, page, false);
+        let left = flow.left; let y = flow.y; let width = flow.width;
+        let height = block(doc, styles, node, left, y, width, fonts, page);
+        flow.y += height;
+        flow.pending_space = false;
+        return;
+    }
+    let name = doc.nodes[node].tag.as_str();
+    if name == "#text" {
+        let href = doc.href_for(node);
+        text(flow, doc.nodes[node].text.as_str(), style, href.as_str(), node, link_root(doc, node), fonts, page);
+        return;
+    }
+    let anchor = doc.attribute(node, "id");
+    if !anchor.is_empty() { page.anchors.push(Anchor { name: anchor, y: flow.y }); }
+    if name == "br" { flush(flow, fonts, page, true); return; }
+    if name == "img" {
+        let dimensions = image_size(doc, node, style, flow.width);
+        if !flow.items.is_empty() && flow.used + dimensions.0 > flow.width {
+            flush(flow, fonts, page, false);
+        }
+        let offset = flow.used;
+        flow.items.push(Fragment {
+            kind: 1u8, text: doc.attribute(node, "alt"), src: doc.attribute(node, "src"),
+            width: dimensions.0, image_height: dimensions.1, style,
+            href: doc.href_for(node), node, link_owner: link_root(doc, node), offset,
+        });
+        flow.used += dimensions.0;
+        flow.pending_space = false;
+        flow.word_start = flow.items.len();
+        flow.word_before = flow.used;
+        flow.word_offset = flow.used;
+        return;
+    }
+    let mut i = 0usize;
+    while i < doc.nodes[node].children.len() {
+        feed(doc, styles, doc.nodes[node].children[i], flow, fonts, page);
+        i += 1;
+    }
+}
+
+fn bullet(doc: &Document, node: usize) -> String {
+    let parent = doc.nodes[node].parent;
+    if doc.nodes[parent].tag != "ol" { return "•".to_string(); }
+    let mut count = 0usize;
+    let mut at = 0usize;
+    while at < doc.nodes[parent].children.len() {
+        let child = doc.nodes[parent].children[at];
+        if doc.nodes[child].tag == "li" { count += 1; }
+        if child == node { break; }
+        at += 1;
+    }
+    format!("{}.", count)
+}
+
+fn block(doc: &Document, styles: &[Style], node: usize, x: i32, top: i32,
+    available: i32, fonts: &Fonts, page: &mut Page) -> i32 {
+    let style = styles[node];
+    if style.display == NONE { return 0; }
+    let padding_width = style.padding_left + style.padding_right + style.border_width * 2;
+    let usable = max(1, available - style.margin_left - style.margin_right - padding_width);
+    let mut content_width = if style.width > 0 { min(usable, style.width) } else { usable };
+    if style.max_width > 0 { content_width = min(content_width, style.max_width); }
+    let border_width = content_width + padding_width;
+    let unused = max(0, available - border_width - style.margin_left - style.margin_right);
+    let offset = if style.auto_left && style.auto_right { unused / 2 }
+        else if style.auto_left { unused } else { 0 };
+    let border_x = x + style.margin_left + offset;
+    let border_y = top + style.margin_top;
+    let content_x = border_x + style.border_width + style.padding_left;
+    let content_y = border_y + style.border_width + style.padding_top;
+    let box_index = page.boxes.len();
+    page.boxes.push(BoxRecord {
+        node, tag: doc.nodes[node].tag.clone(), x: border_x, y: border_y, width: border_width, height: 0,
+    });
+    let anchor = doc.attribute(node, "id");
+    if !anchor.is_empty() { page.anchors.push(Anchor { name: anchor, y: border_y }); }
+    let background_index = page.commands.len();
+    if style.has_background { page.commands.push(empty_rect()); }
+    let border_index = page.commands.len();
+    if style.border_width > 0 {
+        page.commands.push(empty_rect()); page.commands.push(empty_rect());
+        page.commands.push(empty_rect()); page.commands.push(empty_rect());
+    }
+    let mut flow = Flow {
+        left: content_x, width: content_width, y: content_y, used: 0,
+        items: Vec::new(), pending_space: false, word_start: 0usize, word_before: 0, word_offset: 0, style,
+    };
+    if doc.nodes[node].tag == "img" {
+        let size = image_size(doc, node, style, content_width);
+        page.commands.push(Command::Image(ImageBox {
+            src: doc.attribute(node, "src"), alt: doc.attribute(node, "alt"),
+            x: content_x, y: content_y, width: size.0, height: size.1, node, href: doc.href_for(node),
+        }));
+        flow.y += size.1;
+    } else {
+        let first_command = page.commands.len();
+        let mut i = 0usize;
+        while i < doc.nodes[node].children.len() {
+            feed(doc, styles, doc.nodes[node].children[i], &mut flow, fonts, page);
+            i += 1;
+        }
+        flush(&mut flow, fonts, page, false);
+        if doc.nodes[node].tag == "li" {
+            let font = selected(fonts, style.bold, style.italic);
+            let mut baseline = content_y + font.ascent(style.font_size)
+                + max(0, line_height(style, fonts) - font.ascent(style.font_size) - font.descent(style.font_size)) / 2;
+            let mut i = first_command;
+            while i < page.commands.len() {
+                if let Command::Text(run) = &page.commands[i] { baseline = run.baseline; break; }
+                i += 1;
+            }
+            let mark = bullet(doc, node);
+            let width = measured(font, mark.as_str(), style.font_size);
+            let top = baseline - font.ascent(style.font_size);
+            page.commands.push(Command::Text(TextRun {
+                x: content_x - width - 10, baseline, top,
+                height: font.ascent(style.font_size) + font.descent(style.font_size),
+                width, size: style.font_size, color: style.color, bold: style.bold, italic: style.italic,
+                text: mark, href: String::new(), node,
+            }));
+        }
+    }
+    let content_height = max(max(0, flow.y - content_y), max(0, style.height));
+    let height = content_height + style.padding_top + style.padding_bottom + style.border_width * 2;
+    page.boxes[box_index].height = height;
+    if style.has_background {
+        page.commands[background_index] = Command::Rect(Rect {
+            x: border_x, y: border_y, width: border_width, height, color: style.background,
+        });
+    }
+    if style.border_width > 0 {
+        let b = style.border_width;
+        let color = style.border_color;
+        page.commands[border_index] = Command::Rect(Rect { x: border_x, y: border_y, width: border_width, height: b, color });
+        page.commands[border_index + 1usize] = Command::Rect(Rect { x: border_x, y: border_y + height - b, width: border_width, height: b, color });
+        page.commands[border_index + 2usize] = Command::Rect(Rect { x: border_x, y: border_y, width: b, height, color });
+        page.commands[border_index + 3usize] = Command::Rect(Rect { x: border_x + border_width - b, y: border_y, width: b, height, color });
+    }
+    max(0, style.margin_top + height + style.margin_bottom)
+}
+
+pub fn build(doc: &Document, width: i32, regular: &Font, bold: &Font,
+    italic: &Font, bolditalic: &Font) -> Page {
+    let fonts = Fonts { regular, bold, italic, bolditalic };
+    let styles = crate::css::compute(doc);
+    let mut background = 0xffffffffu32;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if (doc.nodes[i].tag == "html" || doc.nodes[i].tag == "body") && styles[i].has_background {
+            background = styles[i].background;
+        }
+        i += 1;
+    }
+    let width = max(80, width);
+    let mut page = Page {
+        width, height: 0, background, title: doc.title.clone(), commands: Vec::new(),
+        boxes: Vec::new(), anchors: Vec::new(),
+    };
+    let height = block(doc, &styles, 0usize, 0, 0, width, &fonts, &mut page);
+    page.height = max(1, height);
+    page
+}
+
+fn escaped(value: &str) -> String {
+    let mut result = String::new();
+    for ch in value.chars() {
+        match ch {
+            '\n' => result.push_str("\\n"),
+            '\r' => result.push_str("\\r"),
+            '\t' => result.push_str("\\t"),
+            '\\' => result.push_str("\\\\"),
+            '"' => result.push_str("\\\""),
+            _ => result.push(ch),
+        }
+    }
+    result
+}
+
+impl Page {
+    pub fn hit(&self, x: i32, y: i32) -> String {
+        let mut i = self.commands.len();
+        while i > 0usize {
+            i -= 1usize;
+            match &self.commands[i] {
+                Command::Text(run) => {
+                    if !run.href.is_empty() && x >= run.x && x < run.x + run.width
+                        && y >= run.top - 2 && y < run.top + run.height + 2 {
+                        return run.href.clone();
+                    }
+                },
+                Command::Image(im) => {
+                    if !im.href.is_empty() && x >= im.x && x < im.x + im.width
+                        && y >= im.y && y < im.y + im.height {
+                        return im.href.clone();
+                    }
+                },
+                _ => {},
+            }
+        }
+        String::new()
+    }
+
+    pub fn anchor(&self, name: &str) -> i32 {
+        let mut i = 0usize;
+        while i < self.anchors.len() {
+            if self.anchors[i].name == name { return self.anchors[i].y; }
+            i += 1;
+        }
+        0
+    }
+
+    pub fn dump(&self) -> String {
+        let mut result = format!("page width={} height={} background={:08x} title=\"{}\"\n",
+            self.width, self.height, self.background, escaped(self.title.as_str()));
+        let mut i = 0usize;
+        while i < self.boxes.len() {
+            let b = &self.boxes[i];
+            result.push_str(format!("box node={} tag={} x={} y={} w={} h={}\n",
+                b.node, b.tag, b.x, b.y, b.width, b.height).as_str());
+            i += 1;
+        }
+        let mut i = 0usize;
+        while i < self.commands.len() {
+            match &self.commands[i] {
+                Command::Rect(r) => result.push_str(format!("rect x={} y={} w={} h={} color={:08x}\n",
+                    r.x, r.y, r.width, r.height, r.color).as_str()),
+                Command::Text(t) => result.push_str(format!(
+                    "text node={} x={} baseline={} top={} w={} h={} size={} bold={} italic={} color={:08x} href=\"{}\" value=\"{}\"\n",
+                    t.node, t.x, t.baseline, t.top, t.width, t.height, t.size, t.bold, t.italic,
+                    t.color, escaped(t.href.as_str()), escaped(t.text.as_str())).as_str()),
+                Command::Image(im) => result.push_str(format!(
+                    "image node={} x={} y={} w={} h={} src=\"{}\" alt=\"{}\" href=\"{}\"\n",
+                    im.node, im.x, im.y, im.width, im.height, escaped(im.src.as_str()),
+                    escaped(im.alt.as_str()), escaped(im.href.as_str())).as_str()),
+            }
+            i += 1;
+        }
+        result
+    }
+}
+
+
+#[test]
+fn long_words_wrap_without_losing_characters() {
+    let font = crate::font::metric_test_font();
+    let doc = crate::html::parse("<style>body { margin: 0; font-size: 20px; } p { margin: 0; }</style><body><p>abcdefghijklmnopqrstuvwx</p></body>");
+    let page = build(&doc, 80, &font, &font, &font, &font);
+    let mut assembled = String::new();
+    let mut count = 0usize;
+    let mut previous_baseline = -1;
+    for command in &page.commands {
+        if let Command::Text(run) = command {
+            assert!(run.x >= 0 && run.x + run.width <= 80);
+            assert!(run.baseline > previous_baseline);
+            assert_eq!(run.width, 72);
+            assembled.push_str(run.text.as_str());
+            previous_baseline = run.baseline;
+            count += 1;
+        }
+    }
+    assert_eq!(assembled, "abcdefghijklmnopqrstuvwx");
+    assert_eq!(count, 4usize);
+}
+
+#[test]
+fn links_hit_only_their_visible_text_and_images() {
+    let font = crate::font::metric_test_font();
+    let doc = crate::html::parse("<style>body { margin: 0; font-size: 20px; } p { margin: 0; }</style><body><p><a href='next.html'>alpha <strong>beta</strong></a> gamma</p><a href='photo.html'><img src='photo.png' width='64' height='32'></a></body>");
+    let page = build(&doc, 160, &font, &font, &font, &font);
+    let mut links = 0usize;
+    let mut image = false;
+    let mut linked_baseline = -1;
+    let mut gamma_baseline = -1;
+    for command in &page.commands {
+        match command {
+            Command::Text(run) => {
+                if run.href == "next.html" {
+                    assert_eq!(page.hit(run.x + 1, run.top + 1), "next.html");
+                    if linked_baseline >= 0 { assert_eq!(run.baseline, linked_baseline); }
+                    linked_baseline = run.baseline;
+                    links += 1;
+                }
+                if run.text == "gamma" {
+                    assert_eq!(page.hit(run.x + 1, run.top + 1), "");
+                    gamma_baseline = run.baseline;
+                }
+            },
+            Command::Image(im) => {
+                assert_eq!(im.width, 64);
+                assert_eq!(im.height, 32);
+                assert_eq!(page.hit(im.x + 1, im.y + 1), "photo.html");
+                assert_eq!(page.hit(im.x + im.width, im.y + 1), "");
+                image = true;
+            },
+            _ => {},
+        }
+    }
+    assert_eq!(links, 2usize);
+    assert!(gamma_baseline > linked_baseline);
+    assert!(image);
+    assert_eq!(page.hit(-1, -1), "");
+}
+
+#[test]
+fn list_markers_share_the_first_text_baseline_and_anchors_resolve() {
+    let font = crate::font::metric_test_font();
+    let doc = crate::html::parse("<style>body { margin: 0; font-size: 20px; } ol { padding-left: 40px; } b { font-size: 32px; }</style><body><p>Before the list.</p><ol><li id='first'>First <b>item</b> with wrapping text.</li><li id='second'>Second item.</li></ol><p><span id='inline'>After</span> the list.</p></body>");
+    let page = build(&doc, 200, &font, &font, &font, &font);
+    let mut first_baseline = -1;
+    let mut first_mark = -2;
+    let mut second_baseline = -3;
+    let mut second_mark = -4;
+    for command in &page.commands {
+        if let Command::Text(run) = command {
+            if run.text == "First" { first_baseline = run.baseline; }
+            if run.text == "1." { first_mark = run.baseline; }
+            if run.text == "Second" { second_baseline = run.baseline; }
+            if run.text == "2." { second_mark = run.baseline; }
+        }
+    }
+    assert_eq!(first_baseline, first_mark);
+    assert_eq!(second_baseline, second_mark);
+    assert!(second_baseline > first_baseline);
+    assert!(page.anchor("first") > 0);
+    assert!(page.anchor("second") > page.anchor("first"));
+    assert!(page.anchor("inline") > page.anchor("second"));
+    assert_eq!(page.anchor("missing"), 0);
+}
+
+#[test]
+fn narrow_images_keep_their_aspect_ratio() {
+    let font = crate::font::metric_test_font();
+    let doc = crate::html::parse("<body style='margin:0'><img src='wide.png' width='600' height='300' alt='wide'></body>");
+    let page = build(&doc, 200, &font, &font, &font, &font);
+    let mut found = false;
+    for command in &page.commands {
+        if let Command::Image(im) = command {
+            assert_eq!(im.width, 200);
+            assert_eq!(im.height, 100);
+            found = true;
+        }
+    }
+    assert!(found);
+}
+
+
+#[test]
+fn style_boundaries_do_not_split_a_word_that_fits_a_line() {
+    let font = crate::font::metric_test_font();
+    let doc = crate::html::parse("<style>body { margin: 0; font-size: 20px; } p { margin: 0; }</style><body><p>xx abc<b>def</b></p></body>");
+    let page = build(&doc, 80, &font, &font, &font, &font);
+    let mut lines: Vec<String> = Vec::new();
+    let mut baseline = -1;
+    let mut bold_seen = false;
+    for command in &page.commands {
+        if let Command::Text(run) = command {
+            if run.baseline != baseline {
+                lines.push(String::new());
+                baseline = run.baseline;
+            }
+            let last = lines.len() - 1usize;
+            lines[last].push_str(run.text.as_str());
+            if run.text == "def" { assert!(run.bold); bold_seen = true; }
+        }
+    }
+    assert_eq!(lines.len(), 2usize);
+    assert_eq!(lines[0], "xx");
+    assert_eq!(lines[1], "abcdef");
+    assert!(bold_seen);
+}
+
+
+#[test]
+fn link_underlines_join_spaces_but_keep_separate_anchors_separate() {
+    let font = crate::font::metric_test_font();
+    let doc = crate::html::parse("<style>body { margin: 0; font-size: 20px; } p { margin: 0; }</style><body><p><a href='same'>one <b>two</b></a> <a href='same'>three four</a> gap <a href='other'>five six</a></p></body>");
+    let page = build(&doc, 600, &font, &font, &font, &font);
+    let mut underlines: Vec<Rect> = Vec::new();
+    for command in &page.commands {
+        if let Command::Rect(rect) = command { underlines.push(*rect); }
+    }
+    assert_eq!(underlines.len(), 3usize);
+    // Both words and their internal 12-pixel space share one rectangle.
+    assert_eq!(underlines[0].x, 0);
+    assert_eq!(underlines[0].width, 84);
+    // A different anchor with the same href starts after an undecorated space.
+    assert_eq!(underlines[1].x, 96);
+    assert_eq!(underlines[1].width, 120);
+    // Neither the unlinked word nor its surrounding spaces is underlined.
+    assert_eq!(underlines[2].x, 276);
+    assert_eq!(underlines[2].width, 96);
+    assert_eq!(underlines[0].y, underlines[1].y);
+    assert_eq!(underlines[1].y, underlines[2].y);
+}
+
+#[test]
+fn wrapped_link_underlines_stop_at_each_line_end() {
+    let font = crate::font::metric_test_font();
+    let doc = crate::html::parse("<style>body { margin: 0; font-size: 20px; } p { margin: 0; }</style><body><p><a href='same'>one two three four</a></p></body>");
+    let page = build(&doc, 100, &font, &font, &font, &font);
+    let mut underlines: Vec<Rect> = Vec::new();
+    for command in &page.commands {
+        if let Command::Rect(rect) = command { underlines.push(*rect); }
+    }
+    assert_eq!(underlines.len(), 3usize);
+    assert_eq!(underlines[0].width, 84);
+    assert_eq!(underlines[1].width, 60);
+    assert_eq!(underlines[2].width, 48);
+    assert_eq!(underlines[0].x, 0);
+    assert_eq!(underlines[1].x, 0);
+    assert_eq!(underlines[2].x, 0);
+    assert!(underlines[0].y < underlines[1].y);
+    assert!(underlines[1].y < underlines[2].y);
+}

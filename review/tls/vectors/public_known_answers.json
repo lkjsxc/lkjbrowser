@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "prepared_date_jst": "2026-11-18",
+  "classification": "Public fixed test-vector material; never use these fixed keys, scalars or salts for live connections.",
+  "byte_encoding": "Lowercase hexadecimal in published octet order; the empty string means zero bytes.",
+  "validation_scope": "Transcription and JavaScript byte-length/shape checks only; no cryptographic execution, TLS tests or live connections.",
+  "sources": [
+    {
+      "id": "rfc5869",
+      "url": "https://www.rfc-editor.org/rfc/rfc5869",
+      "locator": "Appendix A.1, A.2 and A.3 (SHA-256 only)"
+    },
+    {
+      "id": "rfc7748",
+      "url": "https://www.rfc-editor.org/rfc/rfc7748",
+      "locator": "Section 5.2 X25519 scalar vectors and section 6.1 Curve25519 exchange"
+    },
+    {
+      "id": "fips197",
+      "url": "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf",
+      "locator": "Appendix B, printed pages 34-35; PDF pages 42-43 (one-based)"
+    },
+    {
+      "id": "nist_aes_gcm_examples",
+      "url": "https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/AES_GCM.pdf",
+      "locator": "GCM-AES128 examples 1, 2, 3 and 5; PDF pages 1-9 (one-based)"
+    }
+  ],
+  "hkdf_sha256": [
+    {
+      "id": "rfc5869_sha256_case_1",
+      "source_id": "rfc5869",
+      "locator": "Appendix A.1",
+      "ikm_hex": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+      "salt_hex": "000102030405060708090a0b0c",
+      "info_hex": "f0f1f2f3f4f5f6f7f8f9",
+      "length": 42,
+      "prk_hex": "077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5",
+      "okm_hex": "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865",
+      "byte_lengths": {
+        "ikm": 22,
+        "salt": 13,
+        "info": 10,
+        "prk": 32,
+        "okm": 42
+      }
+    },
+    {
+      "id": "rfc5869_sha256_case_2",
+      "source_id": "rfc5869",
+      "locator": "Appendix A.2",
+      "ikm_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+      "salt_hex": "606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+      "info_hex": "b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+      "length": 82,
+      "prk_hex": "06a6b88c5853361a06104c9ceb35b45cef760014904671014a193f40c15fc244",
+      "okm_hex": "b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a99cac7827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5c1f3434f1d87",
+      "byte_lengths": {
+        "ikm": 80,
+        "salt": 80,
+        "info": 80,
+        "prk": 32,
+        "okm": 82
+      }
+    },
+    {
+      "id": "rfc5869_sha256_case_3",
+      "source_id": "rfc5869",
+      "locator": "Appendix A.3",
+      "ikm_hex": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+      "salt_hex": "",
+      "info_hex": "",
+      "length": 42,
+      "prk_hex": "19ef24a32c717b167f33a91d6f648bdf96596776afdb6377ac434c1c293ccb04",
+      "okm_hex": "8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8",
+      "byte_lengths": {
+        "ikm": 22,
+        "salt": 0,
+        "info": 0,
+        "prk": 32,
+        "okm": 42
+      }
+    }
+  ],
+  "x25519": [
+    {
+      "id": "rfc7748_scalar_1",
+      "source_id": "rfc7748",
+      "locator": "Section 5.2, first X25519 vector",
+      "role": "scalar_multiplication",
+      "scalar_hex": "a546e36bf0527c9d3b16154b82465edd62144c0ac1fc5a18506a2244ba449ac4",
+      "u_hex": "e6db6867583030db3594c1a424b15f7c726624ec26b3353b10a903a6d0ab1c4c",
+      "expected_hex": "c3da55379de9c6908e94ea4df28d084f32eccf03491c71f754b4075577a28552",
+      "byte_lengths": {
+        "scalar": 32,
+        "u": 32,
+        "expected": 32
+      }
+    },
+    {
+      "id": "rfc7748_scalar_2",
+      "source_id": "rfc7748",
+      "locator": "Section 5.2, second X25519 vector",
+      "role": "scalar_multiplication",
+      "scalar_hex": "4b66e9d4d1b4673c5ad22691957d6af5c11b6421e0ea01d42ca4169e7918ba0d",
+      "u_hex": "e5210f12786811d3f4b7959d0538ae2c31dbe7106fc03c3efc4cd549c715a493",
+      "expected_hex": "95cbde9476e8907d7aade45cb4b873f88b595a68799fa152e6f8f7647aac7957",
+      "byte_lengths": {
+        "scalar": 32,
+        "u": 32,
+        "expected": 32
+      }
+    },
+    {
+      "id": "rfc7748_alice_public",
+      "source_id": "rfc7748",
+      "locator": "Section 6.1, Alice public key",
+      "role": "public_key",
+      "scalar_hex": "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a",
+      "u_hex": "0900000000000000000000000000000000000000000000000000000000000000",
+      "expected_hex": "8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a",
+      "byte_lengths": {
+        "scalar": 32,
+        "u": 32,
+        "expected": 32
+      }
+    },
+    {
+      "id": "rfc7748_bob_public",
+      "source_id": "rfc7748",
+      "locator": "Section 6.1, Bob public key",
+      "role": "public_key",
+      "scalar_hex": "5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb",
+      "u_hex": "0900000000000000000000000000000000000000000000000000000000000000",
+      "expected_hex": "de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f",
+      "byte_lengths": {
+        "scalar": 32,
+        "u": 32,
+        "expected": 32
+      }
+    },
+    {
+      "id": "rfc7748_alice_shared",
+      "source_id": "rfc7748",
+      "locator": "Section 6.1, shared secret using Alice scalar and Bob public key",
+      "role": "shared_secret",
+      "scalar_hex": "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a",
+      "u_hex": "de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f",
+      "expected_hex": "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742",
+      "byte_lengths": {
+        "scalar": 32,
+        "u": 32,
+        "expected": 32
+      }
+    },
+    {
+      "id": "rfc7748_bob_shared",
+      "source_id": "rfc7748",
+      "locator": "Section 6.1, shared secret using Bob scalar and Alice public key",
+      "role": "shared_secret",
+      "scalar_hex": "5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb",
+      "u_hex": "8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a",
+      "expected_hex": "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742",
+      "byte_lengths": {
+        "scalar": 32,
+        "u": 32,
+        "expected": 32
+      }
+    }
+  ],
+  "aes128_block": [
+    {
+      "id": "fips197_appendix_b",
+      "source_id": "fips197",
+      "locator": "Appendix B; output array serialized by columns, as specified for AES octet order",
+      "key_hex": "2b7e151628aed2a6abf7158809cf4f3c",
+      "plaintext_hex": "3243f6a8885a308d313198a2e0370734",
+      "ciphertext_hex": "3925841d02dc09fbdc118597196a0b32",
+      "byte_lengths": {
+        "key": 16,
+        "plaintext": 16,
+        "ciphertext": 16
+      }
+    }
+  ],
+  "aes128_gcm": [
+    {
+      "id": "nist_gcm_aes128_example_1",
+      "source_id": "nist_aes_gcm_examples",
+      "locator": "GCM-AES128 Example #1, PDF pages 1-2",
+      "key_hex": "feffe9928665731c6d6a8f9467308308",
+      "iv_hex": "cafebabefacedbaddecaf888",
+      "aad_hex": "",
+      "plaintext_hex": "",
+      "ciphertext_hex": "",
+      "tag_hex": "3247184b3c4f69a44dbcd22887bbb418",
+      "byte_lengths": {
+        "key": 16,
+        "iv": 12,
+        "aad": 0,
+        "plaintext": 0,
+        "ciphertext": 0,
+        "tag": 16
+      }
+    },
+    {
+      "id": "nist_gcm_aes128_example_2",
+      "source_id": "nist_aes_gcm_examples",
+      "locator": "GCM-AES128 Example #2, PDF pages 2-4",
+      "key_hex": "feffe9928665731c6d6a8f9467308308",
+      "iv_hex": "cafebabefacedbaddecaf888",
+      "aad_hex": "",
+      "plaintext_hex": "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255",
+      "ciphertext_hex": "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091473f5985",
+      "tag_hex": "4d5c2af327cd64a62cf35abd2ba6fab4",
+      "byte_lengths": {
+        "key": 16,
+        "iv": 12,
+        "aad": 0,
+        "plaintext": 64,
+        "ciphertext": 64,
+        "tag": 16
+      }
+    },
+    {
+      "id": "nist_gcm_aes128_example_3",
+      "source_id": "nist_aes_gcm_examples",
+      "locator": "GCM-AES128 Example #3, PDF pages 4-5",
+      "key_hex": "feffe9928665731c6d6a8f9467308308",
+      "iv_hex": "cafebabefacedbaddecaf888",
+      "aad_hex": "3ad77bb40d7a3660a89ecaf32466ef97f5d3d58503b9699de785895a96fdbaaf43b1cd7f598ece23881b00e3ed0306887b0c785e27e8ad3f8223207104725dd4",
+      "plaintext_hex": "",
+      "ciphertext_hex": "",
+      "tag_hex": "5f91d77123ef5eb9997913849b8dc1e9",
+      "byte_lengths": {
+        "key": 16,
+        "iv": 12,
+        "aad": 64,
+        "plaintext": 0,
+        "ciphertext": 0,
+        "tag": 16
+      }
+    },
+    {
+      "id": "nist_gcm_aes128_example_5",
+      "source_id": "nist_aes_gcm_examples",
+      "locator": "GCM-AES128 Example #5, PDF pages 7-9",
+      "key_hex": "feffe9928665731c6d6a8f9467308308",
+      "iv_hex": "cafebabefacedbaddecaf888",
+      "aad_hex": "3ad77bb40d7a3660a89ecaf32466ef97f5d3d585",
+      "plaintext_hex": "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39",
+      "ciphertext_hex": "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091",
+      "tag_hex": "f07c2528eea2fca1211f905e1b6a881b",
+      "byte_lengths": {
+        "key": 16,
+        "iv": 12,
+        "aad": 20,
+        "plaintext": 60,
+        "ciphertext": 60,
+        "tag": 16
+      }
+    }
+  ]
+}

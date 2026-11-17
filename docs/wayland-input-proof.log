@@ -1,0 +1,2 @@
+input PASS motion=120,220 click=120,220 scroll=24 key=press+release resize=900x700 focus=clear+restore close=true
+peer PASS requests=31 shm_fd=true pong=true configure_ack=true cursor=true

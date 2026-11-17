@@ -1,0 +1,79 @@
+mod png;
+
+fn landscape() -> Vec<u32> {
+    let mut pixels = Vec::<u32>::new();
+    let mut y = 0i32;
+    while y < 225i32 {
+        let mut x = 0i32;
+        while x < 740i32 {
+            let r = 219i32 + y * 25i32 / 225i32;
+            let g = 237i32 + y * 6i32 / 225i32;
+            let b = 238i32 - y * 18i32 / 225i32;
+            let mut color = 0xff000000u32 | ((r as u32) << 16) | ((g as u32) << 8) | b as u32;
+            let dx = x - 589i32;
+            let dy = y - 54i32;
+            if dx * dx + dy * dy < 625i32 { color = 0xffffecc8u32; }
+            let a = x - 230i32;
+            let distant = 106i32 + a * a / 2600i32;
+            let b = x - 650i32;
+            let other = 119i32 + b * b / 2100i32;
+            if y > distant || y > other { color = 0xff9bb9a5u32; }
+            let c = x - 460i32;
+            let middle = 137i32 + c * c / 5700i32;
+            if y > middle { color = 0xff678f7cu32; }
+            let d = x - 40i32;
+            let front = 165i32 + d * d / 6900i32;
+            if y > front { color = 0xff396d5du32; }
+            if y > 151i32 {
+                let river_center = 404i32 - (y - 151i32) * (y - 151i32) / 130i32;
+                let river_width = 7i32 + (y - 151i32) / 3i32;
+                if x > river_center - river_width && x < river_center + river_width {
+                    color = if y % 11i32 == 0i32 { 0xffc6ded7u32 } else { 0xffa9cec3u32 };
+                }
+            }
+            if x > 92i32 && x < 97i32 && y > 158i32 && y < 186i32 { color = 0xff325649u32; }
+            let tree_x = if x < 94i32 { 94i32 - x } else { x - 94i32 };
+            if y > 132i32 && y < 171i32 && tree_x < (y - 132i32) / 2i32 { color = 0xff325f4eu32; }
+            pixels.push(color);
+            x += 1i32;
+        }
+        y += 1i32;
+    }
+    pixels
+}
+
+fn main(mut world: World) {
+    let arguments = world.args();
+    let mut directory = world.directory("/home/coder/workspace/lkjbrowser").unwrap();
+    let mut output = world.stdout();
+    if arguments.len() == 0usize {
+        let pixels = landscape();
+        let encoded = png::encode(740usize,225usize,&pixels).unwrap();
+        let mut file = directory.create("fixtures/workshop.png").unwrap();
+        file.write_all(&encoded).unwrap();
+        let decoded = png::decode(&encoded).unwrap();
+        assert_eq!(decoded.pixels,pixels);
+        output.write(format!("PNG fixture: 740x225, {} encoded bytes, all pixels roundtrip\n",encoded.len()).as_bytes());
+    } else {
+        let path = std::str::from_utf8(&arguments[0usize]).unwrap();
+        let mut file = directory.open(path).unwrap();
+        let bytes = file.read_to_end().unwrap();
+        match png::decode(&bytes) {
+            Ok(image) => {
+                let mut hash = 14695981039346656037u64;
+                let mut i = 0usize;
+                while i < image.pixels.len() {
+                    let pixel = image.pixels[i];
+                    let mut shift = 0u32;
+                    while shift < 32u32 {
+                        hash = (hash ^ ((pixel >> shift) & 255u32) as u64).wrapping_mul(1099511628211u64);
+                        shift += 8u32;
+                    }
+                    i += 1usize;
+                }
+                output.write(format!("PNG {}x{} ARGB-FNV1a={:x}\n",image.width,image.height,hash).as_bytes());
+            },
+            Err(error) => { output.write(format!("PNG error: {}\n",error).as_bytes()); world.set_exit_status(1u8); },
+        }
+    }
+}

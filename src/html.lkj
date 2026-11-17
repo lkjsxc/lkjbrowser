@@ -1,0 +1,407 @@
+//! A small, forgiving HTML tokenizer and indexed tree builder.
+//! This deliberately implements document HTML, not the HTML5 tree-construction algorithm.
+
+#[derive(Clone)]
+pub struct Attribute {
+    pub name: String,
+    pub value: String,
+}
+
+pub struct Node {
+    pub parent: usize,
+    pub tag: String,
+    pub text: String,
+    pub attributes: Vec<Attribute>,
+    pub children: Vec<usize>,
+}
+
+pub struct Document {
+    pub nodes: Vec<Node>,
+    pub styles: String,
+    pub title: String,
+}
+
+pub fn trim(value: &str) -> &str { std::str::trim_ascii(value) }
+
+pub fn whitespace(b: u8) -> bool {
+    b == 9u8 || b == 10u8 || b == 12u8 || b == 13u8 || b == 32u8
+}
+
+fn name_byte(b: u8) -> bool {
+    (b >= 65u8 && b <= 90u8) || (b >= 97u8 && b <= 122u8)
+        || (b >= 48u8 && b <= 57u8) || b == 45u8 || b == 95u8 || b == 58u8
+}
+
+fn lower(b: u8) -> u8 {
+    if b >= 65u8 && b <= 90u8 { b + 32u8 } else { b }
+}
+
+fn matches_at(source: &[u8], at: usize, needle: &[u8], insensitive: bool) -> bool {
+    if at > source.len() || needle.len() > source.len() - at { return false; }
+    let mut n = 0usize;
+    while n < needle.len() {
+        let a = if insensitive { lower(source[at + n]) } else { source[at + n] };
+        let b = if insensitive { lower(needle[n]) } else { needle[n] };
+        if a != b { return false; }
+        n += 1;
+    }
+    true
+}
+
+fn find_after(source: &[u8], from: usize, needle: &[u8], insensitive: bool) -> usize {
+    let mut at = from;
+    while at < source.len() {
+        if matches_at(source, at, needle, insensitive) { return at; }
+        at += 1;
+    }
+    source.len()
+}
+
+fn entity_code(name: &str) -> u32 {
+    match name {
+        "amp" => 38u32, "lt" => 60u32, "gt" => 62u32,
+        "quot" => 34u32, "apos" => 39u32, "nbsp" => 160u32,
+        "copy" => 169u32, "reg" => 174u32, "trade" => 8482u32,
+        "ndash" => 8211u32, "mdash" => 8212u32, "hellip" => 8230u32,
+        "lsquo" => 8216u32, "rsquo" => 8217u32,
+        "ldquo" => 8220u32, "rdquo" => 8221u32, "bull" => 8226u32,
+        "middot" => 183u32, "times" => 215u32, "euro" => 8364u32,
+        _ => {
+            let bytes = name.as_bytes();
+            if bytes.len() < 2usize || bytes[0] != 35u8 { return 0u32; }
+            let mut at = 1usize;
+            let mut radix = 10u32;
+            if bytes[at] == 120u8 || bytes[at] == 88u8 { radix = 16u32; at += 1; }
+            if at == bytes.len() { return 0u32; }
+            let mut value = 0u32;
+            while at < bytes.len() {
+                let b = lower(bytes[at]);
+                let digit = if b >= 48u8 && b <= 57u8 { (b - 48u8) as u32 }
+                    else if b >= 97u8 && b <= 102u8 { (b - 87u8) as u32 }
+                    else { return 0u32; };
+                if digit >= radix || value > (1114111u32 - digit) / radix { return 0u32; }
+                value = value * radix + digit;
+                at += 1;
+            }
+            value
+        }
+    }
+}
+
+pub fn decode_entities(source: &str) -> String {
+    let bytes = source.as_bytes();
+    let mut result = String::new();
+    let mut at = 0usize;
+    let mut plain = 0usize;
+    while at < bytes.len() {
+        if bytes[at] == 38u8 {
+            let mut end = at + 1usize;
+            while end < bytes.len() && end - at <= 32usize
+                && bytes[end] != 59u8 && !whitespace(bytes[end])
+                && bytes[end] != 38u8 && bytes[end] != 60u8 {
+                end += 1;
+            }
+            if end < bytes.len() && bytes[end] == 59u8 {
+                let code = entity_code(&source[at + 1usize..end]);
+                if code > 0u32 {
+                    match char::from_u32(code) {
+                        Some(ch) => {
+                            result.push_str(&source[plain..at]);
+                            result.push(ch);
+                            at = end + 1usize;
+                            plain = at;
+                            continue;
+                        },
+                        None => {},
+                    }
+                }
+            }
+        }
+        at += 1;
+    }
+    result.push_str(&source[plain..]);
+    result
+}
+
+pub fn void_tag(tag: &str) -> bool {
+    match tag {
+        "area" | "base" | "br" | "col" | "embed" | "hr" | "img" |
+        "input" | "link" | "meta" | "param" | "source" | "track" | "wbr" => true,
+        _ => false,
+    }
+}
+
+fn closes_paragraph(tag: &str) -> bool {
+    match tag {
+        "address" | "article" | "aside" | "blockquote" | "div" | "dl" | "fieldset" |
+        "footer" | "form" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "header" |
+        "hr" | "main" | "nav" | "ol" | "p" | "pre" | "section" | "ul" => true,
+        _ => false,
+    }
+}
+
+impl Document {
+    pub fn has_attribute(&self, node: usize, name: &str) -> bool {
+        let mut i = 0usize;
+        while i < self.nodes[node].attributes.len() {
+            if self.nodes[node].attributes[i].name == name { return true; }
+            i += 1;
+        }
+        false
+    }
+
+    pub fn attribute(&self, node: usize, name: &str) -> String {
+        let mut at = 0usize;
+        while at < self.nodes[node].attributes.len() {
+            if self.nodes[node].attributes[at].name == name {
+                return self.nodes[node].attributes[at].value.clone();
+            }
+            at += 1;
+        }
+        String::new()
+    }
+
+    pub fn href_for(&self, node: usize) -> String {
+        let mut at = node;
+        loop {
+            if self.nodes[at].tag == "a" {
+                let value = self.attribute(at, "href");
+                if !value.is_empty() { return value; }
+            }
+            if at == 0usize { break; }
+            at = self.nodes[at].parent;
+        }
+        String::new()
+    }
+
+    pub fn text_content(&self, node: usize) -> String {
+        let mut result = String::new();
+        let mut pending: Vec<usize> = Vec::new();
+        pending.push(node);
+        while let Some(at) = pending.pop() {
+            if self.nodes[at].tag == "#text" {
+                result.push_str(self.nodes[at].text.as_str());
+            } else {
+                let mut i = self.nodes[at].children.len();
+                while i > 0usize {
+                    i -= 1;
+                    pending.push(self.nodes[at].children[i]);
+                }
+            }
+        }
+        result
+    }
+
+    pub fn dump(&self) -> String {
+        let mut result = String::new();
+        let mut i = 0usize;
+        while i < self.nodes.len() {
+            let n = &self.nodes[i];
+            result.push_str(format!("node {} parent={} tag={} text={}\n", i, n.parent,
+                n.tag, n.text).as_str());
+            i += 1;
+        }
+        result
+    }
+}
+
+fn add_node(doc: &mut Document, parent: usize, tag: String, text: String, attributes: Vec<Attribute>) -> usize {
+    let id = doc.nodes.len();
+    doc.nodes.push(Node { parent, tag, text, attributes, children: Vec::new() });
+    doc.nodes[parent].children.push(id);
+    id
+}
+
+fn add_text(doc: &mut Document, parent: usize, text: &str, decode: bool) {
+    if text.is_empty() { return; }
+    let data = if decode { decode_entities(text) } else { text.to_string() };
+    add_node(doc, parent, "#text".to_string(), data, Vec::new());
+}
+
+pub fn parse(source: &str) -> Document {
+    let mut doc = Document { nodes: Vec::new(), styles: String::new(), title: String::new() };
+    doc.nodes.push(Node {
+        parent: 0usize, tag: "#document".to_string(), text: String::new(),
+        attributes: Vec::new(), children: Vec::new(),
+    });
+    let mut stack: Vec<usize> = vec![0usize];
+    let bytes = source.as_bytes();
+    let mut at = 0usize;
+    while at < bytes.len() {
+        let parent = stack[stack.len() - 1usize];
+        let tag = doc.nodes[parent].tag.clone();
+        if tag == "script" || tag == "style" || tag == "title" || tag == "textarea" {
+            let closing = format!("</{}", tag);
+            let end = find_after(bytes, at, closing.as_bytes(), true);
+            if tag == "style" {
+                doc.styles.push_str(&source[at..end]);
+                doc.styles.push('\n');
+            }
+            if tag == "title" && doc.title.is_empty() {
+                doc.title = decode_entities(trim(&source[at..end]));
+            }
+            add_text(&mut doc, parent, &source[at..end], tag != "style" && tag != "script");
+            at = end;
+            stack.pop();
+            if at == bytes.len() { break; }
+        }
+        if bytes[at] != 60u8 {
+            let start = at;
+            while at < bytes.len() && bytes[at] != 60u8 { at += 1; }
+            let p = stack[stack.len() - 1usize];
+            add_text(&mut doc, p, &source[start..at], true);
+            continue;
+        }
+        if matches_at(bytes, at, b"<!--", false) {
+            let end = find_after(bytes, at + 4usize, b"-->", false);
+            at = if end < bytes.len() { end + 3usize } else { end };
+            continue;
+        }
+        if at + 1usize < bytes.len() && (bytes[at + 1usize] == 33u8 || bytes[at + 1usize] == 63u8) {
+            while at < bytes.len() && bytes[at] != 62u8 { at += 1; }
+            if at < bytes.len() { at += 1; }
+            continue;
+        }
+        let start = at;
+        at += 1;
+        let closing = at < bytes.len() && bytes[at] == 47u8;
+        if closing { at += 1; }
+        while at < bytes.len() && whitespace(bytes[at]) { at += 1; }
+        let name_start = at;
+        while at < bytes.len() && name_byte(bytes[at]) { at += 1; }
+        if name_start == at || !((bytes[name_start] >= 65u8 && bytes[name_start] <= 90u8)
+            || (bytes[name_start] >= 97u8 && bytes[name_start] <= 122u8)) {
+            let p = stack[stack.len() - 1usize];
+            add_text(&mut doc, p, "<", false);
+            at = start + 1usize;
+            continue;
+        }
+        let name = source[name_start..at].to_ascii_lowercase();
+        if closing {
+            while at < bytes.len() && bytes[at] != 62u8 { at += 1; }
+            if at < bytes.len() { at += 1; }
+            let mut pos = stack.len();
+            while pos > 1usize {
+                pos -= 1;
+                if doc.nodes[stack[pos]].tag == name {
+                    while stack.len() > pos { stack.pop(); }
+                    break;
+                }
+            }
+            continue;
+        }
+        let mut attributes: Vec<Attribute> = Vec::new();
+        let mut self_closing = false;
+        while at < bytes.len() && bytes[at] != 62u8 {
+            while at < bytes.len() && whitespace(bytes[at]) { at += 1; }
+            if at == bytes.len() || bytes[at] == 62u8 { break; }
+            if bytes[at] == 47u8 {
+                self_closing = true;
+                at += 1;
+                continue;
+            }
+            let attr_start = at;
+            while at < bytes.len() && !whitespace(bytes[at]) && bytes[at] != 61u8
+                && bytes[at] != 62u8 && bytes[at] != 47u8 { at += 1; }
+            if attr_start == at { at += 1; continue; }
+            let attr_name = source[attr_start..at].to_ascii_lowercase();
+            while at < bytes.len() && whitespace(bytes[at]) { at += 1; }
+            let mut attr_value = String::new();
+            if at < bytes.len() && bytes[at] == 61u8 {
+                at += 1;
+                while at < bytes.len() && whitespace(bytes[at]) { at += 1; }
+                if at < bytes.len() && (bytes[at] == 34u8 || bytes[at] == 39u8) {
+                    let quote = bytes[at];
+                    at += 1;
+                    let value_start = at;
+                    while at < bytes.len() && bytes[at] != quote { at += 1; }
+                    attr_value = decode_entities(&source[value_start..at]);
+                    if at < bytes.len() { at += 1; }
+                } else {
+                    let value_start = at;
+                    while at < bytes.len() && !whitespace(bytes[at]) && bytes[at] != 62u8 { at += 1; }
+                    attr_value = decode_entities(&source[value_start..at]);
+                }
+            }
+            let mut duplicate = false;
+            let mut i = 0usize;
+            while i < attributes.len() {
+                if attributes[i].name == attr_name { duplicate = true; }
+                i += 1;
+            }
+            if !duplicate { attributes.push(Attribute { name: attr_name, value: attr_value }); }
+        }
+        if at < bytes.len() && bytes[at] == 62u8 { at += 1; }
+        if closes_paragraph(name.as_str()) {
+            let mut pos = stack.len();
+            while pos > 1usize {
+                pos -= 1;
+                let t = doc.nodes[stack[pos]].tag.as_str();
+                if t == "p" {
+                    while stack.len() > pos { stack.pop(); }
+                    break;
+                }
+                if closes_paragraph(t) { break; }
+            }
+        }
+        if name == "li" || name == "dt" || name == "dd" {
+            let mut pos = stack.len();
+            while pos > 1usize {
+                pos -= 1;
+                let t = doc.nodes[stack[pos]].tag.as_str();
+                if t == "li" || t == "dt" || t == "dd" {
+                    while stack.len() > pos { stack.pop(); }
+                    break;
+                }
+                if t == "ul" || t == "ol" || t == "dl" { break; }
+            }
+        }
+        let p = stack[stack.len() - 1usize];
+        let is_void = void_tag(name.as_str());
+        let id = add_node(&mut doc, p, name, String::new(), attributes);
+        if !is_void && !self_closing { stack.push(id); }
+    }
+    doc
+}
+
+#[test]
+fn nested_tree_entities_and_raw_style() {
+    let doc = parse("<!doctype html><html><head><title>A &amp; B</title><style>p { color: #123456; }</style></head><body><p>Hello <b>world</b> &lt;ok&gt;</p><a href='next?a=1&amp;b=2'>Next</a></body></html>");
+    assert_eq!(doc.title, "A & B");
+    assert!(doc.styles.contains("#123456"));
+    assert!(doc.text_content(0usize).contains("Hello world <ok>"));
+    let mut found = false;
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "a" {
+            assert_eq!(doc.attribute(i, "href"), "next?a=1&b=2");
+            found = true;
+        }
+        i += 1;
+    }
+    assert!(found);
+}
+
+#[test]
+fn malformed_and_optional_tags_stay_a_tree() {
+    let doc = parse("<ul><li>one<li>two</ul><p>three<div>four</div>3 < 4<!-- unterminated");
+    let mut list_items = 0usize;
+    let mut list_parent = 0usize;
+    let mut i = 1usize;
+    while i < doc.nodes.len() {
+        assert!(doc.nodes[i].parent < i);
+        if doc.nodes[i].tag == "li" {
+            if list_items == 0usize { list_parent = doc.nodes[i].parent; }
+            assert_eq!(doc.nodes[i].parent, list_parent);
+            list_items += 1;
+        }
+        i += 1;
+    }
+    assert_eq!(list_items, 2usize);
+    assert!(doc.text_content(0usize).contains("3 < 4"));
+}
+
+#[test]
+fn numeric_entities_preserve_unicode() {
+    assert_eq!(decode_entities("caf&#233; &#x1f642; &unknown;"), "café 🙂 &unknown;");
+}

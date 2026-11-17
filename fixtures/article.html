@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The web, one readable page at a time — Field Notes</title>
+<style>
+body { margin: 0; background: #edf1f4; color: #293b49; font-size: 18px; line-height: 1.55; }
+main { max-width: 760px; margin: 0 auto; padding: 36px 44px 52px; background: white; }
+nav { font-size: 14px; color: #647582; margin-bottom: 30px; }
+a { color: #146b7c; }
+.kicker { font-size: 13px; font-weight: bold; color: #146b7c; margin-bottom: 12px; }
+h1 { color: #173142; font-size: 42px; line-height: 1.15; margin: 0 0 18px; }
+h2 { color: #173142; font-size: 27px; line-height: 1.3; margin: 30px 0 13px; }
+p { margin: 0 0 19px; }
+.meta { color: #6c7b87; font-size: 14px; margin-bottom: 29px; }
+.lead { font-size: 21px; line-height: 1.5; color: #415967; margin-bottom: 25px; }
+blockquote { margin: 24px 0; padding: 18px 24px 2px; background: #edf6f7; border: 1px solid #d4e5e8; }
+ul, ol { margin: 0 0 22px; padding: 0 0 0 28px; }
+li { margin-bottom: 9px; }
+.small { font-size: 15px; color: #6c7b87; }
+footer { margin-top: 34px; padding: 20px 22px 3px; background: #f0f3f5; font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+<nav><a href="simple.html">FIELD NOTES</a> &nbsp; / &nbsp; Ideas for a quieter internet</nav>
+<p class="kicker">BUILDING IN THE OPEN &nbsp; · &nbsp; ISSUE 01</p>
+<h1>The web, one readable page at a time</h1>
+<p class="meta">A dispatch from the workshop &nbsp; · &nbsp; November 17, 2026 &nbsp; · &nbsp; 6 minute read</p>
+<p class="lead">A browser begins with a small promise: ask for a page, give its words room to breathe, and let a reader follow their curiosity.</p>
+<p>We have become used to thinking of the web as a complicated machine. It is also a remarkably simple idea. A document can point to another document, and a person can decide where to go next. A good reading experience keeps that path visible.</p>
+<p>This page is an exercise in those essentials. Its headings, paragraphs, <strong>bold emphasis</strong>, <em>italic asides</em>, and <a href="simple.html">ordinary links</a> are laid out and painted by the same small program that fetched the document.</p>
+
+<h2 id="space">Start with space</h2>
+<p>Legible text needs more than recognizable letters. A comfortable measure gives each line a sensible ending. Consistent baselines make a paragraph feel settled. Enough space between sections helps the eye find a place to begin again.</p>
+<blockquote><p>“The useful question is not how much can fit on a screen, but how easily someone can find the next thought.”</p></blockquote>
+<p>There is no animation here, and no script is needed to read the article. The interesting work happens underneath: a font file becomes curves, curves become coverage, and coverage becomes the dark edge of a letter against the page.</p>
+
+<h2 id="ingredients">Four ingredients for a useful page</h2>
+<ul>
+<li><strong>A clear hierarchy.</strong> A title explains the subject; section headings divide the argument into places a reader can return to.</li>
+<li><strong>A human reading width.</strong> Lines wrap before they become a journey across the whole window.</li>
+<li><strong>Links with a destination.</strong> Try the <a href="simple.html">workshop page</a>, then return here to continue reading.</li>
+<li><strong>An honest response to failure.</strong> An unreachable page should explain what happened and leave a useful way forward.</li>
+</ul>
+
+<h2 id="process">From bytes to a page</h2>
+<p>The route is deliberate. First, the program reads bytes from a file or a TCP connection. It recognizes a small subset of HTML and builds a tree. CSS rules then attach presentation choices to that tree. Finally, the layout pass creates rectangles and text fragments with explicit positions.</p>
+<ol>
+<li>Read the document and decode its character references.</li>
+<li>Apply supported selectors and inherit text properties.</li>
+<li>Lay out block boxes and wrap inline text using real font metrics.</li>
+<li>Rasterize each outline and present the resulting frame.</li>
+</ol>
+<p>That last frame is not a picture of somebody else's browser. It is the direct output of the program. Resizing the page changes the line breaks; scrolling moves through the document; clicking a link loads another page.</p>
+
+<h2 id="next">Leave room for the next step</h2>
+<p>A first browser is not a complete web platform. Some layouts are too ambitious for it, some fonts need shaping it has not learned, and many sites require protocols or scripting beyond this first slice. Being specific about those boundaries makes the next improvement easier to choose.</p>
+<p>For now, a long article can be read from beginning to end. That is a small, useful place to start.</p>
+<p><a href="simple.html">Visit the workshop →</a> &nbsp; <a href="#space">Return to “Start with space”</a></p>
+<footer>
+<p><strong>Field Notes</strong> is a local demonstration document for lkjbrowser. All words, layout, and painting in this window come through the browser's own document pipeline.</p>
+<p class="small">No JavaScript. One column. Plenty of room to read.</p>
+</footer>
+</main>
+</body>
+</html>

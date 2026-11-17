@@ -1,0 +1,1 @@
+pub fn main(mut world: World) { let mut file = world.temporary_file().unwrap(); let _pixels = file.map_writable(); }

@@ -1,0 +1,114 @@
+//! Pixel canvas and text painting. Pixels are opaque 0xFFRRGGBB.
+use crate::font::Font;
+
+pub struct Canvas { pub width: usize, pub height: usize, pub pixels: Vec<u32> }
+
+impl Canvas {
+    pub fn new(width: usize, height: usize, color: u32) -> Canvas {
+        Canvas { width, height, pixels: vec![color | 0xff000000u32; width * height] }
+    }
+    pub fn rect(&mut self, x: i32, y: i32, width: i32, height: i32, color: u32) {
+        if width <= 0i32 || height <= 0i32 { return; }
+        let x0 = if x < 0i32 { 0i32 } else { x };
+        let y0 = if y < 0i32 { 0i32 } else { y };
+        let right = x + width;
+        let bottom = y + height;
+        let x1 = if right > self.width as i32 { self.width as i32 } else { right };
+        let y1 = if bottom > self.height as i32 { self.height as i32 } else { bottom };
+        let mut row = y0;
+        while row < y1 {
+            let mut col = x0;
+            while col < x1 {
+                self.pixels[row as usize * self.width + col as usize] = color | 0xff000000u32;
+                col += 1i32;
+            }
+            row += 1i32;
+        }
+    }
+    pub fn blend(&mut self, x: i32, y: i32, color: u32, alpha: u8) {
+        if x < 0i32 || y < 0i32 || x >= self.width as i32 || y >= self.height as i32 || alpha == 0u8 { return; }
+        let p = y as usize * self.width + x as usize;
+        if alpha == 255u8 { self.pixels[p] = color | 0xff000000u32; return; }
+        let background = self.pixels[p];
+        let a = alpha as u32;
+        let inv = 255u32 - a;
+        let r = (((color >> 16) & 255u32) * a + ((background >> 16) & 255u32) * inv + 127u32) / 255u32;
+        let g = (((color >> 8) & 255u32) * a + ((background >> 8) & 255u32) * inv + 127u32) / 255u32;
+        let b = ((color & 255u32) * a + (background & 255u32) * inv + 127u32) / 255u32;
+        self.pixels[p] = 0xff000000u32 | (r << 16) | (g << 8) | b;
+    }
+    pub fn glyph(&mut self, font: &mut Font, codepoint: u32, size: i32, x: i32, baseline: i32, color: u32) {
+        let index = font.raster(codepoint, size);
+        let glyph = &font.cache[index];
+        let mut row = 0usize;
+        while row < glyph.height {
+            let yy = baseline + glyph.top + row as i32;
+            if yy >= 0i32 && yy < self.height as i32 {
+                let mut col = 0usize;
+                while col < glyph.width {
+                    self.blend(x + glyph.left + col as i32, yy, color, glyph.mask[row * glyph.width + col]);
+                    col += 1usize;
+                }
+            }
+            row += 1usize;
+        }
+    }
+    pub fn text(&mut self, font: &mut Font, text: &str, size: i32, x: i32, baseline: i32, color: u32) -> i32 {
+        let mut pen = x;
+        for c in text.chars() {
+            let codepoint = c as u32;
+            self.glyph(font, codepoint, size, pen, baseline, color);
+            pen += font.advance(codepoint, size);
+        }
+        pen - x
+    }
+    pub fn bgra(&self) -> Vec<u8> {
+        let mut result = Vec::<u8>::new();
+        let mut i = 0usize;
+        while i < self.pixels.len() {
+            let pixel = self.pixels[i];
+            result.push((pixel & 255u32) as u8);
+            result.push(((pixel >> 8) & 255u32) as u8);
+            result.push(((pixel >> 16) & 255u32) as u8);
+            result.push(255u8);
+            i += 1usize;
+        }
+        result
+    }
+    pub fn ppm(&self) -> Vec<u8> {
+        let header = format!("P6\n{} {}\n255\n", self.width, self.height);
+        let mut result = header.as_bytes().to_vec();
+        let mut i = 0usize;
+        while i < self.pixels.len() {
+            let pixel = self.pixels[i];
+            result.push(((pixel >> 16) & 255u32) as u8);
+            result.push(((pixel >> 8) & 255u32) as u8);
+            result.push((pixel & 255u32) as u8);
+            i += 1usize;
+        }
+        result
+    }
+}
+
+impl Canvas {
+    /// Scale and blend decoded image pixels, clipping before work.
+    pub fn image(&mut self, source_width: usize, source_height: usize, pixels: &[u32], x: i32, y: i32, width: i32, height: i32) {
+        if source_width == 0usize || source_height == 0usize || width <= 0i32 || height <= 0i32 || source_height > pixels.len() / source_width { return; }
+        let x0 = if x < 0i32 { 0i32 } else { x };
+        let y0 = if y < 0i32 { 0i32 } else { y };
+        let x1 = if x + width > self.width as i32 { self.width as i32 } else { x + width };
+        let y1 = if y + height > self.height as i32 { self.height as i32 } else { y + height };
+        let mut row = y0;
+        while row < y1 {
+            let sy = (row - y) as usize * source_height / height as usize;
+            let mut col = x0;
+            while col < x1 {
+                let sx = (col - x) as usize * source_width / width as usize;
+                let pixel = pixels[sy * source_width + sx];
+                self.blend(col,row,pixel,(pixel >> 24) as u8);
+                col += 1i32;
+            }
+            row += 1i32;
+        }
+    }
+}

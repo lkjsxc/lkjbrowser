@@ -1,0 +1,176 @@
+--- a/src/css.lkj
++++ b/src/css.lkj
+@@ -47,7 +47,7 @@
+ 
+ pub struct Rule {
+     pub parts: Vec<String>,
+-    pub specificity: i32,
++    pub specificity: [usize; 3],
+     pub declarations: Vec<Declaration>,
+ }
+ 
+@@ -106,8 +106,8 @@
+         "a" => { s.color = 0xff1769a4u32; s.underline = true; },
+         "strong" | "b" => { s.bold = true; },
+         "em" | "i" | "cite" => { s.italic = true; },
+-        "small" => { s.font_size = (s.font_size * 5) / 6; },
+-        "big" => { s.font_size = (s.font_size * 6) / 5; },
++        "small" => { s.font_size = clamp((s.font_size * 5) / 6, 6, 160); },
++        "big" => { s.font_size = clamp((s.font_size * 6) / 5, 6, 160); },
+         _ => {},
+     }
+     if s.display == INLINE && parent.display == INLINE && parent.has_background {
+@@ -309,18 +309,20 @@
+     result
+ }
+ 
+-fn specificity(parts: &[String]) -> i32 {
+-    let mut result = 0i32;
++fn specificity(parts: &[String]) -> [usize; 3] {
++    // Lexicographic ID, class and type counts; no finite weight trades one tier
++    // for another. Each count is bounded by the already allocated selector.
++    let mut result = [0usize; 3];
+     let mut p = 0usize;
+     while p < parts.len() {
+         let bytes = parts[p].as_bytes();
+         if !bytes.is_empty() && bytes[0] != 46u8 && bytes[0] != 35u8 && bytes[0] != 42u8 && bytes[0] != 62u8 {
+-            result += 1;
++            result[2] += 1usize;
+         }
+         let mut i = 0usize;
+         while i < bytes.len() {
+-            if bytes[i] == 35u8 { result += 10000; }
+-            if bytes[i] == 46u8 { result += 100; }
++            if bytes[i] == 35u8 { result[0] += 1usize; }
++            if bytes[i] == 46u8 { result[1] += 1usize; }
+             i += 1;
+         }
+         p += 1;
+@@ -328,6 +330,12 @@
+     result
+ }
+ 
++fn specificity_greater(left: [usize; 3], right: [usize; 3]) -> bool {
++    if left[0] != right[0] { left[0] > right[0] }
++    else if left[1] != right[1] { left[1] > right[1] }
++    else { left[2] > right[2] }
++}
++
+ pub fn parse(source: &str) -> Vec<Rule> {
+     let cleaned = strip_comments(source);
+     let source = cleaned.as_str();
+@@ -579,7 +587,7 @@
+     while node < doc.nodes.len() {
+         let parent = if node == 0usize { initial() } else { result[doc.nodes[node].parent] };
+         let mut style = ua_style(doc.nodes[node].tag.as_str(), parent);
+-        let mut matching: Vec<(usize, i32)> = Vec::new();
++        let mut matching: Vec<(usize, [usize; 3])> = Vec::new();
+         let mut i = 0usize;
+         while i < rules.len() {
+             if matches(doc, node, &rules[i]) { matching.push((i, rules[i].specificity)); }
+@@ -589,7 +597,7 @@
+         while i < matching.len() {
+             let entry = matching[i];
+             let mut j = i;
+-            while j > 0usize && matching[j - 1usize].1 > entry.1 {
++            while j > 0usize && specificity_greater(matching[j - 1usize].1, entry.1) {
+                 matching[j] = matching[j - 1usize];
+                 j -= 1usize;
+             }
+@@ -749,3 +757,96 @@
+     }
+     assert_eq!(found, 2usize);
+ }
++
++#[test]
++fn specificity_keeps_id_priority_over_many_matching_classes() {
++    let mut source = "<style>#target{color:red}".to_string();
++    let mut i = 0usize;
++    while i < 100usize { source.push_str(".c"); i += 1usize; }
++    source.push_str("{color:blue}</style><p id='target' class='c'>x</p>");
++    let doc = crate::html::parse(source.as_str());
++    let styles = compute(&doc);
++    let mut found = false;
++    let mut i = 0usize;
++    while i < doc.nodes.len() {
++        if doc.nodes[i].tag == "p" {
++            assert_eq!(styles[i].color, 0xffff0000u32);
++            found = true;
++        }
++        i += 1usize;
++    }
++    assert!(found);
++}
++
++#[test]
++fn specificity_keeps_class_priority_over_many_matching_types() {
++    let mut source = "<style>.chosen{color:red}".to_string();
++    let mut i = 0usize;
++    while i < 100usize { source.push_str("div "); i += 1usize; }
++    source.push_str("{color:blue}</style>");
++    let mut i = 0usize;
++    while i < 99usize { source.push_str("<div>"); i += 1usize; }
++    source.push_str("<div class='chosen'>x</div>");
++    let mut i = 0usize;
++    while i < 99usize { source.push_str("</div>"); i += 1usize; }
++    let doc = crate::html::parse(source.as_str());
++    let styles = compute(&doc);
++    let mut found = false;
++    let mut i = 0usize;
++    while i < doc.nodes.len() {
++        if doc.attribute(i, "class") == "chosen" {
++            assert_eq!(styles[i].color, 0xffff0000u32);
++            found = true;
++        }
++        i += 1usize;
++    }
++    assert!(found);
++}
++
++#[test]
++fn long_valid_id_selector_does_not_overflow_specificity() {
++    let mut source = String::new();
++    let mut i = 0usize;
++    while i < 214749usize { source.push_str("#x"); i += 1usize; }
++    source.push_str("{color:red}");
++    let rules = parse(source.as_str());
++    assert_eq!(rules.len(), 1usize);
++    assert_eq!(rules[0].specificity[0], 214749usize);
++    assert_eq!(rules[0].specificity[1], 0usize);
++    assert_eq!(rules[0].specificity[2], 0usize);
++}
++
++#[test]
++fn nested_big_and_small_defaults_keep_the_font_size_policy() {
++    let mut source = "<body>".to_string();
++    let mut i = 0usize;
++    while i < 99usize { source.push_str("<big>"); i += 1usize; }
++    source.push_str("<big id='largest' style='margin-left:1em'>");
++    let mut i = 0usize;
++    while i < 64usize { source.push_str("<small>"); i += 1usize; }
++    source.push_str("x");
++    let mut i = 0usize;
++    while i < 64usize { source.push_str("</small>"); i += 1usize; }
++    let mut i = 0usize;
++    while i < 100usize { source.push_str("</big>"); i += 1usize; }
++    source.push_str("</body>");
++    let doc = crate::html::parse(source.as_str());
++    let styles = compute(&doc);
++    let mut largest = false;
++    let mut smallest = false;
++    let mut i = 0usize;
++    while i < doc.nodes.len() {
++        assert!(styles[i].font_size >= 6 && styles[i].font_size <= 160);
++        if doc.attribute(i, "id") == "largest" {
++            assert_eq!(styles[i].font_size, 160);
++            assert_eq!(styles[i].margin_left, 160);
++            largest = true;
++        }
++        if doc.nodes[i].tag == "#text" {
++            assert_eq!(styles[i].font_size, 6);
++            smallest = true;
++        }
++        i += 1usize;
++    }
++    assert!(largest && smallest);
++}

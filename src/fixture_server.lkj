@@ -1,0 +1,116 @@
+//! Disposable local HTTP fixture server, built by the pinned lkjscript compiler.
+//! This test program never listens outside 127.0.0.1 and always asks for port zero.
+fn send(stream: &mut File, status: &str, content_type: &str, body: &[u8]) {
+    let header = format!("HTTP/1.1 {}\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", status, content_type, body.len());
+    stream.write_all(header.as_bytes()).unwrap();
+    stream.write_all(body).unwrap();
+}
+fn request_path(stream: &mut File) -> String {
+    let mut bytes = Vec::new();
+    let mut scratch = [0u8; 2048];
+    while bytes.len() < 65536usize {
+        let n = match stream.read(&mut scratch) { Ok(n) => n, Err(_errno) => return "".to_string() };
+        if n == 0usize { return "".to_string(); }
+        bytes.extend_from_slice(&scratch[..n]);
+        let text = std::text::utf8_lossy(&bytes);
+        if text.contains("\r\n\r\n") {
+            let first = match text.as_str().find(' ') { Some(n) => n, None => return "".to_string() };
+            let rest = &text[first + 1usize..];
+            let last = match rest.find(' ') { Some(n) => n, None => return "".to_string() };
+            return rest[..last].to_string();
+        }
+    }
+    "".to_string()
+}
+fn read_fixture(root: &mut Directory, name: &str) -> Option<Vec<u8>> {
+    let mut file = match root.open(name) { Ok(f) => f, Err(_e) => return None };
+    match file.read_to_end() { Ok(bytes) => Some(bytes), Err(_e) => None }
+}
+pub fn main(mut world: World) {
+    let args = world.args();
+    if args.len() != 2usize { world.stderr().write(b"usage: fixture-server ABS_FIXTURE_DIR ABS_PORTFILE\n"); world.set_exit_status(2u8); return; }
+    let fixtures = std::str::from_utf8(&args[0]).unwrap();
+    let port_path = std::str::from_utf8(&args[1]).unwrap();
+    assert!(port_path.starts_with("/") && fixtures.starts_with("/"));
+    let mut root = world.directory(fixtures).unwrap();
+    let mut filesystem = world.directory("/").unwrap();
+    let mut listener = world.listen("127.0.0.1", 0u16).unwrap();
+    let port = listener.port().unwrap();
+    let closed_port = {
+        let mut closed = world.listen("127.0.0.1", 0u16).unwrap();
+        closed.port().unwrap()
+    };
+    let closed_path = format!("{}.closed", &port_path[1usize..]);
+    let mut closed_file = filesystem.create(closed_path.as_str()).unwrap();
+    closed_file.write_all(format!("{}\n", closed_port).as_bytes()).unwrap();
+    let mut port_file = filesystem.create(&port_path[1usize..]).unwrap();
+    port_file.write_all(format!("{}\n", port).as_bytes()).unwrap();
+    let mut served = 0usize;
+    loop {
+        let mut stream = listener.accept_nodelay().unwrap();
+        let path = request_path(&mut stream);
+        if path.is_empty() { continue; }
+        served += 1usize;
+        if path == "/shutdown" {
+            send(&mut stream, "200 OK", "text/plain", b"shutdown\n");
+            break;
+        }
+        if path == "/redirect" {
+            stream.write_all(b"HTTP/1.1 302 Found\r\nLocation: article.html\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").unwrap();
+        } else if path == "/truncated" {
+            stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 100\r\nConnection: close\r\n\r\nshort").unwrap();
+        } else if path == "/ambiguous" {
+            stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\nContent-Length: 5\r\nConnection: close\r\n\r\n5\r\nhello\r\n0\r\n\r\n").unwrap();
+        } else if path == "/empty" {
+            stream.write_all(b"HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n").unwrap();
+        } else if path.starts_with("/file-redirect?to=") {
+            let target=&path.as_str()[18usize..];
+            stream.write_all(format!("HTTP/1.1 302 Found\r\nLocation: {}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",target).as_bytes()).unwrap();
+        } else if path.starts_with("/file-image?to=") {
+            let target=&path.as_str()[15usize..];
+            let body=format!("<html><head><title>Remote image policy</title></head><body><h1>Remote image policy</h1><img src=\"{}\" width=\"320\" height=\"100\" alt=\"Local image is blocked\"></body></html>",target);
+            send(&mut stream,"200 OK","text/html",body.as_bytes());
+        } else if path == "/invalid-status" {
+            stream.write_all("HTTP/1.€ 200 OK\r\nContent-Length: 0\r\n\r\n".as_bytes()).unwrap();
+        } else if path == "/large-header" {
+            let long="x".repeat(70000usize);
+            stream.write_all(format!("HTTP/1.1 200 OK\r\nX-Test: {}\r\nContent-Length: 0\r\n\r\n",long).as_bytes()).unwrap();
+        } else if path == "/plain-case" {
+            send(&mut stream, "200 OK", "Text/Plain; charset=utf-8", b"lkjbrowser plain text\nSecond line: <literal> &amp; bytes are text.\n");
+        } else if path == "/plain" {
+            send(&mut stream, "200 OK", "text/plain; charset=utf-8", b"lkjbrowser plain text\nSecond line: <literal> &amp; bytes are text.\n");
+        } else if path == "/chunked" {
+            let body = read_fixture(&mut root, "article.html").unwrap();
+            stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n").unwrap();
+            let mut at = 0usize;
+            while at < body.len() {
+                let end = if at + 89usize < body.len() { at + 89usize } else { body.len() };
+                stream.write_all(format!("{:x}\r\n", end - at).as_bytes()).unwrap();
+                stream.write_all(&body[at..end]).unwrap();
+                stream.write_all(b"\r\n").unwrap();
+                at = end;
+            }
+            stream.write_all(b"0\r\nX-Fixture: complete\r\n\r\n").unwrap();
+        } else {
+            let name = if path == "/" { "article.html".to_string() } else {
+                let raw = path.as_str().strip_prefix("/").unwrap_or("");
+                match raw.find('?') { Some(n) => raw[..n].to_string(), None => raw.to_string() }
+            };
+            if name.is_empty() || name.contains("..") || name.contains("\\") {
+                send(&mut stream, "400 Bad Request", "text/plain", b"invalid fixture path\n");
+            } else {
+                match read_fixture(&mut root, name.as_str()) {
+                    Some(body) => {
+                        let content_type = if name.ends_with(".png") { "image/png" }
+                            else if name.ends_with(".html") { "text/html; charset=utf-8" }
+                            else if name.ends_with(".css") { "text/css; charset=utf-8" }
+                            else { "application/octet-stream" };
+                        send(&mut stream, "200 OK", content_type, &body);
+                    },
+                    None => send(&mut stream, "404 Not Found", "text/plain", b"fixture not found\n"),
+                }
+            }
+        }
+    }
+    world.stdout().write(format!("fixture-server stopped after {} requests\n", served).as_bytes());
+}

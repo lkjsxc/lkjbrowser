@@ -1,0 +1,12 @@
+# Milliseconds are absolute offsets from the live Wayland event-loop start.
+# Only ordinary scroll/key/click handlers are used.
+1600 scroll 120
+2100 scroll 120
+2600 scroll 120
+3100 scroll 120
+3600 scroll 120
+4100 scroll 120
+5000 key 102
+6200 click 130 120
+7600 scroll 180
+8500 key 102

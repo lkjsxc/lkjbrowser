@@ -1,0 +1,195 @@
+//! Deterministic adversarial parser probes; each case runs in its own process.
+mod html;
+mod css;
+
+fn tree_is_valid(source: &str) -> bool {
+    let doc = html::parse(source);
+    if doc.nodes.is_empty() { return false; }
+    let styles = css::compute(&doc);
+    if styles.len() != doc.nodes.len() { return false; }
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if i > 0usize && doc.nodes[i].parent >= i { return false; }
+        let mut j = 0usize;
+        while j < doc.nodes[i].children.len() {
+            let child = doc.nodes[i].children[j];
+            if child >= doc.nodes.len() || child <= i { return false; }
+            if doc.nodes[child].parent != i { return false; }
+            j += 1usize;
+        }
+        i += 1usize;
+    }
+    let _ = doc.text_content(0usize);
+    true
+}
+
+fn unicode_inputs() -> bool {
+    let cases = vec![
+        "".to_string(),
+        "<".to_string(),
+        "<é🙂".to_string(),
+        "<p title='é🙂'>雪 &amp; café &#x1f642;</p>".to_string(),
+        "<p é🙂='雪' title=é🙂>é🙂</p>".to_string(),
+        "<p title='é🙂".to_string(),
+        "<!-- é🙂".to_string(),
+        "<!-- é🙂 --><p>雪</p>".to_string(),
+        "<style>/*é🙂*/p{color:#abc}</style><p>雪</p>".to_string(),
+        "<style>p{color:rgb(é,🙂,雪);margin:🙂em}</style><p>ok</p>".to_string(),
+        "<style>p{content:'é}🙂';color:red}</style><p>ok</p>".to_string(),
+        "<style>.é🙂{font-size:22px} #雪{color:red}</style><p>ok</p>".to_string(),
+        "<style>p{color:red}/*é🙂</style><p>ok</p>".to_string(),
+        "<title>é🙂&amp;".to_string(),
+        "<textarea>é🙂&amp;".to_string(),
+        "&é🙂é🙂é🙂é🙂é🙂é🙂é🙂; &unknown; &#1114112; &#xD800; &#999999999999999999999999;".to_string(),
+        "<p>é🙂</é🙂><p>still a tree</p>".to_string(),
+        "<p title='é🙂;:{}'>x</p>".to_string(),
+    ];
+    let mut i = 0usize;
+    while i < cases.len() {
+        if !tree_is_valid(cases[i].as_str()) { return false; }
+        i += 1usize;
+    }
+    true
+}
+
+fn numeric_inputs() -> bool {
+    let invalid_lengths = vec![
+        "".to_string(), "+".to_string(), "-".to_string(), ".".to_string(), "px".to_string(), "em".to_string(), "rem".to_string(), "%".to_string(),
+        "2147483647px".to_string(), "-2147483648em".to_string(), "18446744073709551615rem".to_string(),
+        "1000009.999em".to_string(), "999999999999999999999999999999px".to_string(),
+        "🙂em".to_string(), "é%".to_string(), "NaN".to_string(), "Infinity".to_string(), "1e309px".to_string(),
+    ];
+    let mut i = 0usize;
+    while i < invalid_lengths.len() {
+        if css::length(invalid_lengths[i].as_str(), 160).is_some() { return false; }
+        i += 1usize;
+    }
+    let invalid_colors = vec![
+        "".to_string(), "#".to_string(), "#ééé".to_string(), "#🙂".to_string(), "#fffffff".to_string(), "#gg0000".to_string(),
+        "rgb()".to_string(), "rgb(1,2)".to_string(), "rgb(1,2,3,4)".to_string(), "rgb(é,🙂,雪)".to_string(),
+        "rgb(2147483647,0,0)".to_string(), "rgb(-2147483648,0,0)".to_string(),
+        "rgb(999999999999999999999999,0,0)".to_string(),
+    ];
+    let mut i = 0usize;
+    while i < invalid_colors.len() {
+        if css::color(invalid_colors[i].as_str()).is_some() { return false; }
+        i += 1usize;
+    }
+    tree_is_valid("<style>p{font-size:2147483647px;margin:-2147483648em;padding:999999999999999999999999rem;color:rgb(999999999999999999999999,0,0);line-height:1000009.999}</style><p>Readable</p>")
+}
+
+fn nested(tag: &str, depth: usize, last_style: &str) -> String {
+    let mut source = "<body>".to_string();
+    let mut i = 0usize;
+    while i < depth {
+        source.push('<');
+        source.push_str(tag);
+        if i + 1usize == depth && !last_style.is_empty() {
+            source.push_str(" style='");
+            source.push_str(last_style);
+            source.push('\'');
+        }
+        source.push('>');
+        i += 1usize;
+    }
+    source.push('x');
+    let mut i = 0usize;
+    while i < depth {
+        source.push_str("</");
+        source.push_str(tag);
+        source.push('>');
+        i += 1usize;
+    }
+    source.push_str("</body>");
+    source
+}
+
+fn last_font_size(depth: usize, tag: &str, last_style: &str) -> i32 {
+    let source = nested(tag, depth, last_style);
+    let doc = html::parse(source.as_str());
+    let styles = css::compute(&doc);
+    styles[styles.len() - 1usize].font_size
+}
+
+fn hash_selector(count: usize) -> String {
+    let mut source = String::new();
+    let mut i = 0usize;
+    while i < count {
+        source.push_str("#x");
+        i += 1usize;
+    }
+    source.push_str("{color:red}");
+    source
+}
+
+fn specificity_count(count: usize) -> usize {
+    let source = hash_selector(count);
+    let rules = css::parse(source.as_str());
+    rules.len()
+}
+
+fn classes_beat_id() -> u32 {
+    let mut source = "<style>#target{color:red}".to_string();
+    let mut i = 0usize;
+    while i < 100usize {
+        source.push_str(".c");
+        i += 1usize;
+    }
+    source.push_str("{color:blue}</style><p id='target' class='c'>x</p>");
+    let doc = html::parse(source.as_str());
+    let styles = css::compute(&doc);
+    let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" { return styles[i].color; }
+        i += 1usize;
+    }
+    0u32
+}
+
+pub fn main(mut world: World) {
+    let args = world.args();
+    let name = if args.is_empty() { b"unicode"[..].to_vec() } else { args[0].clone() };
+    let mut out = world.stdout();
+    out.write(b"START ");
+    out.write(&name);
+    out.write(b"\n");
+    let mut ok = true;
+    if name == b"unicode"[..].to_vec() {
+        ok = unicode_inputs();
+    } else if name == b"numeric"[..].to_vec() {
+        ok = numeric_inputs();
+    } else if name == b"depth"[..].to_vec() {
+        let source = nested("div", 4096usize, "");
+        ok = tree_is_valid(source.as_str());
+    } else if name == b"font-boundary"[..].to_vec() {
+        let size = last_font_size(93usize, "big", "");
+        out.write(format!("font_size={}\n", size).as_bytes());
+    } else if name == b"font-overflow"[..].to_vec() {
+        let size = last_font_size(94usize, "big", "");
+        out.write(format!("font_size={}\n", size).as_bytes());
+    } else if name == b"font-em-overflow"[..].to_vec() {
+        let size = last_font_size(65usize, "big", "margin-left:1em");
+        out.write(format!("font_size={}\n", size).as_bytes());
+    } else if name == b"font-small-policy"[..].to_vec() {
+        let size = last_font_size(64usize, "small", "");
+        out.write(format!("font_size={} expected=6..160\n", size).as_bytes());
+        ok = size >= 6 && size <= 160;
+    } else if name == b"specificity-boundary"[..].to_vec() {
+        let count = specificity_count(214748usize);
+        out.write(format!("rules={}\n", count).as_bytes());
+        ok = count == 1usize;
+    } else if name == b"specificity-overflow"[..].to_vec() {
+        let count = specificity_count(214749usize);
+        out.write(format!("rules={}\n", count).as_bytes());
+        ok = count == 1usize;
+    } else if name == b"specificity-order"[..].to_vec() {
+        let color = classes_beat_id();
+        out.write(format!("color={:08x} expected=ffff0000\n", color).as_bytes());
+        ok = color == 0xffff0000u32;
+    } else {
+        out.write(b"Unknown parser probe\n");
+        ok = false;
+    }
+    if ok { out.write(b"PASS\n"); }
+    else { out.write(b"FAIL\n"); world.set_exit_status(1u8); }
+}

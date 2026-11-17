@@ -1,0 +1,18 @@
+--- a/src/net.lkj
++++ b/src/net.lkj
+@@ -165,9 +165,13 @@
+     format!("{}{}",origin,normalize(full.as_str()))
+ }
+ pub fn read_path(world:&mut World,path:&str)->Result<Vec<u8>,String> {
+-    let (root,name)=if path.starts_with('/') {("/", &path[1..])} else {(".",path)};
++    // Inspect the final inode before opening it for data: FIFOs and devices may block.
++    let (root,name)=match path.rfind('/') {
++        Some(i)=>if i==0usize {("/", &path[1..])} else {(&path[..i], &path[i+1usize..])},
++        None=>(".",path),
++    };
+     let mut dir=match world.directory(root){Ok(d)=>d,Err(e)=>return Err(err("Open directory",e))};
+-    let mut file=match dir.open(name){Ok(f)=>f,Err(e)=>return Err(err("Open file",e))};
++    let mut file=match dir.open_regular(name){Ok(f)=>f,Err(e)=>return Err(err("Open regular file",e))};
+     let mut result=Vec::new();let mut block=[0u8;8192];
+     loop {
+         let n=match file.read(&mut block){Ok(n)=>n,Err(e)=>return Err(err("Read file",e))};

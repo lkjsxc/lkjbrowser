@@ -1,0 +1,11 @@
+Actual Weston screenshots of one continuously running native browser.
+Input is timed application event replay, not physical hardware input.
+Frames retain exact PNG pixels; animation uses a nominal 400 ms frame delay.
+APNG shots/scroll-and-link.apng: 16 frames, 1000x760, 400 ms, 856056 bytes; first-frame pixels verified (417b78cce22f1011)
+Script 900ms: scroll 480
+Script 1800ms: scroll 480
+Script 2700ms: key 102
+Script 3400ms: click 130 120
+Script 4300ms: scroll 260
+Script 5200ms: click 75 35
+Wayland: sent 43 messages, received 40, presented 7 frames

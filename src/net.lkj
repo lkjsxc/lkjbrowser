@@ -1,0 +1,541 @@
+//! URL loading, DNS over TCP and HTTP/1.1. No external networking helper.
+use std::str::trim_ascii;
+const LIMIT: usize = 16777216usize;
+const TIMEOUT: usize = 6000000000usize;
+
+pub struct Url {
+    pub scheme: String,
+    pub host: String,
+    pub port: u16,
+    pub path: String,
+    pub fragment: String,
+}
+pub struct Response {
+    pub url: String,
+    pub status: u16,
+    pub content_type: String,
+    pub body: Vec<u8>,
+}
+fn err(operation: &str, errno: i64) -> String {
+    format!("{}: {} ({})", operation, std::io::errno_name(errno), errno)
+}
+pub fn text(bytes: &[u8]) -> String {
+    let valid = { match std::str::from_utf8(bytes) {
+        Ok(value) => Some(value.to_string()), Err(_) => None
+    }};
+    if let Some(value) = valid { return value; }
+    let mut result = String::new();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        let b = bytes[i];
+        let n = if b < 128u8 {1usize} else if b >= 194u8 && b <= 223u8 {2usize}
+            else if b >= 224u8 && b <= 239u8 {3usize}
+            else if b >= 240u8 && b <= 244u8 {4usize} else {0usize};
+        let mut cp = if n==1 {b as u32} else if n==2 {(b&31u8) as u32}
+            else if n==3 {(b&15u8) as u32} else {(b&7u8) as u32};
+        let mut ok=n>0 && i+n<=bytes.len();
+        let mut j=1usize;
+        while ok && j<n {
+            let c=bytes[i+j];
+            if c&192u8!=128u8 {ok=false;} else {cp=cp*64u32+(c&63u8) as u32;}
+            j+=1;
+        }
+        if n==2 && cp<128u32 || n==3 && cp<2048u32 || n==4 && cp<65536u32 {ok=false;}
+        if ok {
+            match char::from_u32(cp) {
+                Some(c)=>{result.push(c);i+=n;}
+                None=>{result.push('\u{fffd}');i+=1;}
+            }
+        } else {result.push('\u{fffd}');i+=1;}
+    }
+    result
+}
+fn hex(b:u8) -> i32 {
+    if b>=b'0' && b<=b'9' {(b-b'0') as i32}
+    else if b>=b'a' && b<=b'f' {(b-b'a') as i32+10}
+    else if b>=b'A' && b<=b'F' {(b-b'A') as i32+10} else {-1}
+}
+pub fn decode_path(path:&str) -> Result<String,String> {
+    let bytes=path.as_bytes();
+    let mut out=Vec::new(); let mut i=0usize;
+    while i<bytes.len() {
+        if bytes[i]==b'%' {
+            if i+2>=bytes.len() { return Err("Incomplete percent escape".to_string()); }
+            let a=hex(bytes[i+1]); let b=hex(bytes[i+2]);
+            if a<0 || b<0 { return Err("Invalid percent escape".to_string()); }
+            let c=(a*16+b) as u8;
+            if c==0 { return Err("NUL in a URL path".to_string()); }
+            out.push(c); i+=3;
+        } else { out.push(bytes[i]); i+=1; }
+    }
+    match String::from_utf8(out) { Ok(s)=>Ok(s),Err(_)=>Err("File path is not UTF-8".to_string()) }
+}
+pub fn parse(value:&str) -> Result<Url,String> {
+    if value.as_bytes().iter().any(|b| *b<32u8 || *b==127u8 || *b==b' ') {
+        return Err("The address contains a space or control character".to_string());
+    }
+    let (address,fragment)=match value.split_once('#') {
+        Some((a,f))=>(a.to_string(),f.to_string()),None=>(value.to_string(),String::new())
+    };
+    if address.starts_with("file://") {
+        let rest=&address.as_str()[7..];
+        let path=if rest.starts_with('/') {rest.to_string()}
+            else if rest.starts_with("localhost/") {rest[9..].to_string()}
+            else {return Err("file:// requires an absolute local path".to_string());};
+        return Ok(Url {scheme:"file".to_string(),host:String::new(),port:0u16,path,fragment});
+    }
+    if address.starts_with("https://") {
+        return Err("HTTPS pages are not supported. Open this address in another browser.".to_string());
+    }
+    if !address.starts_with("http://") {
+        return Err("Supported addresses begin with file:// or http://".to_string());
+    }
+    let rest=&address.as_str()[7..];
+    let end=rest.find('/').unwrap_or(rest.len());
+    let q=rest.find('?').unwrap_or(rest.len());
+    let boundary=if q<end {q} else {end};
+    let authority=&rest[..boundary];
+    if authority.is_empty() || authority.contains('@') || authority.contains('[') {
+        return Err("An HTTP hostname or numeric IPv4 address is required (no userinfo or IPv6 yet)".to_string());
+    }
+    let (host,port)=match authority.split_once(':') {
+        Some((h,p)) => {
+            let n=match p.parse::<u16>() {Ok(v)=>v,Err(_)=>return Err("Invalid HTTP port".to_string())};
+            if n==0 {return Err("Port zero is not a destination".to_string());}
+            (h.to_ascii_lowercase(),n)
+        }
+        None=>(authority.to_ascii_lowercase(),80u16)
+    };
+    let path=if boundary==rest.len() {"/".to_string()}
+        else if rest.as_bytes()[boundary]==b'?' {format!("/{}", &rest[boundary..])}
+        else {rest[boundary..].to_string()};
+    Ok(Url{scheme:"http".to_string(),host,port,path,fragment})
+}
+fn normalize(path:&str)->String {
+    let (pathname,suffix)=match path.find('?') {
+        Some(i)=>(path[..i].to_string(),path[i..].to_string()),None=>(path.to_string(),String::new())
+    };
+    let mut segments:Vec<String>=Vec::new();
+    let mut first=true;
+    for part in pathname.as_str().split('/') {
+        if first && part.is_empty(){first=false;continue;}
+        first=false;
+        if part==".." {if !segments.is_empty(){segments.pop();}}
+        else if part!="." {segments.push(part.to_string());}
+    }
+    let mut out="/".to_string();
+    let mut i=0usize;
+    while i<segments.len(){if i>0{out.push('/');}out.push_str(segments[i].as_str());i+=1;}
+    if (pathname.ends_with("/.") || pathname.ends_with("/..")) && !out.ends_with('/') {out.push('/');}
+    out.push_str(suffix.as_str());out
+}
+fn has_scheme(reference:&str)->bool{
+    let bytes=reference.as_bytes();
+    if bytes.is_empty() || !((bytes[0]>=b'A' && bytes[0]<=b'Z') || (bytes[0]>=b'a' && bytes[0]<=b'z')){return false;}
+    let mut i=1usize;
+    while i<bytes.len(){
+        let b=bytes[i];
+        if b==b':'{return true;}
+        if !((b>=b'A' && b<=b'Z') || (b>=b'a' && b<=b'z') || (b>=b'0' && b<=b'9') || b==b'+' || b==b'-' || b==b'.'){return false;}
+        i+=1;
+    }
+    false
+}
+pub fn resolve(base:&str, reference:&str)->String {
+    if has_scheme(reference) {return reference.to_string();}
+    if reference.is_empty(){return base.split_once('#').map(|(a,_)|a).unwrap_or(base).to_string();}
+    if reference.starts_with('#') {
+        let origin=base.split_once('#').map(|(a,_)|a).unwrap_or(base);
+        return format!("{}{}",origin,reference);
+    }
+    let u=match parse(base){Ok(u)=>u,Err(_)=>return reference.to_string()};
+    let origin=if u.scheme=="file" {"file://".to_string()}
+        else if u.port==80u16 {format!("http://{}",u.host)}
+        else {format!("http://{}:{}",u.host,u.port)};
+    if reference.starts_with("//") {return format!("{}:{}",u.scheme,reference);}
+    let full=if reference.starts_with('/') {reference.to_string()}
+        else if reference.starts_with('?') {
+            let p=u.path.as_str().split_once('?').map(|(a,_)|a).unwrap_or(u.path.as_str());
+            format!("{}{}",p,reference)
+        } else {
+            let path=u.path.as_str().split_once('?').map(|(a,_)|a).unwrap_or(u.path.as_str());
+            let end=path.rfind('/').unwrap_or(0usize);
+            format!("{}{}", &path[..end+1], reference)
+        };
+    format!("{}{}",origin,normalize(full.as_str()))
+}
+pub fn read_path(world:&mut World,path:&str)->Result<Vec<u8>,String> {
+    // Inspect the final inode before opening it for data: FIFOs and devices may block.
+    let (root,name)=match path.rfind('/') {
+        Some(i)=>if i==0usize {("/", &path[1..])} else {(&path[..i], &path[i+1usize..])},
+        None=>(".",path),
+    };
+    let mut dir=match world.directory(root){Ok(d)=>d,Err(e)=>return Err(err("Open directory",e))};
+    let mut file=match dir.open_regular(name){Ok(f)=>f,Err(e)=>return Err(err("Open regular file",e))};
+    let mut result=Vec::new();let mut block=[0u8;8192];
+    loop {
+        let n=match file.read(&mut block){Ok(n)=>n,Err(e)=>return Err(err("Read file",e))};
+        if n==0 {break;}
+        if result.len()+n>LIMIT {return Err("File exceeds this browser's 16 MiB document limit".to_string());}
+        result.extend_from_slice(&block[..n]);
+    }
+    Ok(result)
+}
+pub fn write_path(world:&mut World,path:&str,bytes:&[u8])->Result<(),String> {
+    let (root,name)=if path.starts_with('/') {("/", &path[1..])} else {(".",path)};
+    let mut dir=match world.directory(root){Ok(d)=>d,Err(e)=>return Err(err("Output directory",e))};
+    let mut file=match dir.create(name){Ok(f)=>f,Err(e)=>return Err(err("Create output",e))};
+    match file.write_all(bytes){Ok(())=>Ok(()),Err(e)=>Err(err("Write output",e))}
+}
+struct Stream {file:File,ready:Readiness,clock:Clock,deadline:usize}
+impl Stream {
+    fn open(world:&mut World,address:&str,port:u16)->Result<Stream,String> {
+        let mut connector=match world.connector(address,port){Ok(c)=>c,Err(e)=>return Err(err("Destination",e))};
+        // The pin has no deadline-aware connect. GAPS.md records this residual blocking operation.
+        let mut file=match connector.connect(){Ok(f)=>f,Err(e)=>return Err(err("Connect",e))};
+        match file.set_nonblocking(true){Ok(())=>{},Err(e)=>return Err(err("Nonblocking socket",e))}
+        let mut ready=match world.readiness(){Ok(r)=>r,Err(e)=>return Err(err("Readiness",e))};
+        match ready.watch_file(&mut file,1usize,1u8){Ok(())=>{},Err(e)=>return Err(err("Watch socket",e))}
+        let mut clock=world.clock();
+        let start=match clock.nanoseconds(){Ok(v)=>v,Err(e)=>return Err(err("Clock",e))};
+        Ok(Stream{file,ready,clock,deadline:start+TIMEOUT})
+    }
+    fn check_deadline(&mut self)->Result<(),String>{
+        let now=match self.clock.nanoseconds(){Ok(n)=>n,Err(e)=>return Err(err("Clock",e))};
+        if now>=self.deadline{return Err("The server did not finish before the six-second deadline".to_string());}
+        Ok(())
+    }
+    fn wait(&mut self,interest:u8)->Result<(),String> {
+        self.check_deadline()?;
+        match self.ready.watch_file(&mut self.file,1usize,interest){Ok(())=>{},Err(e)=>return Err(err("Watch socket",e))}
+        let events=match self.ready.wait(&mut self.clock,self.deadline){Ok(e)=>e,Err(e)=>return Err(err("Wait for socket",e))};
+        if events.is_empty(){return Err("The server did not respond before the six-second deadline".to_string());}
+        Ok(())
+    }
+    fn send(&mut self,bytes:&[u8])->Result<(),String> {
+        let mut offset=0usize;
+        while offset<bytes.len(){
+            self.check_deadline()?;
+            match self.file.write(&bytes[offset..]){
+                Ok(0)=>return Err("The connection closed while sending".to_string()),
+                Ok(n)=>offset+=n,
+                Err(11)=>self.wait(2u8)?,
+                Err(e)=>return Err(err("Send",e)),
+            }
+        }
+        Ok(())
+    }
+    fn receive(&mut self,buffer:&mut [u8])->Result<usize,String>{
+        loop {self.check_deadline()?;match self.file.read(buffer){
+            Ok(n)=>return Ok(n),Err(11)=>self.wait(1u8)?,Err(e)=>return Err(err("Receive",e))
+        }}
+    }
+    fn exact(&mut self,n:usize)->Result<Vec<u8>,String>{
+        let mut bytes=vec![0u8;n];let mut offset=0usize;
+        while offset<n {
+            let count=self.receive(&mut bytes[offset..])?;
+            if count==0 {return Err("The server closed an incomplete message".to_string());}
+            offset+=count;
+        }
+        Ok(bytes)
+    }
+}
+fn numeric(host:&str)->bool {
+    let mut count=0usize;
+    for part in host.split('.') {
+        if part.is_empty(){return false;}
+        if part.parse::<u8>().is_err(){return false;}count+=1;
+    }
+    count==4
+}
+// Trusted configuration only: callers must not pass a document-controlled path.
+pub fn read_trusted_config(root:&mut Directory,path:&str)->Result<Vec<u8>,String>{
+    let mut config=root.open(path).map_err(|e:i64|->String{err("Resolver configuration",e)})?;
+    // This operation checks the held inode is regular before any content read.
+    config.modified_nanoseconds().map_err(|e:i64|->String{err("Regular resolver configuration",e)})?;
+    let mut bytes=Vec::new();let mut block=[0u8;1024];
+    loop{
+        let n=config.read(&mut block).map_err(|e:i64|->String{err("Read resolver configuration",e)})?;
+        if n==0usize{break;}
+        if bytes.len()+n>65536usize{return Err("Resolver configuration exceeds 64 KiB".to_string());}
+        bytes.extend_from_slice(&block[..n]);
+    }
+    Ok(bytes)
+}
+fn resolver(world:&mut World)->Result<String,String> {
+    // Fixed OS-owned configuration may use its normal relative symlink. Page loads
+    // never call this path; read_path retains open_regular/no-leaf-symlink semantics.
+    let mut root=world.directory("/").map_err(|e:i64|->String{err("Resolver configuration directory",e)})?;
+    let bytes=read_trusted_config(&mut root,"etc/resolv.conf")?;
+    let content=text(&bytes);
+    for line in content.as_str().lines(){
+        let line=trim_ascii(line);
+        if line.starts_with("nameserver"){
+            let rest=trim_ascii(&line[10..]);
+            let end=rest.find(' ').unwrap_or(rest.len());
+            let addr=&rest[..end];
+            if numeric(addr){return Ok(addr.to_string());}
+        }
+    }
+    Err("No IPv4 DNS resolver was found in /etc/resolv.conf".to_string())
+}
+fn be16(bytes:&[u8],i:usize)->u16 {((bytes[i] as u16)<<8)|(bytes[i+1] as u16)}
+fn name_end(bytes:&[u8],start:usize)->Result<usize,String>{
+    let mut i=start;
+    loop {
+        if i>=bytes.len(){return Err("Truncated DNS name".to_string());}
+        let n=bytes[i] as usize;i+=1;
+        if n==0{return Ok(i);}
+        if n&192usize==192usize {
+            if i>=bytes.len(){return Err("Truncated DNS pointer".to_string());}
+            return Ok(i+1);
+        }
+        if n>63 || i+n>bytes.len(){return Err("Invalid DNS label".to_string());}
+        i+=n;
+    }
+}
+pub fn dns_answer(bytes:&[u8],id:u16)->Result<String,String>{
+    if bytes.len()<12 || be16(bytes,0)!=id || bytes[2]&128u8==0u8 {
+        return Err("Invalid DNS response".to_string());
+    }
+    if bytes[3]&15u8!=0u8 {return Err(format!("DNS returned response code {}",bytes[3]&15u8));}
+    let questions=be16(bytes,4) as usize;let answers=be16(bytes,6) as usize;
+    let mut p=12usize;let mut q=0usize;
+    while q<questions {p=name_end(bytes,p)?;if p+4>bytes.len(){return Err("Truncated DNS question".to_string());}p+=4;q+=1;}
+    let mut a=0usize;
+    while a<answers {
+        p=name_end(bytes,p)?;
+        if p+10>bytes.len(){return Err("Truncated DNS record".to_string());}
+        let kind=be16(bytes,p);let class=be16(bytes,p+2);let n=be16(bytes,p+8) as usize;p+=10;
+        if p+n>bytes.len(){return Err("Truncated DNS address".to_string());}
+        if kind==1u16 && class==1u16 && n==4usize {
+            return Ok(format!("{}.{}.{}.{}",bytes[p],bytes[p+1],bytes[p+2],bytes[p+3]));
+        }
+        p+=n;a+=1;
+    }
+    Err("DNS returned no IPv4 address".to_string())
+}
+pub fn lookup(world:&mut World,host:&str,dns:&str)->Result<String,String>{
+    if numeric(host){return Ok(host.to_string());}
+    if host=="localhost"{return Ok("127.0.0.1".to_string());}
+    if host.len()>253{return Err("DNS name is too long".to_string());}
+    let address=if dns.is_empty(){resolver(world)?}else{dns.to_string()};
+    let mut entropy=world.entropy();let mut random=[0u8;2];
+    match entropy.fill(&mut random){Ok(())=>{},Err(e)=>return Err(err("DNS transaction entropy",e))}
+    let id=be16(&random,0);
+    let mut query=vec![random[0],random[1],1u8,0u8,0u8,1u8,0u8,0u8,0u8,0u8,0u8,0u8];
+    for label in host.split('.') {
+        if label.is_empty() || label.len()>63 {return Err("Invalid DNS label".to_string());}
+        query.push(label.len() as u8);query.extend_from_slice(label.as_bytes());
+    }
+    query.extend_from_slice(&[0u8,0u8,1u8,0u8,1u8]);
+    let mut packet=vec![(query.len()>>8) as u8,(query.len()&255usize) as u8];
+    packet.extend_from_slice(&query);
+    let mut stream=Stream::open(world,address.as_str(),53u16)?;
+    stream.send(&packet)?;
+    let length=stream.exact(2usize)?;let n=be16(&length,0) as usize;
+    let response=stream.exact(n)?;
+    dns_answer(&response,id)
+}
+pub struct Headers {
+    pub status:u16,pub length:Option<usize>,pub chunked:bool,pub location:String,pub content_type:String
+}
+pub fn parse_headers(bytes:&[u8])->Result<Headers,String>{
+    let content=match std::str::from_utf8(bytes){Ok(s)=>s,Err(_)=>return Err("Non-ASCII HTTP header".to_string())};
+    let mut lines=content.split("\r\n");
+    let status_line=lines.next().unwrap_or("");
+    let sb=status_line.as_bytes();
+    if sb.len()<12 || !(status_line.starts_with("HTTP/1.1 ") || status_line.starts_with("HTTP/1.0 ")){
+        return Err("Invalid HTTP status line".to_string());
+    }
+    if sb[9]<b'0' || sb[9]>b'9' || sb[10]<b'0' || sb[10]>b'9' || sb[11]<b'0' || sb[11]>b'9'
+        || sb.len()>12 && sb[12]!=b' ' {
+        return Err("Invalid HTTP status".to_string());
+    }
+    let status=(sb[9]-b'0') as u16*100u16+(sb[10]-b'0') as u16*10u16+(sb[11]-b'0') as u16;
+    if status<100u16 || status>599u16{return Err("Invalid HTTP status range".to_string());}
+    let mut headers=Headers{status,length:None,chunked:false,location:String::new(),content_type:"text/html".to_string()};
+    for line in lines {
+        if line.is_empty(){continue;}
+        let (name,value)=match line.split_once(':'){Some(pair)=>pair,None=>return Err("Invalid HTTP header line".to_string())};
+        let lower=name.to_ascii_lowercase();let value=trim_ascii(value);
+        if lower=="content-length" {
+            if value.is_empty() || !value.as_bytes().iter().all(|b|*b>=b'0' && *b<=b'9'){
+                return Err("Invalid Content-Length".to_string());
+            }
+            let n=match value.parse::<usize>(){Ok(n)=>n,Err(_)=>return Err("Invalid Content-Length".to_string())};
+            if n>LIMIT{return Err("Document exceeds this browser's 16 MiB limit".to_string());}
+            match headers.length {Some(old)=>if old!=n{return Err("Conflicting Content-Length values".to_string());},None=>{}}
+            headers.length=Some(n);
+        } else if lower=="transfer-encoding" {
+            if !value.eq_ignore_ascii_case("chunked"){return Err("Unsupported HTTP transfer coding".to_string());}
+            headers.chunked=true;
+        } else if lower=="location" {headers.location=value.to_string();}
+        else if lower=="content-type" {headers.content_type=value.to_string();}
+        else if lower=="content-encoding" && !value.eq_ignore_ascii_case("identity") {
+            return Err("The server sent compressed content despite Accept-Encoding: identity".to_string());
+        }
+    }
+    if headers.chunked && headers.length.is_some(){return Err("Ambiguous HTTP body framing (both length and transfer coding)".to_string());}
+    Ok(headers)
+}
+struct ChunkDecoder { output:Vec<u8>,offset:usize,state:u8,remaining:usize }
+impl ChunkDecoder{
+    fn new()->ChunkDecoder{ChunkDecoder{output:Vec::new(),offset:0usize,state:0u8,remaining:0usize}}
+    fn feed(&mut self,bytes:&[u8])->Result<bool,String>{
+        loop{
+            if self.state==4u8{return Ok(true);}
+            if self.state==0u8 || self.state==3u8{
+                let mut end=self.offset;
+                while end+1<bytes.len() && !(bytes[end]==13u8 && bytes[end+1]==10u8){end+=1;}
+                if end-self.offset>8192usize{return Err("HTTP chunk line exceeds 8 KiB".to_string());}
+                if end+1>=bytes.len(){return Ok(false);}
+                if self.state==3u8{
+                    if end==self.offset{self.state=4u8;return Ok(true);}
+                    self.offset=end+2usize;
+                }else{
+                    let mut n=0usize;let mut i=self.offset;let mut digits=0usize;
+                    while i<end && bytes[i]!=b';'{
+                        let v=hex(bytes[i]);
+                        if v<0{return Err("Invalid HTTP chunk size".to_string());}
+                        if n>LIMIT/16usize{return Err("HTTP chunk exceeds document limit".to_string());}
+                        n=n*16usize+v as usize;i+=1;digits+=1;
+                    }
+                    if digits==0{return Err("Missing HTTP chunk size".to_string());}
+                    if n>LIMIT || self.output.len()+n>LIMIT{return Err("HTTP document exceeds 16 MiB limit".to_string());}
+                    self.offset=end+2usize;self.remaining=n;
+                    self.state=if n==0usize{3u8}else{1u8};
+                }
+            }else if self.state==1u8{
+                let available=bytes.len()-self.offset;
+                let n=available.min(self.remaining);
+                if n==0usize{return Ok(false);}
+                self.output.extend_from_slice(&bytes[self.offset..self.offset+n]);
+                self.offset+=n;self.remaining-=n;
+                if self.remaining==0usize{self.state=2u8;}
+            }else{
+                if self.offset+2usize>bytes.len(){return Ok(false);}
+                if bytes[self.offset]!=13u8 || bytes[self.offset+1usize]!=10u8{return Err("Missing chunk terminator".to_string());}
+                self.offset+=2usize;self.state=0u8;
+            }
+        }
+    }
+}
+pub fn chunked(bytes:&[u8])->Result<Option<Vec<u8>>,String>{
+    let mut decoder=ChunkDecoder::new();
+    if decoder.feed(bytes)?{Ok(Some(decoder.output))}else{Ok(None)}
+}
+fn header_end(bytes:&[u8])->Option<usize>{
+    let mut i=0usize;
+    while i+3<bytes.len(){if bytes[i]==13u8 && bytes[i+1]==10u8 && bytes[i+2]==13u8 && bytes[i+3]==10u8{return Some(i+4);}i+=1;}
+    None
+}
+fn request(world:&mut World,url:&Url,dns:&str)->Result<(Headers,Vec<u8>),String>{
+    let address=lookup(world,url.host.as_str(),dns)?;
+    let mut stream=Stream::open(world,address.as_str(),url.port)?;
+    let host=if url.port==80u16{url.host.clone()}else{format!("{}:{}",url.host,url.port)};
+    let request=format!("GET {} HTTP/1.1\r\nHost: {}\r\nUser-Agent: lkjbrowser/0.1\r\nAccept: text/html,text/plain,*/*;q=0.5\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n",url.path,host);
+    stream.send(request.as_bytes())?;
+    let mut bytes=Vec::new();let mut buffer=[0u8;8192];
+    let mut end=0usize;
+    let headers=loop{
+        if let Some(n)=header_end(&bytes){
+            if n>65536{return Err("HTTP headers exceed 64 KiB".to_string());}
+            let h=parse_headers(&bytes[..n])?;
+            if h.status>=100u16 && h.status<200u16{
+                if h.status==101u16{return Err("HTTP protocol upgrade is unsupported".to_string());}
+                bytes={let remainder=&bytes[n..];remainder.to_vec()};continue;
+            }
+            end=n;break h;
+        }
+        if bytes.len()>65536{return Err("HTTP headers exceed 64 KiB".to_string());}
+        let n=stream.receive(&mut buffer)?;
+        if n==0{return Err("The server closed before sending HTTP headers".to_string());}
+        bytes.extend_from_slice(&buffer[..n]);
+    };
+    let mut body={let view=&bytes[end..];view.to_vec()};
+    let mut decoder=ChunkDecoder::new();
+    loop{
+        if headers.status==204u16 || headers.status==304u16{return Ok((headers,Vec::new()));}
+        if headers.chunked{
+            if decoder.feed(&body)?{return Ok((headers,decoder.output));}
+        }else if let Some(n)=headers.length{
+            if body.len()>=n{body.truncate(n);return Ok((headers,body));}
+        }
+        let n=stream.receive(&mut buffer)?;
+        if n==0{
+            if headers.chunked || headers.length.is_some(){return Err("Incomplete HTTP response body".to_string());}
+            return Ok((headers,body));
+        }
+        if body.len()+n>LIMIT{return Err("HTTP document exceeds 16 MiB limit".to_string());}
+        body.extend_from_slice(&buffer[..n]);
+    }
+}
+pub fn fetch(world:&mut World,address:&str,dns:&str)->Result<Response,String>{
+    fetch_authorized(world,address,dns,true)
+}
+pub fn fetch_authorized(world:&mut World,address:&str,dns:&str,mut allow_file:bool)->Result<Response,String>{
+    let mut current=address.to_string();let mut redirects=0usize;
+    loop{
+        let u=parse(current.as_str())?;
+        if u.scheme=="file"{
+            if !allow_file{return Err("Web pages cannot open local files. To open a local file yourself, enter its address above.".to_string());}
+            let path=decode_path(u.path.as_str())?;
+            let body=read_path(world,path.as_str())?;
+            return Ok(Response{url:current,status:200u16,content_type:"text/html; charset=utf-8".to_string(),body});
+        }
+        // Receiving any HTTP hop removes local-file authority for the rest of this redirect chain.
+        allow_file=false;
+        let (headers,body)=request(world,&u,dns)?;
+        if headers.status==301u16 || headers.status==302u16 || headers.status==303u16 || headers.status==307u16 || headers.status==308u16{
+            if headers.location.is_empty(){return Err("HTTP redirect has no Location".to_string());}
+            if redirects>=5{return Err("More than five HTTP redirects".to_string());}
+            current=resolve(current.as_str(),headers.location.as_str());redirects+=1;continue;
+        }
+        return Ok(Response{url:current,status:headers.status,content_type:headers.content_type,body});
+    }
+}
+#[test]
+fn urls(){
+    assert_eq!(parse("http://localhost:8080/a?q=1#z").unwrap().port,8080u16);
+    assert_eq!(resolve("http://host/a/b","../next"),"http://host/next".to_string());
+    assert_eq!(decode_path("/a%20b").unwrap(),"/a b".to_string());
+    assert!(parse("http://host/\r\nx").is_err());
+    assert!(parse("https://example.com").is_err());
+}
+#[test]
+fn framing(){
+    let h=parse_headers(b"HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\n").unwrap();
+    assert_eq!(h.length,Some(12usize));
+    assert!(parse_headers(b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\nTransfer-Encoding: chunked\r\n\r\n").is_err());
+    assert_eq!(chunked(b"4\r\nWiki\r\n5\r\npedia\r\n0\r\n\r\n").unwrap().unwrap(),b"Wikipedia"[..].to_vec());
+    assert!(chunked(b"1\r\nx\r\n0\r\n").unwrap().is_none());
+    assert!(chunked(b"x\r\n").is_err());
+}
+
+#[test]
+fn malformed_status_is_an_error_not_a_trap(){
+    assert!(parse_headers("HTTP/1.€ 200 OK\r\n\r\n".as_bytes()).is_err());
+    assert!(parse_headers(b"HTTP/1.1 20x OK\r\n\r\n").is_err());
+    assert!(parse_headers(b"HTTP/1.1 099 Weird\r\n\r\n").is_err());
+    assert!(parse_headers(b"HTTP/1.1 200 OK\r\nContent-Length: +12\r\n\r\n").is_err());
+    assert_eq!(text(&[0xffu8,b'a',0xc3u8,0xa9u8]),"\u{fffd}aé".to_string());
+}
+
+#[test]
+fn reference_resolution(){
+    assert_eq!(resolve("http://host/a/b?q=1#old",""),"http://host/a/b?q=1".to_string());
+    assert_eq!(resolve("http://host/a/b","."),"http://host/a/".to_string());
+    assert_eq!(resolve("http://host/a/b","c//d"),"http://host/a/c//d".to_string());
+    assert_eq!(resolve("http://host/a/b","mailto:test@example.com"),"mailto:test@example.com".to_string());
+    assert_eq!(resolve("http://host/a/b","../../x"),"http://host/x".to_string());
+}
+#[test]
+fn incremental_chunks(){
+    let packet=b"3\r\nabc\r\n2\r\nde\r\n0\r\nX-Test: yes\r\n\r\n";
+    let mut decoder=ChunkDecoder::new();
+    let mut n=0usize;
+    while n<packet.len(){assert!(!decoder.feed(&packet[..n]).unwrap());n+=1;}
+    assert!(decoder.feed(&packet[..]).unwrap());
+    assert_eq!(decoder.output,b"abcde"[..].to_vec());
+}

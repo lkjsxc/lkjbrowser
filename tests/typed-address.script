@@ -1,0 +1,20 @@
+# Ctrl+L, type about:welcome using physical US keycodes, then Enter.
+down 29
+key 38
+up 29
+key 30
+key 48
+key 24
+key 22
+key 20
+down 42
+key 39
+up 42
+key 17
+key 18
+key 38
+key 46
+key 24
+key 50
+key 18
+key 28

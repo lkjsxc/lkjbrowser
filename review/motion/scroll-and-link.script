@@ -1,0 +1,8 @@
+# One event every --script-interval-ms milliseconds, after initial presentation.
+# The click uses the article's actual top-navigation hit box.
+scroll 180
+scroll 180
+scroll 180
+scroll 180
+key 102
+click 130 120

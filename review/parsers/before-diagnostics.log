@@ -1,0 +1,12 @@
+START font-overflow
+css.lkj:110: R0001 integer overflow
+START font-em-overflow
+css.lkj:181: R0001 integer overflow
+START specificity-overflow
+css.lkj:322: R0001 integer overflow
+START font-small-policy
+font_size=0 expected=6..160
+FAIL
+START specificity-order
+color=ff0000ff expected=ffff0000
+FAIL

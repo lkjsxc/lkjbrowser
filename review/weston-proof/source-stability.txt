@@ -1,0 +1,1 @@
+Source hashes stayed unchanged during capture.

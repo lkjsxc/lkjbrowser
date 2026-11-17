@@ -1,0 +1,198 @@
+//! Lossless APNG development multiplexer; does not render or simulate browser frames.
+mod png;
+
+struct Frame {
+    header: Vec<u8>,
+    prefix: Vec<u8>,
+    streams: Vec<Vec<u8>>,
+    width: usize,
+    height: usize,
+    pixel_hash: u64,
+}
+fn u32be(data: &[u8], at: usize) -> u32 {
+    ((data[at] as u32) << 24) | ((data[at + 1usize] as u32) << 16)
+        | ((data[at + 2usize] as u32) << 8) | data[at + 3usize] as u32
+}
+fn push16(out: &mut Vec<u8>, value: u16) {
+    out.push((value >> 8) as u8); out.push(value as u8);
+}
+fn push32(out: &mut Vec<u8>, value: u32) {
+    out.push((value >> 24) as u8); out.push((value >> 16) as u8);
+    out.push((value >> 8) as u8); out.push(value as u8);
+}
+fn crc32(data: &[u8]) -> u32 {
+    let mut crc = 0xffffffffu32;
+    let mut i = 0usize;
+    while i < data.len() {
+        crc ^= data[i] as u32;
+        let mut bit = 0usize;
+        while bit < 8usize {
+            crc = if crc & 1u32 != 0u32 { (crc >> 1) ^ 0xedb88320u32 } else { crc >> 1 };
+            bit += 1usize;
+        }
+        i += 1usize;
+    }
+    crc ^ 0xffffffffu32
+}
+fn chunk(out: &mut Vec<u8>, name: &[u8], contents: &[u8]) {
+    push32(out,contents.len() as u32);
+    let mut body = name.to_vec();
+    body.extend_from_slice(contents);
+    let crc = crc32(&body);
+    out.extend_from_slice(&body);
+    push32(out,crc);
+}
+fn pixel_hash(pixels: &[u32]) -> u64 {
+    let mut hash = 14695981039346656037u64;
+    let mut i = 0usize;
+    while i < pixels.len() {
+        let mut shift = 0u32;
+        while shift < 32u32 {
+            hash = (hash ^ ((pixels[i] >> shift) & 255u32) as u64).wrapping_mul(1099511628211u64);
+            shift += 8u32;
+        }
+        i += 1usize;
+    }
+    hash
+}
+fn frame(bytes: &[u8]) -> Result<Frame,String> {
+    let image = png::decode(bytes)?;
+    let mut prefix = Vec::<u8>::new();
+    let mut streams = Vec::<Vec<u8>>::new();
+    let mut seen_data = false;
+    let mut at = 8usize;
+    while at < bytes.len() {
+        // png::decode has already checked chunk extents, CRCs, ordering and terminator.
+        let length = u32be(bytes,at) as usize;
+        let kind = u32be(bytes,at + 4usize);
+        let end = at + 12usize + length;
+        if kind == 0x6163544cu32 || kind == 0x6663544cu32 || kind == 0x66644154u32 {
+            return Err("input frames must be static PNG files".to_string());
+        }
+        if kind == 0x49444154u32 {
+            seen_data = true;
+            streams.push(bytes[at + 8usize..at + 8usize + length].to_vec());
+        } else if kind != 0x49484452u32 && kind != 0x49454e44u32 && !seen_data {
+            prefix.extend_from_slice(&bytes[at..end]);
+        }
+        at = end;
+    }
+    Ok(Frame { header: bytes[16usize..29usize].to_vec(), prefix, streams,
+        width: image.width, height: image.height, pixel_hash: pixel_hash(&image.pixels) })
+}
+fn delay_fraction(milliseconds: u32) -> Result<(u16,u16),String> {
+    if milliseconds == 0u32 { return Err("frame delay must be positive milliseconds".to_string()); }
+    let mut a = milliseconds;
+    let mut b = 1000u32;
+    while b != 0u32 { let r = a % b; a = b; b = r; }
+    let numerator = milliseconds / a;
+    let denominator = 1000u32 / a;
+    if numerator > 65535u32 || denominator > 65535u32 {
+        return Err("frame delay cannot be represented exactly by APNG".to_string());
+    }
+    Ok((numerator as u16,denominator as u16))
+}
+fn read_frame(root: &mut Directory, path: &str) -> Result<Frame,String> {
+    let mut file = match root.open(path) {
+        Ok(file) => file,
+        Err(errno) => return Err(format!("cannot open {}: errno {}",path,errno)),
+    };
+    let data = match file.read_to_end() {
+        Ok(data) => data,
+        Err(errno) => return Err(format!("cannot read {}: errno {}",path,errno)),
+    };
+    frame(&data)
+}
+fn argument(bytes: &[u8]) -> Result<String,String> {
+    match std::str::from_utf8(bytes) {
+        Ok(value) => Ok(value.to_string()),
+        Err(_) => Err("arguments must be UTF-8 paths or numbers".to_string()),
+    }
+}
+fn assemble(root: &mut Directory, args: &[Vec<u8>]) -> Result<String,String> {
+    if args.len() < 3usize {
+        return Err("usage: target/animate OUTPUT.apng DELAY_MS FRAME1.png [FRAME2.png ...]".to_string());
+    }
+    let output_name = argument(&args[0usize])?;
+    let delay_text = argument(&args[1usize])?;
+    let delay = match delay_text.as_str().parse::<u32>() {
+        Ok(delay) => delay,
+        Err(_) => return Err("DELAY_MS must be an unsigned integer".to_string()),
+    };
+    let fraction = delay_fraction(delay)?;
+    let count = args.len() - 2usize;
+    if count > 4294967295usize { return Err("too many frames for APNG".to_string()); }
+    let first_path = argument(&args[2usize])?;
+    let first = read_frame(root,first_path.as_str())?;
+    let mut animation = vec![137u8,80u8,78u8,71u8,13u8,10u8,26u8,10u8];
+    chunk(&mut animation,b"IHDR",&first.header);
+    animation.extend_from_slice(&first.prefix);
+    let mut control = Vec::<u8>::new();
+    push32(&mut control,count as u32); push32(&mut control,0u32);
+    chunk(&mut animation,b"acTL",&control);
+    let mut sequence = 0u32;
+    let mut i = 0usize;
+    while i < count {
+        let path = argument(&args[i + 2usize])?;
+        let current = read_frame(root,path.as_str())?;
+        if current.header != first.header || current.prefix != first.prefix {
+            return Err(format!("{} has different dimensions, format or shared PNG metadata",path));
+        }
+        let mut frame_control = Vec::<u8>::new();
+        push32(&mut frame_control,sequence);
+        sequence = match sequence.checked_add(1u32) {
+            Some(next) => next, None => return Err("APNG sequence count overflow".to_string()),
+        };
+        push32(&mut frame_control,current.width as u32);
+        push32(&mut frame_control,current.height as u32);
+        push32(&mut frame_control,0u32); push32(&mut frame_control,0u32);
+        push16(&mut frame_control,fraction.0); push16(&mut frame_control,fraction.1);
+        frame_control.push(0u8); frame_control.push(0u8); // NONE disposal, SOURCE blend.
+        chunk(&mut animation,b"fcTL",&frame_control);
+        let mut s = 0usize;
+        while s < current.streams.len() {
+            if animation.len() + current.streams[s].len() + 16usize > 33554420usize {
+                return Err("proof animation exceeds the 32 MiB file policy".to_string());
+            }
+            if i == 0usize { chunk(&mut animation,b"IDAT",&current.streams[s]); }
+            else {
+                let mut payload = Vec::<u8>::new();
+                push32(&mut payload,sequence);
+                sequence = match sequence.checked_add(1u32) {
+                    Some(next) => next, None => return Err("APNG sequence count overflow".to_string()),
+                };
+                payload.extend_from_slice(&current.streams[s]);
+                chunk(&mut animation,b"fdAT",&payload);
+            }
+            s += 1usize;
+        }
+        i += 1usize;
+    }
+    chunk(&mut animation,b"IEND",&[0u8;0]);
+    let decoded = png::decode(&animation)?;
+    if decoded.width != first.width || decoded.height != first.height || pixel_hash(&decoded.pixels) != first.pixel_hash {
+        return Err("APNG fallback frame does not match the source PNG".to_string());
+    }
+    let mut output = match root.create(output_name.as_str()) {
+        Ok(output) => output,
+        Err(errno) => return Err(format!("cannot create {}: errno {}",output_name,errno)),
+    };
+    match output.write_all(&animation) {
+        Ok(()) => (),
+        Err(errno) => return Err(format!("cannot write {}: errno {}",output_name,errno)),
+    }
+    Ok(format!("APNG {}: {} frames, {}x{}, {} ms, {} bytes; first-frame pixels verified ({:x})\n",
+        output_name,count,first.width,first.height,delay,animation.len(),first.pixel_hash))
+}
+fn main(mut world: World) {
+    let args = world.args();
+    let mut output = world.stdout();
+    let mut root = match world.directory(".") {
+        Ok(root) => root,
+        Err(errno) => { output.write(format!("animate: cannot open current directory: errno {}\n",errno).as_bytes()); world.set_exit_status(1u8); return; },
+    };
+    match assemble(&mut root,&args) {
+        Ok(report) => output.write(report.as_bytes()),
+        Err(error) => { output.write(format!("animate: {}\n",error).as_bytes()); world.set_exit_status(1u8); },
+    }
+}

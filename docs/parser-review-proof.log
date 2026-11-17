@@ -1,0 +1,41 @@
+Parser review artifacts: /home/coder/workspace/lkjbrowser/target/independent-review-parsers-run-pWDMxKFn
+ok 14 tests
+START unicode
+PASS
+START numeric
+PASS
+START depth
+PASS
+START font-boundary
+font_size=160
+PASS
+START font-overflow
+font_size=160
+PASS
+START font-em-overflow
+font_size=160
+PASS
+START font-small-policy
+font_size=6 expected=6..160
+PASS
+START specificity-boundary
+rules=1
+PASS
+START specificity-overflow
+rules=1
+PASS
+START specificity-order
+color=ffff0000 expected=ffff0000
+PASS
+case	exit
+unicode	0
+numeric	0
+depth	0
+font-boundary	0
+font-overflow	0
+font-em-overflow	0
+font-small-policy	0
+specificity-boundary	0
+specificity-overflow	0
+specificity-order	0
+Unit test exit: 0

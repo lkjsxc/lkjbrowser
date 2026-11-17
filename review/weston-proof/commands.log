@@ -1,0 +1,180 @@
++ date -u +%Y-%m-%dT%H:%M:%SZ
++ cp target/lkjbrowser /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/lkjbrowser
++ cp target/byte-descriptor-bridge /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/byte-descriptor-bridge
++ cp target/fixture-server /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/fixture-server
++ cp toolchain.lock /home/coder/workspace/lkjbrowser/review/weston-proof/toolchain.lock
++ sha256sum target/lkjbrowser target/byte-descriptor-bridge target/fixture-server .toolchain/lkjscript-x86_64-linux
++ sha256sum src/css.lkj src/fetch_probe.lkj src/fixture_server.lkj src/font.lkj src/font_probe.lkj src/html.lkj src/layout.lkj src/main.lkj src/net.lkj src/paint.lkj src/png.lkj src/png_probe.lkj src/wayland_input_probe.lkj src/wayland.lkj src/wayland_peer.lkj src/wayland_smoke.lkj program.lkj toolchain.lock bridge/byte_descriptor_bridge.c fixtures/article.html fixtures/simple.html fixtures/workshop.png
++ sha256sum /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/lkjbrowser /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/byte-descriptor-bridge /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/fixture-server
++ sha256sum .deps/root/usr/bin/weston .deps/root/usr/bin/weston-screenshooter
++ font_dir=/usr/share/fonts/truetype/liberation
++ test -f /usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf
++ sha256sum /usr/share/fonts/truetype/liberation/LiberationSans-BoldItalic.ttf /usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf /usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf /usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf
++ mkdir -m 700 /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime
++ export XDG_RUNTIME_DIR=/home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime
++ XDG_RUNTIME_DIR=/home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime
++ export WAYLAND_DISPLAY=review-wl
++ WAYLAND_DISPLAY=review-wl
++ export LD_LIBRARY_PATH=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu:/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston
++ LD_LIBRARY_PATH=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu:/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston
++ export 'WESTON_MODULE_MAP=headless-backend.so=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so;kiosk-shell.so=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so'
++ WESTON_MODULE_MAP='headless-backend.so=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so;kiosk-shell.so=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so'
++ weston_pid=
++ server_pid=
++ bridge_pid=
++ client_pid=
++ trap cleanup EXIT
++ trap 'exit 130' HUP INT TERM
++ /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston --version
++ weston_pid=2260085
++ (( attempt=0 ))
++ /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston --backend=headless --renderer=pixman --width=1000 --height=760 --shell=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so --socket=review-wl --idle-time=0 --no-config --debug --log=/home/coder/workspace/lkjbrowser/review/weston-proof/weston.log
++ (( attempt<100 ))
++ test -S /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime/review-wl
++ kill -0 2260085
++ sleep 0.05
++ (( attempt++ ))
++ (( attempt<100 ))
++ test -S /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime/review-wl
++ break
++ test -S /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime/review-wl
++ server_pid=2260091
++ (( attempt=0 ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/http-port
++ /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/fixture-server /home/coder/workspace/lkjbrowser/fixtures /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/http-port
++ kill -0 2260091
++ sleep 0.05
++ (( attempt++ ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/http-port
++ break
+++ cat /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/http-port
++ port=45891
+++ cat /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/http-port.closed
++ closed_port=36825
++ printf '%s\n' 45891
++ printf '%s\n' 36825
++ capture article http://127.0.0.1:45891/article.html
++ local name=article url=http://127.0.0.1:45891/article.html
++ local page=/home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/article
++ mkdir -p /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/article /home/coder/workspace/lkjbrowser/review/weston-proof/article
++ truncate -s 6082304 /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/article/frame.bgra
++ bridge_pid=2260097
++ (( attempt=0 ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/article/bridge-port
++ /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/byte-descriptor-bridge /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime/review-wl /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/article/frame.bgra
++ kill -0 2260097
++ sleep 0.05
++ (( attempt++ ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/article/bridge-port
++ break
++ local bridge_port
+++ cat /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/article/bridge-port
++ bridge_port=38521
++ printf '%s\n' http://127.0.0.1:45891/article.html
++ client_pid=2260111
++ sleep 2
++ /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/lkjbrowser --wayland 38521 --frame-file /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/article/frame.bgra --font-dir /usr/share/fonts/truetype/liberation --max-ms 6500 http://127.0.0.1:45891/article.html
++ kill -0 2260111
++ cd /home/coder/workspace/lkjbrowser/review/weston-proof/article
++ timeout 10 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
++ captures=('/home/coder/workspace/lkjbrowser/review/weston-proof/article/wayland-screenshot-2026-11-17_17-14-34.png')
++ local captures
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/review/weston-proof/article/wayland-screenshot-2026-11-17_17-14-34.png /home/coder/workspace/lkjbrowser/review/weston-proof/article.png
++ wait 2260111
++ client_pid=
++ wait 2260097
++ bridge_pid=
++ capture simple http://127.0.0.1:45891/simple.html
++ local name=simple url=http://127.0.0.1:45891/simple.html
++ local page=/home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/simple
++ mkdir -p /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/simple /home/coder/workspace/lkjbrowser/review/weston-proof/simple
++ truncate -s 6082304 /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/simple/frame.bgra
++ bridge_pid=2260346
++ (( attempt=0 ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/simple/bridge-port
++ kill -0 2260346
++ sleep 0.05
++ /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/byte-descriptor-bridge /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime/review-wl /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/simple/frame.bgra
++ (( attempt++ ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/simple/bridge-port
++ break
++ local bridge_port
+++ cat /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/simple/bridge-port
++ bridge_port=34287
++ printf '%s\n' http://127.0.0.1:45891/simple.html
++ client_pid=2260349
++ sleep 2
++ /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/lkjbrowser --wayland 34287 --frame-file /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/simple/frame.bgra --font-dir /usr/share/fonts/truetype/liberation --max-ms 6500 http://127.0.0.1:45891/simple.html
++ kill -0 2260349
++ cd /home/coder/workspace/lkjbrowser/review/weston-proof/simple
++ timeout 10 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
++ captures=('/home/coder/workspace/lkjbrowser/review/weston-proof/simple/wayland-screenshot-2026-11-17_17-14-41.png')
++ local captures
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/review/weston-proof/simple/wayland-screenshot-2026-11-17_17-14-41.png /home/coder/workspace/lkjbrowser/review/weston-proof/simple.png
++ wait 2260349
++ client_pid=
++ wait 2260346
++ bridge_pid=
++ capture unreachable http://127.0.0.1:36825/unreachable
++ local name=unreachable url=http://127.0.0.1:36825/unreachable
++ local page=/home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/unreachable
++ mkdir -p /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/unreachable /home/coder/workspace/lkjbrowser/review/weston-proof/unreachable
++ truncate -s 6082304 /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/unreachable/frame.bgra
++ bridge_pid=2260856
++ (( attempt=0 ))
++ /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/byte-descriptor-bridge /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/runtime/review-wl /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/unreachable/frame.bgra
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/unreachable/bridge-port
++ kill -0 2260856
++ sleep 0.05
++ (( attempt++ ))
++ (( attempt<100 ))
++ test -s /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/unreachable/bridge-port
++ break
++ local bridge_port
+++ cat /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/unreachable/bridge-port
++ bridge_port=56235
++ printf '%s\n' http://127.0.0.1:36825/unreachable
++ client_pid=2260859
++ sleep 2
++ /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/lkjbrowser --wayland 56235 --frame-file /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/unreachable/frame.bgra --font-dir /usr/share/fonts/truetype/liberation --max-ms 6500 http://127.0.0.1:36825/unreachable
++ kill -0 2260859
++ cd /home/coder/workspace/lkjbrowser/review/weston-proof/unreachable
++ timeout 10 /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston-screenshooter
++ captures=('/home/coder/workspace/lkjbrowser/review/weston-proof/unreachable/wayland-screenshot-2026-11-17_17-14-48.png')
++ local captures
++ test 1 = 1
++ cp /home/coder/workspace/lkjbrowser/review/weston-proof/unreachable/wayland-screenshot-2026-11-17_17-14-48.png /home/coder/workspace/lkjbrowser/review/weston-proof/unreachable.png
++ wait 2260859
++ client_pid=
++ wait 2260856
++ bridge_pid=
++ /home/coder/workspace/lkjbrowser/target/independent-review-weston-1r1nMm/lkjbrowser --headless --font-dir /usr/share/fonts/truetype/liberation http://127.0.0.1:45891/shutdown
++ wait 2260091
++ server_pid=
++ sha256sum /home/coder/workspace/lkjbrowser/review/weston-proof/article.png /home/coder/workspace/lkjbrowser/review/weston-proof/simple.png /home/coder/workspace/lkjbrowser/review/weston-proof/unreachable.png
++ sha256sum src/css.lkj src/fetch_probe.lkj src/fixture_server.lkj src/font.lkj src/font_probe.lkj src/html.lkj src/layout.lkj src/main.lkj src/net.lkj src/paint.lkj src/png.lkj src/png_probe.lkj src/wayland_input_probe.lkj src/wayland.lkj src/wayland_peer.lkj src/wayland_smoke.lkj program.lkj toolchain.lock bridge/byte_descriptor_bridge.c fixtures/article.html fixtures/simple.html fixtures/workshop.png
++ cmp /home/coder/workspace/lkjbrowser/review/weston-proof/source-fixtures.sha256 /home/coder/workspace/lkjbrowser/review/weston-proof/source-fixtures-after.sha256
++ printf 'Source hashes stayed unchanged during capture.\n'
++ printf 'PASS: three actual Weston output captures; binary copies frozen; all owned child processes cleaned up.\n'
++ cleanup
++ set +e
++ for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"
++ test -n ''
++ for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"
++ test -n ''
++ for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"
++ test -n ''
++ for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"
++ test -n 2260085
++ kill 2260085
++ wait 2260085
++ date -u +%Y-%m-%dT%H:%M:%SZ

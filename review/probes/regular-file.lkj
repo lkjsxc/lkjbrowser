@@ -1,0 +1,16 @@
+mod net;
+pub fn main(mut world:World){
+    let args=world.args();
+    if args.len()!=1usize{
+        world.stderr().write(b"Expected one path\n");
+        world.set_exit_status(2u8);return;
+    }
+    let path=net::text(&args[0]);
+    match net::read_path(&mut world,path.as_str()){
+        Ok(bytes)=>world.stdout().write(format!("OK {} {}",bytes.len(),net::text(&bytes)).as_bytes()),
+        Err(problem)=>{
+            world.stdout().write(format!("ERR {}\n",problem).as_bytes());
+            world.set_exit_status(1u8);
+        }
+    }
+}

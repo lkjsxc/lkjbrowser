@@ -1,0 +1,32 @@
+mod font;
+mod paint;
+use font::Font;
+use paint::Canvas;
+fn main(mut world: World) {
+    let mut dir = world.directory("/usr/share/fonts/truetype/liberation").unwrap();
+    let mut file = dir.open("LiberationSans-Regular.ttf").unwrap();
+    let mut regular = Font::parse(file.read_to_end().unwrap()).unwrap();
+    let mut boldfile = dir.open("LiberationSans-Bold.ttf").unwrap();
+    let mut bold = Font::parse(boldfile.read_to_end().unwrap()).unwrap();
+    let mut italicfile = dir.open("LiberationSans-Italic.ttf").unwrap();
+    let mut italic = Font::parse(italicfile.read_to_end().unwrap()).unwrap();
+    let mut canvas = Canvas::new(1000usize, 760usize, 0xfff7f8fau32);
+    canvas.rect(32i32, 32i32, 936i32, 696i32, 0xffffffffu32);
+    canvas.text(&mut bold, "lkjbrowser / a real font, drawn here", 34i32, 64i32, 105i32, 0xff142c42u32);
+    canvas.text(&mut regular, "Readable text starts with the baseline.", 24i32, 64i32, 162i32, 0xff233849u32);
+    canvas.text(&mut regular, "The quick brown fox jumps over the lazy dog. 0123456789", 18i32, 64i32, 204i32, 0xff26394bu32);
+    canvas.text(&mut regular, "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz", 18i32, 64i32, 236i32, 0xff26394bu32);
+    canvas.text(&mut italic, "Italic: cafe, naivete, and an easy afternoon on the web.", 20i32, 64i32, 280i32, 0xff52667au32);
+    canvas.text(&mut regular, "Accents: café naïveté Ångström élève — • © € £ ± ×", 22i32, 64i32, 326i32, 0xff26394bu32);
+    canvas.text(&mut bold, "Small type should remain comfortable.", 14i32, 64i32, 370i32, 0xff26394bu32);
+    canvas.text(&mut regular, "14 px: links, tabs, and the address line", 14i32, 64i32, 398i32, 0xff086f85u32);
+    canvas.text(&mut regular, "16 px: This rasterizer reads TrueType outlines at runtime.", 16i32, 64i32, 430i32, 0xff26394bu32);
+    canvas.text(&mut regular, "18 px: Paths, curves and antialiasing are all lkjscript.", 18i32, 64i32, 465i32, 0xff26394bu32);
+    canvas.text(&mut regular, "O0o8 B6g9 MWiIl1 ,.;:!? () [] {} < > / \\ = + - _", 26i32, 64i32, 520i32, 0xff26394bu32);
+    canvas.text(&mut bold, "Typography", 56i32, 64i32, 614i32, 0xff116b77u32);
+    let mut outdir = world.directory("/home/coder/workspace/lkjbrowser/shots").unwrap();
+    let mut ppm = outdir.create("font-proof.ppm").unwrap();
+    ppm.write_all(&canvas.ppm()).unwrap();
+    let mut output = world.stdout();
+    output.write(format!("FONT: regular glyph A={} advance18={} ascent18={} descent18={} cache={}\n", regular.glyph_id(65u32), regular.advance(65u32,18i32), regular.ascent(18i32), regular.descent(18i32), regular.cache.len()).as_bytes());
+}

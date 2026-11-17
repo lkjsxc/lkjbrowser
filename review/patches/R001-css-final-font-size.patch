@@ -1,0 +1,116 @@
+--- a/src/css.lkj
++++ b/src/css.lkj
+@@ -561,10 +561,11 @@
+     }
+ }
+ 
+-fn apply_declarations(style: &mut Style, values: &[Declaration], important: bool, parent_size: i32) {
++fn apply_declarations(style: &mut Style, values: &[Declaration], important: bool,
++    parent_size: i32, font_only: bool) {
+     let mut i = 0usize;
+     while i < values.len() {
+-        if values[i].important == important {
++        if values[i].important == important && (values[i].name == "font-size") == font_only {
+             apply(style, values[i].name.as_str(), values[i].value.as_str(), parent_size);
+         }
+         i += 1;
+@@ -596,15 +597,23 @@
+             i += 1;
+         }
+         let inline = declarations(doc.attribute(node, "style").as_str());
+-        let mut phase = 0usize;
+-        while phase < 2usize {
+-            let mut i = 0usize;
+-            while i < matching.len() {
+-                apply_declarations(&mut style, &rules[matching[i].0].declarations, phase == 1usize, parent.font_size);
+-                i += 1;
++        // Resolve the winning font size before em lengths in any other property.
++        // Both passes retain the same specificity, source order and importance.
++        let mut pass = 0usize;
++        while pass < 2usize {
++            let mut phase = 0usize;
++            while phase < 2usize {
++                let mut i = 0usize;
++                while i < matching.len() {
++                    apply_declarations(&mut style, &rules[matching[i].0].declarations,
++                        phase == 1usize, parent.font_size, pass == 0usize);
++                    i += 1;
++                }
++                apply_declarations(&mut style, &inline, phase == 1usize,
++                    parent.font_size, pass == 0usize);
++                phase += 1;
+             }
+-            apply_declarations(&mut style, &inline, phase == 1usize, parent.font_size);
+-            phase += 1;
++            pass += 1;
+         }
+         if doc.has_attribute(node, "hidden") { style.display = NONE; }
+         result.push(style);
+@@ -676,3 +685,67 @@
+         i += 1;
+     }
+ }
++
++#[test]
++fn em_lengths_use_final_font_size_in_either_declaration_order() {
++    let doc = crate::html::parse("<body style='font-size:20px'><p style='margin-left:1em;padding-left:2em;width:4em;line-height:1.5em;font-size:40px'>Before</p><p style='font-size:40px;margin-left:1em;padding-left:2em;width:4em;line-height:1.5em'>After</p></body>");
++    let styles = compute(&doc);
++    let mut found = 0usize;
++    let mut i = 0usize;
++    while i < doc.nodes.len() {
++        if doc.nodes[i].tag == "p" {
++            assert_eq!(styles[i].font_size, 40);
++            assert_eq!(styles[i].margin_left, 40);
++            assert_eq!(styles[i].padding_left, 80);
++            assert_eq!(styles[i].width, 160);
++            assert_eq!(styles[i].line_height, 60);
++            assert_eq!(styles[i].line_height_scale, 0);
++            found += 1usize;
++        }
++        i += 1usize;
++    }
++    assert_eq!(found, 2usize);
++}
++
++#[test]
++fn em_lengths_use_font_size_from_the_winning_specificity() {
++    let doc = crate::html::parse("<style>body{font-size:20px}p{margin-left:1em;padding-left:2em;width:4em;line-height:1.5em;font-size:2em}.target{font-size:3em}#target{font-size:2.5em}</style><body><p id='target' class='target'>Specificity</p></body>");
++    let styles = compute(&doc);
++    let mut found = 0usize;
++    let mut i = 0usize;
++    while i < doc.nodes.len() {
++        if doc.nodes[i].tag == "p" {
++            assert_eq!(styles[i].font_size, 50);
++            assert_eq!(styles[i].margin_left, 50);
++            assert_eq!(styles[i].padding_left, 100);
++            assert_eq!(styles[i].width, 200);
++            assert_eq!(styles[i].line_height, 75);
++            assert_eq!(styles[i].line_height_scale, 0);
++            found += 1usize;
++        }
++        i += 1usize;
++    }
++    assert_eq!(found, 1usize);
++}
++
++#[test]
++fn em_lengths_respect_important_font_and_inline_precedence() {
++    let doc = crate::html::parse("<style>body{font-size:20px}p{margin-left:1em;padding-left:2em;width:4em;line-height:1.5em;font-size:2em!important}#target{font-size:70px}</style><body><p id='target' style='font-size:90px'>Stylesheet important</p><p id='override' style='font-size:3em!important'>Inline important</p></body>");
++    let styles = compute(&doc);
++    let mut found = 0usize;
++    let mut i = 0usize;
++    while i < doc.nodes.len() {
++        if doc.nodes[i].tag == "p" {
++            let size = if doc.attribute(i, "id") == "target" { 40 } else { 60 };
++            assert_eq!(styles[i].font_size, size);
++            assert_eq!(styles[i].margin_left, size);
++            assert_eq!(styles[i].padding_left, size * 2);
++            assert_eq!(styles[i].width, size * 4);
++            assert_eq!(styles[i].line_height, size * 3 / 2);
++            assert_eq!(styles[i].line_height_scale, 0);
++            found += 1usize;
++        }
++        i += 1usize;
++    }
++    assert_eq!(found, 2usize);
++}

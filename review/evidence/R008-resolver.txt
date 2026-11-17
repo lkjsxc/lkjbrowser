@@ -1,0 +1,8 @@
+Resolver-configuration compatibility check, 2026-11-17 UTC
+
+Host metadata: /etc/resolv.conf is a relative symlink.
+Pre-R002 preserved loader: exit 0, accepted configuration, 938 bytes.
+R002 proposed/adopted loader: exit 1, ERR Open regular file: EINVAL (22).
+Both were the previously built pinned-compiler probe binaries under target/independent-file-review-20261118/.
+No external connection or DNS request was made. Configuration contents were not displayed and are not included here.
+Current resolver() delegates the fixed /etc/resolv.conf path to read_path(), so hostname lookup reaches this failure before opening a DNS connection.

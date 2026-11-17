@@ -1,0 +1,10 @@
+pub fn probe(bytes: &[u8]) -> usize {
+    let mut index=0usize;
+    while index<bytes.len() {
+        match std::str::from_utf8(&bytes[index..index+1usize]) {
+            Ok(value)=>{index+=value.len();continue;}
+            Err(_)=>{index+=1usize;}
+        }
+    }
+    index
+}

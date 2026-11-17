@@ -1,0 +1,5 @@
+pub fn probe() -> usize {
+ let mut bytes=vec![1u8,2u8,3u8];
+ bytes=bytes[1usize..].to_vec();
+ bytes.len()
+}

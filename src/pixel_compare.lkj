@@ -1,0 +1,14 @@
+mod png;
+mod net;
+pub fn main(mut world:World){
+    let args=world.args();
+    assert_eq!(args.len(),2usize);
+    let a=net::read_path(&mut world,net::text(&args[0]).as_str()).unwrap();
+    let b=net::read_path(&mut world,net::text(&args[1]).as_str()).unwrap();
+    let left=png::decode(&a).unwrap();let right=png::decode(&b).unwrap();
+    assert_eq!(left.width,right.width);assert_eq!(left.height,right.height);
+    let mut different=0usize;let mut i=0usize;
+    while i<left.pixels.len(){if left.pixels[i]!=right.pixels[i]{different+=1usize;}i+=1usize;}
+    world.stdout().write(format!("pixel comparison {}x{}: {} differing pixels\n",left.width,left.height,different).as_bytes());
+    if different!=0usize{world.set_exit_status(1u8);}
+}

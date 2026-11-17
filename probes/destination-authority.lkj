@@ -1,0 +1,1 @@
+pub fn main(mut connector: Connector) { let _other = connector.for_destination("93.184.216.34", 80u16); }

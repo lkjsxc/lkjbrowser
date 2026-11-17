@@ -1,0 +1,2 @@
+fn consume(_values: &[u32]) {}
+pub fn probe() { consume(&[]); }

@@ -1,0 +1,20 @@
+Real Weston 13 pixman screenshots; browser source pin:
+tag=2026.11.17-e6d13590b
+commit=e6d13590b7bb2d665d668727f1a8d1ee4f76c33d
+sha256=60149069984ecfe491e322eba406238555c13acc90375c5468e5d5d4954a83ca
+asset=lkjscript-x86_64-linux
+repository=lkjsxc/lkjscript
+
+article http://127.0.0.1:38551/article.html
+Wayland: sent 25 messages, received 34, presented 1 frames
+pixel comparison 1000x760: 0 differing pixels
+
+simple http://127.0.0.1:38551/simple.html
+Wayland: sent 25 messages, received 34, presented 1 frames
+pixel comparison 1000x760: 0 differing pixels
+
+error http://127.0.0.1:43975/unreachable
+Wayland: sent 25 messages, received 34, presented 1 frames
+pixel comparison 1000x760: 0 differing pixels
+
+All capture-owned processes stopped. No system installation or service.

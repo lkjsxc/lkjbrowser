@@ -1,0 +1,8 @@
+// Pinned 2026.11.17-e6d13590b: test discovers the test but hides its cfg(test) helper.
+#[cfg(test)]
+fn helper() -> i32 { 7 }
+
+#[test]
+fn helper_is_available_in_tests() {
+    assert_eq!(helper(), 7);
+}

@@ -1,0 +1,10 @@
+mod net;
+pub fn main(mut world:World){
+ let args=world.args();assert_eq!(args.len(),2usize);
+ let directory=net::text(&args[0]);let name=net::text(&args[1]);
+ let mut root=world.directory(directory.as_str()).unwrap();
+ match net::read_trusted_config(&mut root,name.as_str()){
+  Ok(bytes)=>world.stdout().write(format!("read regular configuration: {} bytes\n",bytes.len()).as_bytes()),
+  Err(problem)=>{world.stderr().write(format!("{}\n",problem).as_bytes());world.set_exit_status(1u8);}
+ }
+}

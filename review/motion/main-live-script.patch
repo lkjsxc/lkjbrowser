@@ -1,0 +1,120 @@
+--- a/src/main.lkj
++++ b/src/main.lkj
+@@ -338,14 +338,23 @@
+         Ok(())
+     }
+ }
++// Test-only live replay keeps the ordinary headless --script behavior unchanged.
++fn replay_lines(script:&str)->Vec<String>{
++    let mut commands=Vec::new();
++    for line in script.lines(){
++        let line=std::str::trim_ascii(line);
++        if !line.is_empty() && !line.starts_with('#'){commands.push(line.to_string());}
++    }
++    commands
++}
+ struct Options {
+-    url:String,screenshot:String,dump:String,script:String,font_dir:String,dns:String,
+-    frame_file:String,port:u16,width:i32,height:i32,scroll:i32,max_ms:usize,help:bool,
++    url:String,screenshot:String,dump:String,script:String,live_script:String,font_dir:String,dns:String,
++    frame_file:String,port:u16,width:i32,height:i32,scroll:i32,max_ms:usize,script_interval_ms:usize,help:bool,
+ }
+ fn options(args:Vec<Vec<u8>>)->Result<Options,String>{
+     let mut opt=Options{url:"about:welcome".to_string(),screenshot:String::new(),dump:String::new(),
+-        script:String::new(),font_dir:String::new(),dns:String::new(),frame_file:String::new(),
+-        port:0u16,width:1000i32,height:760i32,scroll:0i32,max_ms:0usize,help:false};
++        script:String::new(),live_script:String::new(),font_dir:String::new(),dns:String::new(),frame_file:String::new(),
++        port:0u16,width:1000i32,height:760i32,scroll:0i32,max_ms:0usize,script_interval_ms:1000usize,help:false};
+     let mut i=0usize;
+     while i<args.len(){
+         let arg=net::text(&args[i]);i+=1;
+@@ -357,6 +366,8 @@
+             if arg=="--screenshot"{opt.screenshot=value;}
+             else if arg=="--layout"{opt.dump=value;}
+             else if arg=="--script"{opt.script=value;}
++            else if arg=="--live-script"{opt.live_script=value;}
++            else if arg=="--script-interval-ms"{opt.script_interval_ms=value.as_str().parse::<usize>().map_err(|_|->String{"Invalid script interval".to_string()})?;}
+             else if arg=="--font-dir"{opt.font_dir=value;}
+             else if arg=="--dns"{opt.dns=value;}
+             else if arg=="--frame-file"{opt.frame_file=value;}
+@@ -371,6 +382,12 @@
+     if opt.width<320i32 || opt.width>4096i32 || opt.height<240i32 || opt.height>2160i32 {
+         return Err("Viewport must be 320..4096 by 240..2160".to_string());
+     }
++    if !opt.live_script.is_empty() && opt.port==0u16 {
++        return Err("--live-script requires --wayland; use --script for headless replay".to_string());
++    }
++    if opt.script_interval_ms==0usize || opt.script_interval_ms.checked_mul(1000000usize).is_none(){
++        return Err("Script interval must be positive and fit in nanoseconds".to_string());
++    }
+     Ok(opt)
+ }
+ fn save(world:&mut World,app:&mut Browser,opt:&Options,canvas:&Canvas)->Result<(),String>{
+@@ -388,9 +405,13 @@
+ fn run(world:&mut World)->Result<(),String>{
+     let opt=options(world.args())?;
+     if opt.help{
+-        world.stdout().write(b"lkjbrowser [URL] [--headless] [--screenshot FILE.ppm] [--layout FILE] [--script FILE]\n  --wayland PORT --frame-file FILE  connect through the temporary descriptor bridge\n  --width N --height N --scroll N --max-ms N --font-dir DIR --dns IPV4\nUse tools/wayland-run.sh URL on a real Wayland desktop.\n");
++        world.stdout().write(b"lkjbrowser [URL] [--headless] [--screenshot FILE.ppm] [--layout FILE] [--script FILE]\n  --wayland PORT --frame-file FILE  connect through the temporary descriptor bridge\n  --width N --height N --scroll N --max-ms N --font-dir DIR --dns IPV4\n  --live-script FILE --script-interval-ms N  test-only timed Wayland input replay\nUse tools/wayland-run.sh URL on a real Wayland desktop.\n");
+         return Ok(());
+     }
++    let live=if opt.live_script.is_empty(){Vec::new()}else{
++        let bytes=net::read_path(world,opt.live_script.as_str())?;
++        replay_lines(net::text(&bytes).as_str())
++    };
+     let faces=fonts(world,opt.font_dir.as_str())?;
+     let mut app=Browser::new(faces,opt.width,opt.height,opt.dns.clone());
+     app.navigate(world,opt.url.as_str(),true);
+@@ -413,6 +434,11 @@
+     let title=format!("{} — lkjbrowser",app.title);
+     let mut window=wayland::Wayland::open(world,opt.port,opt.width,opt.height,title.as_str())?;
+     let mut clock=world.clock();let start=clock.nanoseconds().unwrap();
++    let interval_ns=opt.script_interval_ms*1000000usize;
++    let mut live_at=0usize;let mut live_last=start;
++    if !live.is_empty(){
++        world.stdout().write(format!("Live replay ready: {} commands, interval {}ms\n",live.len(),opt.script_interval_ms).as_bytes());
++    }
+     let mut dirty=true;let mut alive=true;
+     while alive{
+         if dirty{
+@@ -431,6 +457,14 @@
+             if !app.event(world,event){alive=false;}
+             changed=true;
+         }
++        let now=clock.nanoseconds().unwrap();
++        // Advance only after the preceding frame was submitted. Real Wayland events
++        // and synthetic input both use the same Browser event/navigation handlers.
++        if alive && !dirty && live_at<live.len() && now-live_last>=interval_ns{
++            app.replay(world,live[live_at].as_str())?;
++            live_at+=1usize;live_last=now;changed=true;
++            world.stdout().write(format!("Live replay {} at {}ms: {} | URL {} | scroll {}\n",live_at,(now-start)/1000000usize,live[live_at-1usize],app.url,app.scroll).as_bytes());
++        }
+         if changed{
+             canvas=app.paint();save(world,&mut app,&opt,&canvas)?;dirty=true;
+         }
+@@ -456,3 +490,25 @@
+     modifiers.update(29u32,false);assert!(modifiers.ctrl!=0u8);
+     modifiers.update(97u32,false);assert_eq!(modifiers.ctrl,0u8);
+ }
++
++#[test]
++fn live_script_ignores_blank_lines_and_comments(){
++    let lines=replay_lines("\n # proof\n scroll 120 \n\nkey 102\nclick 130 120\n");
++    assert_eq!(lines.len(),3usize);
++    assert_eq!(lines[0],"scroll 120");
++    assert_eq!(lines[1],"key 102");
++    assert_eq!(lines[2],"click 130 120");
++}
++
++#[test]
++fn live_script_requires_wayland_and_positive_finite_interval(){
++    assert!(options(vec!["--live-script".as_bytes().to_vec(),"events.txt".as_bytes().to_vec()]).is_err());
++    assert!(options(vec!["--wayland".as_bytes().to_vec(),"1234".as_bytes().to_vec(),"--live-script".as_bytes().to_vec(),"events.txt".as_bytes().to_vec(),"--script-interval-ms".as_bytes().to_vec(),"0".as_bytes().to_vec()]).is_err());
++    assert!(options(vec!["--script-interval-ms".as_bytes().to_vec(),"18446744073709551615".as_bytes().to_vec()]).is_err());
++    let opt=options(vec!["--wayland".as_bytes().to_vec(),"1234".as_bytes().to_vec(),"--live-script".as_bytes().to_vec(),"events.txt".as_bytes().to_vec(),"--script-interval-ms".as_bytes().to_vec(),"250".as_bytes().to_vec()]).unwrap();
++    assert_eq!(opt.script_interval_ms,250usize);
++    assert_eq!(opt.live_script,"events.txt");
++    let headless=options(vec!["--script".as_bytes().to_vec(),"events.txt".as_bytes().to_vec()]).unwrap();
++    assert_eq!(headless.port,0u16);
++    assert_eq!(headless.script,"events.txt");
++}
