@@ -239,7 +239,8 @@ All processes started by the capture/test scripts are owned and reaped.
 
 `tools/fetch-toolchain.sh` verifies the release checksum and executable against
 the lock. Pin changes require a deliberate commit; the language checkout is read-only.
-The repository is local-only, with no remote, release or deployment.
+Builds and tests are local operations. Public-repository synchronization, releases
+and deployments are separate from these commands.
 
 | Module | Responsibility |
 | --- | --- |

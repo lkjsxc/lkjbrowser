@@ -184,8 +184,9 @@ still use synchronous fetches, and the pin's TCP connect can block before the
 six-second I/O timer starts. That remains the first ranked runtime gap.
 
 The pin and existing byte/descriptor bridge are unchanged from 798c6b7.
-The repository has no remote. No release, deployment, system installation or
-persistent service was created. Capture/test-owned processes were stopped and
+This run added no remote and made no push, release, deployment, system installation
+or persistent service. The lead handles public-repository synchronization and the
+separate chrome redesign. Capture/test-owned processes were stopped and
 reaped; each private compositor runtime was removed.
 
 ## Local implementation history
