@@ -1,0 +1,89 @@
+//! Bounded definite-length DER primitives. No input-driven indexing precedes bounds checks.
+#[derive(Clone,Copy)]
+pub struct Element { pub tag:u8,pub start:usize,pub body:usize,pub end:usize }
+
+pub fn read(bytes:&[u8],position:&mut usize,limit:usize)->Result<Element,String>{
+    if limit>bytes.len() || *position>=limit{return Err("The certificate contains truncated DER.".to_string());}
+    let start=*position;let tag=bytes[start];let mut p=start+1usize;
+    if tag&31u8==31u8{return Err("The certificate uses an unsupported DER tag.".to_string());}
+    if p>=limit{return Err("The certificate contains a truncated DER length.".to_string());}
+    let first=bytes[p];p+=1;
+    let mut n=first as usize;
+    if first&128u8!=0u8{
+        let count=(first&127u8) as usize;
+        if count==0usize || count>4usize || count>limit-p{return Err("The certificate contains an invalid DER length.".to_string());}
+        if bytes[p]==0u8{return Err("The certificate contains a noncanonical DER length.".to_string());}
+        n=0usize;let mut i=0usize;
+        while i<count{n=n*256usize+bytes[p] as usize;p+=1;i+=1;}
+        if n<128usize{return Err("The certificate contains a noncanonical DER length.".to_string());}
+    }
+    if n>limit-p{return Err("The certificate contains a truncated DER value.".to_string());}
+    let end=p+n;*position=end;Ok(Element{tag,start,body:p,end})
+}
+pub fn expect(bytes:&[u8],position:&mut usize,limit:usize,tag:u8)->Result<Element,String>{
+    let e=read(bytes,position,limit)?;
+    if e.tag!=tag{return Err("The certificate contains an unexpected DER type.".to_string());}
+    if tag==6u8{
+        if e.body==e.end || bytes[e.end-1usize]&128u8!=0u8{return Err("The certificate contains an invalid object identifier.".to_string());}
+        let mut first=true;let mut p=e.body;
+        while p<e.end{if first && bytes[p]==128u8{return Err("The certificate contains a noncanonical object identifier.".to_string());}first=bytes[p]&128u8==0u8;p+=1usize;}
+    }Ok(e)
+}
+pub fn single(bytes:&[u8],tag:u8)->Result<Element,String>{
+    let mut p=0usize;let e=expect(bytes,&mut p,bytes.len(),tag)?;
+    if p!=bytes.len(){return Err("The certificate contains trailing DER data.".to_string());}Ok(e)
+}
+pub fn done(position:usize,limit:usize)->Result<(),String>{
+    if position!=limit{return Err("The certificate contains unexpected DER fields.".to_string());}Ok(())
+}
+pub fn value(bytes:&[u8],e:Element)->Vec<u8>{bytes[e.body..e.end].to_vec()}
+pub fn encoded(bytes:&[u8],e:Element)->Vec<u8>{bytes[e.start..e.end].to_vec()}
+pub fn oid_is(bytes:&[u8],e:Element,oid:&[u8])->bool{
+    e.tag==6u8 && bytes[e.body..e.end]==*oid
+}
+pub fn boolean(bytes:&[u8],e:Element)->Result<bool,String>{
+    if e.tag!=1u8 || e.end-e.body!=1usize{return Err("The certificate contains an invalid DER boolean.".to_string());}
+    if bytes[e.body]==255u8{Ok(true)}else if bytes[e.body]==0u8{Ok(false)}
+    else{Err("The certificate contains a noncanonical DER boolean.".to_string())}
+}
+pub fn unsigned(bytes:&[u8],e:Element)->Result<Vec<u8>,String>{
+    if e.tag!=2u8 || e.body==e.end || bytes[e.body]&128u8!=0u8{return Err("The certificate contains an invalid positive integer.".to_string());}
+    let mut p=e.body;
+    if e.end-p>1usize && bytes[p]==0u8{
+        if bytes[p+1usize]&128u8==0u8{return Err("The certificate contains a noncanonical integer.".to_string());}
+        p+=1;
+    }
+    Ok(bytes[p..e.end].to_vec())
+}
+pub fn number(bytes:&[u8],e:Element)->Result<u64,String>{
+    let v=unsigned(bytes,e)?;
+    if v.len()>8usize{return Err("The certificate integer is too large.".to_string());}
+    let mut n=0u64;for b in v{n=(n<<8u32)|b as u64;}Ok(n)
+}
+pub fn bits(bytes:&[u8],e:Element)->Result<Vec<u8>,String>{
+    if e.tag!=3u8 || e.body==e.end || bytes[e.body]!=0u8{return Err("The certificate requires a whole-byte BIT STRING.".to_string());}
+    Ok(bytes[e.body+1usize..e.end].to_vec())
+}
+#[test]
+fn bounded_der_lengths(){
+    assert!(single(&[48u8,128u8,0u8,0u8],48u8).is_err());
+    assert!(single(&[48u8,129u8,0u8],48u8).is_err());
+    assert!(single(&[48u8,130u8,1u8],48u8).is_err());
+    assert!(single(&[48u8,3u8,0u8],48u8).is_err());
+    assert!(single(&[48u8,0u8,0u8],48u8).is_err());
+    assert!(single(&[48u8,0u8],48u8).is_ok());
+}
+#[test]
+fn canonical_numbers(){
+    let bad=[2u8,2u8,0u8,1u8];assert!(unsigned(&bad,single(&bad,2u8).unwrap()).is_err());
+    let negative=[2u8,1u8,128u8];assert!(unsigned(&negative,single(&negative,2u8).unwrap()).is_err());
+    let good=[2u8,2u8,0u8,128u8];assert_eq!(number(&good,single(&good,2u8).unwrap()).unwrap(),128u64);
+}
+
+#[test]
+fn canonical_oid(){
+    assert!(single(&[6u8,0u8],6u8).is_err());
+    assert!(single(&[6u8,1u8,128u8],6u8).is_err());
+    assert!(single(&[6u8,3u8,42u8,128u8,1u8],6u8).is_err());
+    assert!(single(&[6u8,3u8,42u8,129u8,1u8],6u8).is_ok());
+}

@@ -1,0 +1,102 @@
+//! Public-integer arithmetic for RSA and ECDSA verification.
+//! Base 2^32 limbs in u64 containers; products plus carry fit u64.
+//! No private RSA operation. Timing/secret erasure of emitted code is not established.
+const MASK:u64=4294967295u64;
+const BASE:u64=4294967296u64;
+
+pub fn from_be(bytes:&[u8], limbs:usize)->Result<Vec<u64>,String>{
+    if bytes.len()>limbs*4usize{return Err("Integer exceeds the supported size".to_string());}
+    let mut out=vec![0u64;limbs];let mut i=0usize;
+    while i<bytes.len(){out[i/4usize]|=(bytes[bytes.len()-1usize-i] as u64)<<((i%4usize)*8usize);i+=1usize;}
+    Ok(out)
+}
+pub fn to_be(value:&[u64], length:usize)->Vec<u8>{
+    let mut out=vec![0u8;length];let mut i=0usize;
+    while i<length {if i/4usize<value.len(){out[length-1usize-i]=(value[i/4usize]>>((i%4usize)*8usize)) as u8;}i+=1usize;}out
+}
+pub fn cmp(a:&[u64],b:&[u64])->i32{
+    let mut i=a.len();while i>0usize{i-=1usize;if a[i]<b[i]{return -1i32;}if a[i]>b[i]{return 1i32;}}0i32
+}
+pub fn zero(a:&[u64])->bool{let mut all=0u64;let mut i=0usize;while i<a.len(){all|=a[i];i+=1usize;}all==0u64}
+pub fn bit(a:&[u64],i:usize)->bool{i/32usize<a.len() && (a[i/32usize]>>(i%32usize))&1u64!=0u64}
+pub fn bits(a:&[u64])->usize{
+    let mut i=a.len();while i>0usize{i-=1usize;let mut v=a[i];if v!=0u64{let mut n=0usize;while v!=0u64{v>>=1u64;n+=1usize;}return i*32usize+n;}}0usize
+}
+fn subtract(a:&mut [u64],b:&[u64])->u64{
+    let mut borrow=0u64;let mut i=0usize;
+    while i<a.len(){let v=BASE+a[i]-b[i]-borrow;a[i]=v&MASK;borrow=1u64-(v>>32usize);i+=1usize;}borrow
+}
+pub struct Modulus { pub value:Vec<u64>, pub one:Vec<u64>, r2:Vec<u64>, inverse:u64 }
+impl Modulus {
+    pub fn new(bytes:&[u8])->Result<Modulus,String>{
+        if bytes.is_empty() || bytes.len()>512usize || bytes[0]==0u8 || bytes[bytes.len()-1usize]&1u8==0u8{
+            return Err("Invalid odd modulus".to_string());
+        }
+        let value=from_be(bytes,(bytes.len()+3usize)/4usize)?;
+        if bits(&value)<3usize{return Err("Modulus is too small".to_string());}
+        let mut inv=1u64;let mut i=0usize;
+        while i<5usize{inv=inv.wrapping_mul(2u64.wrapping_sub(value[0].wrapping_mul(inv)))&MASK;i+=1usize;}
+        let inverse=(BASE-inv)&MASK;let mut one=vec![0u64;value.len()];one[0]=1u64;
+        let mut modulus=Modulus{value,one:one.clone(),r2:one.clone(),inverse};
+        i=0usize;
+        while i<modulus.value.len()*32usize{one=modulus.add(&one,&one);i+=1usize;}
+        modulus.one=one.clone();
+        i=0usize;while i<modulus.value.len()*32usize{one=modulus.add(&one,&one);i+=1usize;}
+        modulus.r2=one;Ok(modulus)
+    }
+    pub fn add(&self,a:&[u64],b:&[u64])->Vec<u64>{
+        let mut out=vec![0u64;self.value.len()];let mut carry=0u64;let mut i=0usize;
+        while i<out.len(){let v=a[i]+b[i]+carry;out[i]=v&MASK;carry=v>>32usize;i+=1usize;}
+        if carry!=0u64 || cmp(&out,&self.value)>=0i32{subtract(&mut out,&self.value);}out
+    }
+    pub fn sub(&self,a:&[u64],b:&[u64])->Vec<u64>{
+        let mut out=a.to_vec();let borrow=subtract(&mut out,b);
+        if borrow!=0u64{let mut carry=0u64;let mut i=0usize;while i<out.len(){let v=out[i]+self.value[i]+carry;out[i]=v&MASK;carry=v>>32usize;i+=1usize;}}out
+    }
+    /// Coarsely integrated operand-scanning Montgomery multiplication.
+    /// Inputs are reduced; t remains below twice the modulus at completion.
+    pub fn mul(&self,a:&[u64],b:&[u64])->Vec<u64>{
+        let n=self.value.len();let mut t=vec![0u64;n+2usize];let mut i=0usize;
+        while i<n{
+            let mut carry=0u64;let mut j=0usize;
+            while j<n{let v=t[j]+a[j]*b[i]+carry;t[j]=v&MASK;carry=v>>32usize;j+=1usize;}
+            let v=t[n]+carry;t[n]=v&MASK;t[n+1usize]=v>>32usize;
+            let q=(t[0]*self.inverse)&MASK;carry=0u64;j=0usize;
+            while j<n{
+                let w=t[j]+q*self.value[j]+carry;
+                if j>0usize{t[j-1usize]=w&MASK;}carry=w>>32usize;j+=1usize;
+            }
+            let w=t[n]+carry;t[n-1usize]=w&MASK;t[n]=t[n+1usize]+(w>>32usize);t[n+1usize]=0u64;i+=1usize;
+        }
+        let high=t[n];t.truncate(n);
+        if high!=0u64 || cmp(&t,&self.value)>=0i32{subtract(&mut t,&self.value);}t
+    }
+    pub fn encode(&self,a:&[u64])->Vec<u64>{self.mul(a,&self.r2)}
+    pub fn decode(&self,a:&[u64])->Vec<u64>{let mut one=vec![0u64;self.value.len()];one[0]=1u64;self.mul(a,&one)}
+    pub fn pow(&self,a:&[u64],exponent:&[u64])->Vec<u64>{
+        let mut out=self.one.clone();let mut i=bits(exponent);
+        while i>0usize{i-=1usize;out=self.mul(&out,&out);if bit(exponent,i){out=self.mul(&out,a);}}out
+    }
+    /// Inverse over a prime field/order, used only after the caller's zero check.
+    pub fn inverse_prime(&self,a:&[u64])->Vec<u64>{
+        let mut exponent=self.value.clone();let mut two=vec![0u64;exponent.len()];two[0]=2u64;subtract(&mut exponent,&two);
+        self.pow(a,&exponent)
+    }
+    /// Convert an arbitrary bounded big-endian integer to a reduced value.
+    pub fn reduce(&self,bytes:&[u8])->Vec<u64>{
+        let mut out=vec![0u64;self.value.len()];let mut one=vec![0u64;self.value.len()];one[0]=1u64;
+        let mut i=0usize;while i<bytes.len(){let mut b=8usize;while b>0usize{b-=1usize;out=self.add(&out,&out);if (bytes[i]>>b)&1u8!=0u8{out=self.add(&out,&one);}}i+=1usize;}out
+    }
+}
+fn hx(s:&str)->Vec<u8>{let mut out=Vec::new();let b=s.as_bytes();let mut i=0usize;while i<b.len(){let a=if b[i]<=b'9'{b[i]-b'0'}else{b[i].to_ascii_lowercase()-b'a'+10u8};let c=if b[i+1usize]<=b'9'{b[i+1usize]-b'0'}else{b[i+1usize].to_ascii_lowercase()-b'a'+10u8};out.push(a*16u8+c);i+=2usize;}out}
+#[test]
+fn montgomery_small(){
+    let m=Modulus::new(&[251u8]).unwrap();let mut a=0u64;
+    while a<251u64{let x=vec![a];let mut b=0u64;while b<251u64{let y=vec![b];let z=m.mul(&m.encode(&x),&m.encode(&y));assert_eq!(m.decode(&z)[0],a*b%251u64);b+=17u64;}a+=7u64;}
+}
+#[test]
+fn montgomery_full_word(){
+    let m=Modulus::new(&hx("ffffffff00000001")).unwrap();
+    let a=from_be(&hx("ffffffff00000000"),2usize).unwrap();
+    assert_eq!(m.decode(&m.mul(&m.encode(&a),&m.encode(&a))),vec![1u64,0u64]);
+}

@@ -1,0 +1,34 @@
+//! Standalone deterministic certificate validator witness. No browser dependency.
+mod der;mod x509;mod signature;mod bigint;mod sha512;
+fn load(world:&mut World,path:&str)->Result<Vec<u8>,String>{
+    let (base,name)=match path.rfind('/') {Some(i)=>if i==0usize {("/", &path[1usize..])}else{(&path[..i],&path[i+1usize..])},None=>(".",path)};
+    let mut directory=world.directory(base).map_err(|_:i64|->String{"Test directory open failed".to_string()})?;
+    let mut file=directory.open_regular(name).map_err(|e:i64|->String{format!("Test file open failed: {} path {}",e,path)})?;
+    let mut data=Vec::new();let mut block=[0u8;4096];
+    loop{let n=file.read(&mut block).map_err(|_:i64|->String{"Test file read failed".to_string()})?;if n==0usize{break;}
+        data.extend_from_slice(&block[..n]);if data.len()>16777216usize{return Err("Test input too large".to_string());}}
+    Ok(data)
+}
+fn text(bytes:&[u8])->String{std::str::from_utf8(bytes).unwrap().to_string()}
+fn run(world:&mut World)->Result<String,String>{
+    let args=world.args();
+    if args.len()<3usize{return Err("Usage: x509-test ROOT.pem CHAIN.pem HOST [tamper|parser|NOW]".to_string());}
+    let root_path=text(&args[0usize]);let chain_path=text(&args[1usize]);let host=text(&args[2usize]);
+    let roots=x509::parse_pem(&load(world,root_path.as_str())?)?;
+    let mut chain=x509::parse_pem(&load(world,chain_path.as_str())?)?;
+    let mode=if args.len()>3usize{text(&args[3usize])}else{String::new()};
+    if mode=="tamper"{let last=chain[0usize].len()-1usize;chain[0usize][last]^=1u8;}
+    if mode=="parser"{
+        let leaf=&chain[0usize];let mut i=0usize;
+        while i<leaf.len(){assert!(x509::parse(&leaf[..i]).is_err());i+=1usize;}
+        let mut trailing=leaf.clone();trailing.push(0u8);assert!(x509::parse(&trailing).is_err());
+        return Ok(format!("PARSER {} truncations and trailing data refused",leaf.len()));
+    }
+    let now=if mode.is_empty() || mode=="tamper"{1800000000u64}else{mode.as_str().parse::<u64>().unwrap()};
+    let cert=x509::validate(&chain,&roots,host.as_str(),now)?;
+    Ok(format!("ACCEPT key={} curve={} chain={}",cert.key_kind,cert.curve,chain.len()))
+}
+pub fn main(mut world:World){
+    match run(&mut world){Ok(message)=>world.stdout().write(format!("{}\n",message).as_bytes()),
+        Err(problem)=>{world.stdout().write(format!("REFUSE {}\n",problem).as_bytes());world.set_exit_status(1u8);}}
+}

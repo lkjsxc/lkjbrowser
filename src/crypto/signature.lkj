@@ -1,0 +1,192 @@
+//! RSA and ECDSA public signature verification.
+//! RFC 8017, FIPS 186-5, SEC 1 v2.0; no signing or private RSA operations.
+//! Montgomery/Jacobian algorithms use public inputs. Emitted-code timing is not examined.
+use super::bigint::{Modulus,from_be,to_be,cmp,zero,bit,bits};
+use super::sha512;
+
+pub fn hash_message(message:&[u8],hash:u16)->Result<Vec<u8>,String>{
+    if hash==256u16{let out=std::sha256::digest(message);return Ok(out[..].to_vec());}
+    if hash==384u16{return Ok(sha512::sha384(message));}
+    if hash==512u16{return Ok(sha512::digest(message));}
+    Err("Unsupported signature hash".to_string())
+}
+fn mgf1(seed:&[u8],len:usize,hash:u16)->Result<Vec<u8>,String>{
+    let mut out=Vec::new();let mut counter=0u32;
+    while out.len()<len{
+        let mut data=seed.to_vec();
+        data.push((counter>>24u32) as u8);data.push((counter>>16u32) as u8);
+        data.push((counter>>8u32) as u8);data.push(counter as u8);
+        out.extend_from_slice(&hash_message(&data,hash)?);counter+=1u32;
+    }
+    out.truncate(len);Ok(out)
+}
+fn rsa_pss(em:&[u8],em_bits:usize,message:&[u8],hash:u16)->Result<(),String>{
+    let digest=hash_message(message,hash)?;let hlen=digest.len();
+    // This profile fixes the salt and MGF hash to the signature hash, as TLS 1.3 requires.
+    if em.len()<2usize*hlen+2usize || em[em.len()-1usize]!=188u8{return Err("Invalid RSA-PSS signature encoding".to_string());}
+    let dlen=em.len()-hlen-1usize;let unused=em.len()*8usize-em_bits;
+    if unused>7usize || unused>0usize && em[0]>>(8usize-unused)!=0u8{return Err("Invalid RSA-PSS high bits".to_string());}
+    let h=&em[dlen..em.len()-1usize];let mask=mgf1(h,dlen,hash)?;
+    let mut db=Vec::new();let mut i=0usize;while i<dlen{db.push(em[i]^mask[i]);i+=1usize;}
+    db[0]&=255u8>>unused;
+    let pad=dlen-hlen-1usize;i=0usize;while i<pad{if db[i]!=0u8{return Err("Invalid RSA-PSS padding".to_string());}i+=1usize;}
+    if db[pad]!=1u8{return Err("Invalid RSA-PSS salt length".to_string());}
+    let mut input=vec![0u8;8usize];input.extend_from_slice(&digest);input.extend_from_slice(&db[pad+1usize..]);
+    if !std::hmac::constant_time_eq(h,&hash_message(&input,hash)?){return Err("RSA-PSS signature did not verify".to_string());}
+    Ok(())
+}
+fn rsa_v15(em:&[u8],message:&[u8],hash:u16)->Result<(),String>{
+    let digest=hash_message(message,hash)?;
+    let prefix=if hash==256u16{hx("3031300d060960864801650304020105000420")}
+        else if hash==384u16{hx("3041300d060960864801650304020205000430")}
+        else if hash==512u16{hx("3051300d060960864801650304020305000440")}
+        else{return Err("Unsupported RSA digest".to_string());};
+    if em.len()<prefix.len()+digest.len()+11usize || em[0]!=0u8 || em[1]!=1u8{
+        return Err("Invalid RSA PKCS1 signature encoding".to_string());
+    }
+    let pad=em.len()-prefix.len()-digest.len()-1usize;let mut i=2usize;
+    while i<pad{if em[i]!=255u8{return Err("Invalid RSA PKCS1 padding".to_string());}i+=1usize;}
+    if em[pad]!=0u8 || !std::hmac::constant_time_eq(&em[pad+1usize..pad+1usize+prefix.len()],&prefix)
+        || !std::hmac::constant_time_eq(&em[em.len()-digest.len()..],&digest){
+        return Err("RSA PKCS1 signature did not verify".to_string());
+    }Ok(())
+}
+/// Primitive verification admits 1024-bit public test vectors; X.509 policy enforces >=2048.
+/// Modulus/exponent are unsigned canonical big-endian bytes (no ASN.1 sign byte).
+pub fn verify_rsa(modulus:&[u8],exponent:&[u8],signature:&[u8],message:&[u8],hash:u16,pss:bool)->Result<(),String>{
+    if modulus.len()<128usize || modulus.len()>512usize || exponent.is_empty() || exponent.len()>4usize
+        || exponent[0]==0u8 || exponent[exponent.len()-1usize]&1u8==0u8
+        || signature.len()!=modulus.len(){return Err("Unsupported RSA public key or signature size".to_string());}
+    let m=Modulus::new(modulus)?;
+    if bits(&m.value)<1024usize{return Err("RSA public key is too small".to_string());}
+    let e=from_be(exponent,m.value.len())?;
+    if bits(&e)<2usize{return Err("Invalid RSA public exponent".to_string());}
+    let s=from_be(signature,m.value.len())?;
+    if cmp(&s,&m.value)>=0i32{return Err("RSA signature is outside its modulus".to_string());}
+    let result=m.decode(&m.pow(&m.encode(&s),&e));
+    let full=to_be(&result,modulus.len());
+    if pss{
+        let em_bits=bits(&m.value)-1usize;let em_len=(em_bits+7usize)/8usize;
+        let skip=full.len()-em_len;let mut i=0usize;while i<skip{if full[i]!=0u8{return Err("Invalid RSA-PSS encoded size".to_string());}i+=1usize;}
+        rsa_pss(&full[skip..],em_bits,message,hash)
+    }else{rsa_v15(&full,message,hash)}
+}
+
+struct Curve{field:Modulus,order:Modulus,b:Vec<u64>,gx:Vec<u64>,gy:Vec<u64>,size:usize}
+fn curve(id:u16)->Result<Curve,String>{
+    let (p,n,b,x,y,size)=if id==23u16{
+        ("ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
+         "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551",
+         "5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b",
+         "6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296",
+         "4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5",32usize)
+    }else if id==24u16{
+        ("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff",
+         "ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973",
+         "b3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aef",
+         "aa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7",
+         "3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f",48usize)
+    }else{return Err("Unsupported ECDSA curve".to_string());};
+    let field=Modulus::new(&hx(p))?;let order=Modulus::new(&hx(n))?;
+    let bx=field.encode(&from_be(&hx(b),field.value.len())?);
+    let gx=field.encode(&from_be(&hx(x),field.value.len())?);
+    let gy=field.encode(&from_be(&hx(y),field.value.len())?);
+    Ok(Curve{field,order,b:bx,gx,gy,size})
+}
+struct Point{x:Vec<u64>,y:Vec<u64>,z:Vec<u64>}
+fn infinity(n:usize)->Point{Point{x:vec![0u64;n],y:vec![0u64;n],z:vec![0u64;n]}}
+fn double(m:&Modulus,p:&Point)->Point{
+    if zero(&p.z) || zero(&p.y){return infinity(m.value.len());}
+    let delta=m.mul(&p.z,&p.z);let gamma=m.mul(&p.y,&p.y);let beta=m.mul(&p.x,&gamma);
+    let a=m.mul(&m.sub(&p.x,&delta),&m.add(&p.x,&delta));let alpha=m.add(&m.add(&a,&a),&a);
+    let beta2=m.add(&beta,&beta);let beta4=m.add(&beta2,&beta2);let beta8=m.add(&beta4,&beta4);
+    let x=m.sub(&m.mul(&alpha,&alpha),&beta8);
+    let yz=m.add(&p.y,&p.z);let z=m.sub(&m.sub(&m.mul(&yz,&yz),&gamma),&delta);
+    let g2=m.mul(&gamma,&gamma);let g4=m.add(&g2,&g2);let g8=m.add(&g4,&g4);let g16=m.add(&g8,&g8);
+    let y=m.sub(&m.mul(&alpha,&m.sub(&beta4,&x)),&g16);
+    Point{x,y,z}
+}
+fn mixed(m:&Modulus,p:&Point,qx:&[u64],qy:&[u64])->Point{
+    if zero(&p.z){return Point{x:qx.to_vec(),y:qy.to_vec(),z:m.one.clone()};}
+    let zz=m.mul(&p.z,&p.z);let u=m.mul(qx,&zz);let s=m.mul(qy,&m.mul(&zz,&p.z));
+    let h=m.sub(&u,&p.x);let sy=m.sub(&s,&p.y);
+    if zero(&h){if zero(&sy){return double(m,p);}return infinity(m.value.len());}
+    let hh=m.mul(&h,&h);let hh2=m.add(&hh,&hh);let i=m.add(&hh2,&hh2);
+    let j=m.mul(&h,&i);let r=m.add(&sy,&sy);let v=m.mul(&p.x,&i);
+    let x=m.sub(&m.sub(&m.mul(&r,&r),&j),&m.add(&v,&v));
+    let yj=m.mul(&p.y,&j);let y=m.sub(&m.mul(&r,&m.sub(&v,&x)),&m.add(&yj,&yj));
+    let zh=m.add(&p.z,&h);let z=m.sub(&m.sub(&m.mul(&zh,&zh),&zz),&hh);
+    Point{x,y,z}
+}
+fn integer(der:&[u8],offset:usize,limbs:usize)->Result<(Vec<u64>,usize),String>{
+    if offset+2usize>der.len() || der[offset]!=2u8{return Err("Invalid ECDSA integer".to_string());}
+    let length=der[offset+1usize] as usize;let start=offset+2usize;
+    if length==0usize || length>limbs*4usize+1usize || start+length>der.len() || der[start]&128u8!=0u8{
+        return Err("Invalid ECDSA integer length or sign".to_string());
+    }
+    let skip=if der[start]==0u8{
+        if length>1usize && der[start+1usize]&128u8==0u8{return Err("Nonminimal ECDSA integer".to_string());}
+        if length==1usize{0usize}else{1usize}
+    }else{0usize};
+    Ok((from_be(&der[start+skip..start+length],limbs)?,start+length))
+}
+fn checked_point(c:&Curve,public_key:&[u8])->Result<(Vec<u64>,Vec<u64>),String>{
+    if public_key.len()!=1usize+2usize*c.size || public_key[0]!=4u8{
+        return Err("Unsupported ECDSA point encoding".to_string());
+    }
+    let xn=from_be(&public_key[1usize..1usize+c.size],c.field.value.len())?;
+    let yn=from_be(&public_key[1usize+c.size..],c.field.value.len())?;
+    if cmp(&xn,&c.field.value)>=0i32 || cmp(&yn,&c.field.value)>=0i32{return Err("ECDSA point coordinate is out of range".to_string());}
+    let x=c.field.encode(&xn);let y=c.field.encode(&yn);
+    let y2=c.field.mul(&y,&y);let x3=c.field.mul(&c.field.mul(&x,&x),&x);
+    let three_x=c.field.add(&c.field.add(&x,&x),&x);
+    if cmp(&y2,&c.field.add(&c.field.sub(&x3,&three_x),&c.b))!=0i32{return Err("ECDSA point is not on its named curve".to_string());}
+    // Both supported curves have cofactor one, so a non-infinity on-curve point has prime order.
+    Ok((x,y))
+}
+pub fn verify_ecdsa(curve_id:u16,public_key:&[u8],signature:&[u8],message:&[u8],hash:u16)->Result<(),String>{
+    let c=curve(curve_id)?;let (qx,qy)=checked_point(&c,public_key)?;
+    if signature.len()<8usize || signature.len()>2usize*c.size+8usize || signature[0]!=48u8
+        || signature[1usize] as usize!=signature.len()-2usize{return Err("Invalid ECDSA signature sequence".to_string());}
+    let (r,offset)=integer(signature,2usize,c.order.value.len())?;
+    let (s,end)=integer(signature,offset,c.order.value.len())?;
+    if end!=signature.len() || zero(&r) || zero(&s) || cmp(&r,&c.order.value)>=0i32 || cmp(&s,&c.order.value)>=0i32{
+        return Err("ECDSA signature integers are out of range".to_string());
+    }
+    let digest=hash_message(message,hash)?;let take=digest.len().min(c.size);
+    let z=c.order.reduce(&digest[..take]);
+    let inv=c.order.inverse_prime(&c.order.encode(&s));
+    let u1=c.order.decode(&c.order.mul(&c.order.encode(&z),&inv));
+    let u2=c.order.decode(&c.order.mul(&c.order.encode(&r),&inv));
+    let mut p=infinity(c.field.value.len());let mut i=c.size*8usize;
+    while i>0usize{
+        i-=1usize;p=double(&c.field,&p);
+        if bit(&u1,i){p=mixed(&c.field,&p,&c.gx,&c.gy);}
+        if bit(&u2,i){p=mixed(&c.field,&p,&qx,&qy);}
+    }
+    if zero(&p.z){return Err("ECDSA verification produced the point at infinity".to_string());}
+    let zi=c.field.inverse_prime(&p.z);let x=c.field.decode(&c.field.mul(&p.x,&c.field.mul(&zi,&zi)));
+    let reduced=c.order.reduce(&to_be(&x,c.size));
+    if cmp(&reduced,&r)!=0i32{return Err("ECDSA signature did not verify".to_string());}Ok(())
+}
+fn hx(s:&str)->Vec<u8>{let mut out=Vec::new();let b=s.as_bytes();let mut i=0usize;while i<b.len(){let a=if b[i]<=b'9'{b[i]-b'0'}else{b[i].to_ascii_lowercase()-b'a'+10u8};let c=if b[i+1usize]<=b'9'{b[i+1usize]-b'0'}else{b[i+1usize].to_ascii_lowercase()-b'a'+10u8};out.push(a*16u8+c);i+=2usize;}out}
+fn test_sig(r:&str,s:&str)->Vec<u8>{
+    let a=hx(r);let b=hx(s);let ap=if a[0]&128u8!=0u8{1usize}else{0usize};let bp=if b[0]&128u8!=0u8{1usize}else{0usize};
+    let mut out=vec![48u8,(4usize+a.len()+b.len()+ap+bp) as u8,2u8,(a.len()+ap) as u8];
+    if ap!=0usize{out.push(0u8);}out.extend_from_slice(&a);out.push(2u8);out.push((b.len()+bp) as u8);if bp!=0usize{out.push(0u8);}out.extend_from_slice(&b);out
+}
+#[test]
+fn rfc6979_p256_sha256(){
+    let key=hx("0460fed4ba255a9d31c961eb74c6356d68c049b8923b61fa6ce669622e60f29fb67903fe1008b8bc99a41ae9e95628bc64f2f1b20c2d7e9f5177a3c294d4462299");
+    let sig=test_sig("efd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf3716","f7cb1c942d657c41d436c7a1b6e29f65f3e900dbb9aff4064dc4ab2f843acda8");
+    assert!(verify_ecdsa(23u16,&key,&sig,b"sample",256u16).is_ok());
+    assert!(verify_ecdsa(23u16,&key,&sig,b"tampered",256u16).is_err());
+    let mut bad=key.clone();bad[3usize]^=1u8;assert!(verify_ecdsa(23u16,&bad,&sig,b"sample",256u16).is_err());
+}
+#[test]
+fn rfc6979_p384_sha384(){
+    let key=hx("04ec3a4e415b4e19a4568618029f427fa5da9a8bc4ae92e02e06aae5286b300c64def8f0ea9055866064a254515480bc138015d9b72d7d57244ea8ef9ac0c621896708a59367f9dfb9f54ca84b3f1c9db1288b231c3ae0d4fe7344fd2533264720");
+    let sig=test_sig("94edbb92a5ecb8aad4736e56c691916b3f88140666ce9fa73d64c4ea95ad133c81a648152e44acf96e36dd1e80fabe46","99ef4aeb15f178cea1fe40db2603138f130e740a19624526203b6351d0a3a94fa329c145786e679e7b82c71a38628ac8");
+    assert!(verify_ecdsa(24u16,&key,&sig,b"sample",384u16).is_ok());
+    assert!(verify_ecdsa(24u16,&key,&sig,b"tampered",384u16).is_err());
+}

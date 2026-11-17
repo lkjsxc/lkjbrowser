@@ -1,0 +1,140 @@
+//! SHA-384 and SHA-512, FIPS 180-4 / RFC 6234 sections 4 through 6.
+//! One-shot unkeyed hashes for signature verification.
+const K:[u64;80]=[
+0x428a2f98d728ae22u64,
+0x7137449123ef65cdu64,
+0xb5c0fbcfec4d3b2fu64,
+0xe9b5dba58189dbbcu64,
+0x3956c25bf348b538u64,
+0x59f111f1b605d019u64,
+0x923f82a4af194f9bu64,
+0xab1c5ed5da6d8118u64,
+0xd807aa98a3030242u64,
+0x12835b0145706fbeu64,
+0x243185be4ee4b28cu64,
+0x550c7dc3d5ffb4e2u64,
+0x72be5d74f27b896fu64,
+0x80deb1fe3b1696b1u64,
+0x9bdc06a725c71235u64,
+0xc19bf174cf692694u64,
+0xe49b69c19ef14ad2u64,
+0xefbe4786384f25e3u64,
+0x0fc19dc68b8cd5b5u64,
+0x240ca1cc77ac9c65u64,
+0x2de92c6f592b0275u64,
+0x4a7484aa6ea6e483u64,
+0x5cb0a9dcbd41fbd4u64,
+0x76f988da831153b5u64,
+0x983e5152ee66dfabu64,
+0xa831c66d2db43210u64,
+0xb00327c898fb213fu64,
+0xbf597fc7beef0ee4u64,
+0xc6e00bf33da88fc2u64,
+0xd5a79147930aa725u64,
+0x06ca6351e003826fu64,
+0x142929670a0e6e70u64,
+0x27b70a8546d22ffcu64,
+0x2e1b21385c26c926u64,
+0x4d2c6dfc5ac42aedu64,
+0x53380d139d95b3dfu64,
+0x650a73548baf63deu64,
+0x766a0abb3c77b2a8u64,
+0x81c2c92e47edaee6u64,
+0x92722c851482353bu64,
+0xa2bfe8a14cf10364u64,
+0xa81a664bbc423001u64,
+0xc24b8b70d0f89791u64,
+0xc76c51a30654be30u64,
+0xd192e819d6ef5218u64,
+0xd69906245565a910u64,
+0xf40e35855771202au64,
+0x106aa07032bbd1b8u64,
+0x19a4c116b8d2d0c8u64,
+0x1e376c085141ab53u64,
+0x2748774cdf8eeb99u64,
+0x34b0bcb5e19b48a8u64,
+0x391c0cb3c5c95a63u64,
+0x4ed8aa4ae3418acbu64,
+0x5b9cca4f7763e373u64,
+0x682e6ff3d6b2b8a3u64,
+0x748f82ee5defb2fcu64,
+0x78a5636f43172f60u64,
+0x84c87814a1f0ab72u64,
+0x8cc702081a6439ecu64,
+0x90befffa23631e28u64,
+0xa4506cebde82bde9u64,
+0xbef9a3f7b2c67915u64,
+0xc67178f2e372532bu64,
+0xca273eceea26619cu64,
+0xd186b8c721c0c207u64,
+0xeada7dd6cde0eb1eu64,
+0xf57d4f7fee6ed178u64,
+0x06f067aa72176fbau64,
+0x0a637dc5a2c898a6u64,
+0x113f9804bef90daeu64,
+0x1b710b35131c471bu64,
+0x28db77f523047d84u64,
+0x32caab7b40c72493u64,
+0x3c9ebe0a15c9bebcu64,
+0x431d67c49c100d4cu64,
+0x4cc5d4becb3e42b6u64,
+0x597f299cfc657e2au64,
+0x5fcb6fab3ad6faecu64,
+0x6c44198c4a475817u64
+];
+fn compress(state:&mut [u64;8],block:&[u8]){
+    let constants=K;
+    let mut w=[0u64;80];let mut i=0usize;
+    while i<16usize{let mut j=0usize;while j<8usize{w[i]=(w[i]<<8u64)|(block[i*8usize+j] as u64);j+=1usize;}i+=1usize;}
+    while i<80usize{
+        let x=w[i-15usize];let y=w[i-2usize];
+        let s0=((x>>1u64)|(x<<63u64))^((x>>8u64)|(x<<56u64))^(x>>7u64);
+        let s1=((y>>19u64)|(y<<45u64))^((y>>61u64)|(y<<3u64))^(y>>6u64);
+        w[i]=w[i-16usize].wrapping_add(s0).wrapping_add(w[i-7usize]).wrapping_add(s1);i+=1usize;
+    }
+    let mut a=state[0];let mut b=state[1];let mut c=state[2];let mut d=state[3];
+    let mut e=state[4];let mut f=state[5];let mut g=state[6];let mut h=state[7];i=0usize;
+    while i<80usize{
+        let s1=((e>>14u64)|(e<<50u64))^((e>>18u64)|(e<<46u64))^((e>>41u64)|(e<<23u64));
+        let choice=(e&f)^((!e)&g);
+        let t1=h.wrapping_add(s1).wrapping_add(choice).wrapping_add(constants[i]).wrapping_add(w[i]);
+        let s0=((a>>28u64)|(a<<36u64))^((a>>34u64)|(a<<30u64))^((a>>39u64)|(a<<25u64));
+        let t2=s0.wrapping_add((a&b)^(a&c)^(b&c));
+        h=g;g=f;f=e;e=d.wrapping_add(t1);d=c;c=b;b=a;a=t1.wrapping_add(t2);i+=1usize;
+    }
+    state[0]=state[0].wrapping_add(a);state[1]=state[1].wrapping_add(b);
+    state[2]=state[2].wrapping_add(c);state[3]=state[3].wrapping_add(d);
+    state[4]=state[4].wrapping_add(e);state[5]=state[5].wrapping_add(f);
+    state[6]=state[6].wrapping_add(g);state[7]=state[7].wrapping_add(h);
+}
+fn run(input:&[u8],short:bool)->Vec<u8>{
+    let mut state=if short{
+        [0xcbbb9d5dc1059ed8u64,0x629a292a367cd507u64,0x9159015a3070dd17u64,0x152fecd8f70e5939u64,
+         0x67332667ffc00b31u64,0x8eb44a8768581511u64,0xdb0c2e0d64f98fa7u64,0x47b5481dbefa4fa4u64]
+    }else{
+        [0x6a09e667f3bcc908u64,0xbb67ae8584caa73bu64,0x3c6ef372fe94f82bu64,0xa54ff53a5f1d36f1u64,
+         0x510e527fade682d1u64,0x9b05688c2b3e6c1fu64,0x1f83d9abfb41bd6bu64,0x5be0cd19137e2179u64]
+    };
+    let mut offset=0usize;while input.len()-offset>=128usize{compress(&mut state,&input[offset..offset+128usize]);offset+=128usize;}
+    let mut tail=[0u8;256];let left=input.len()-offset;let mut i=0usize;
+    while i<left{tail[i]=input[offset+i];i+=1usize;}tail[left]=128u8;
+    let used=if left>=112usize{256usize}else{128usize};
+    let high=(input.len() as u64)>>61u64;let low=(input.len() as u64).wrapping_mul(8u64);
+    i=0usize;while i<8usize{tail[used-16usize+i]=(high>>((7usize-i)*8usize)) as u8;tail[used-8usize+i]=(low>>((7usize-i)*8usize)) as u8;i+=1usize;}
+    compress(&mut state,&tail[..128usize]);if used==256usize{compress(&mut state,&tail[128usize..]);}
+    let count=if short{48usize}else{64usize};let mut out=Vec::new();i=0usize;
+    while i<count{out.push((state[i/8usize]>>((7usize-i%8usize)*8usize)) as u8);i+=1usize;}out
+}
+pub fn digest(input:&[u8])->Vec<u8>{run(input,false)}
+pub fn sha384(input:&[u8])->Vec<u8>{run(input,true)}
+fn hx(s:&str)->Vec<u8>{let mut out=Vec::new();let b=s.as_bytes();let mut i=0usize;while i<b.len(){let a=if b[i]<=b'9'{b[i]-b'0'}else{b[i].to_ascii_lowercase()-b'a'+10u8};let c=if b[i+1usize]<=b'9'{b[i+1usize]-b'0'}else{b[i+1usize].to_ascii_lowercase()-b'a'+10u8};out.push(a*16u8+c);i+=2usize;}out}
+#[test]
+fn known_answers(){
+    assert_eq!(sha384(b"abc"),hx("cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7"));
+    assert_eq!(digest(b"abc"),hx("ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"));
+    assert_eq!(sha384(b""),hx("38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b"));
+    assert_eq!(digest(b""),hx("cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"));
+    let a=b"abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
+    assert_eq!(sha384(a),hx("09330c33f71147e83d192fc782cd1b4753111b173b3b05d22fa08086e3b0f712fcc7c71a557e2db966c3e9fa91746039"));
+    assert_eq!(digest(a),hx("8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909"));
+}

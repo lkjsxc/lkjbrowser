@@ -1,0 +1,472 @@
+//! X.509 parsing and a deliberately bounded TLS server-authentication profile.
+//! RFC 5280/9525. Trust comes only from the caller's explicit root bundle.
+//! Exact DER issuer/subject matching is conservative; unsupported constraints fail closed.
+use super::der;
+use super::signature;
+use der::Element;
+
+#[derive(Clone)]
+pub struct Algorithm { pub kind:u16,pub hash:u16,pub pss:bool }
+#[derive(Clone)]
+pub struct Certificate {
+    pub der:Vec<u8>,pub tbs:Vec<u8>,pub signature:Vec<u8>,pub algorithm:Algorithm,
+    pub issuer:Vec<u8>,pub subject:Vec<u8>,pub key_kind:u16,pub curve:u16,
+    pub modulus:Vec<u8>,pub exponent:Vec<u8>,pub public_key:Vec<u8>,
+    pub not_before:i64,pub not_after:i64,pub ca:bool,pub basic_constraints:bool,
+    pub basic_critical:bool,pub path_length:Option<usize>,pub key_usage:bool,
+    pub digital_signature:bool,pub key_cert_sign:bool,pub eku:bool,pub server_auth:bool,
+    pub names:Vec<String>,pub addresses:Vec<Vec<u8>>,pub san_critical:bool,
+}
+
+fn error(message:&str)->String{message.to_string()}
+fn oid(bytes:&[u8],e:Element,value:&[u8])->bool{der::oid_is(bytes,e,value)}
+fn null_or_absent(bytes:&[u8],p:&mut usize,end:usize)->Result<(),String>{
+    if *p<end{let n=der::expect(bytes,p,end,5u8)?;if n.body!=n.end{return Err(error("The certificate has invalid algorithm parameters."));}}
+    der::done(*p,end)
+}
+fn hash_algorithm(bytes:&[u8],e:Element)->Result<u16,String>{
+    if e.tag!=48u8{return Err(error("The certificate has invalid hash parameters."));}
+    let mut p=e.body;let o=der::expect(bytes,&mut p,e.end,6u8)?;
+    let hash=if oid(bytes,o,&[96u8,134u8,72u8,1u8,101u8,3u8,4u8,2u8,1u8]){256u16}
+        else if oid(bytes,o,&[96u8,134u8,72u8,1u8,101u8,3u8,4u8,2u8,2u8]){384u16}
+        else if oid(bytes,o,&[96u8,134u8,72u8,1u8,101u8,3u8,4u8,2u8,3u8]){512u16}
+        else{return Err(error("The certificate uses an unsupported signature hash."));};
+    null_or_absent(bytes,&mut p,e.end)?;Ok(hash)
+}
+fn signature_algorithm(bytes:&[u8],e:Element)->Result<Algorithm,String>{
+    let mut p=e.body;let o=der::expect(bytes,&mut p,e.end,6u8)?;
+    let rsa:&[u8]=&[42u8,134u8,72u8,134u8,247u8,13u8,1u8,1u8];
+    let value=&bytes[o.body..o.end];
+    if value.len()==9usize && value[..8usize]==*rsa{
+        let last=value[8usize];
+        if last==11u8 || last==12u8 || last==13u8{
+            null_or_absent(bytes,&mut p,e.end)?;
+            return Ok(Algorithm{kind:1u16,hash:if last==11u8{256u16}else if last==12u8{384u16}else{512u16},pss:false});
+        }
+        if last==10u8{
+            let params=der::expect(bytes,&mut p,e.end,48u8)?;der::done(p,e.end)?;
+            let mut q=params.body;let mut hash=0u16;let mut mgf=0u16;let mut salt=20u64;let mut last_tag=159u8;
+            while q<params.end{
+                let field=der::read(bytes,&mut q,params.end)?;
+                if field.tag<160u8 || field.tag>163u8 || field.tag<=last_tag{return Err(error("The certificate has invalid RSA-PSS parameters."));}
+                last_tag=field.tag;let mut r=field.body;
+                if field.tag==160u8{
+                    let h=der::expect(bytes,&mut r,field.end,48u8)?;hash=hash_algorithm(bytes,h)?;
+                }else if field.tag==161u8{
+                    let m=der::expect(bytes,&mut r,field.end,48u8)?;let mut s=m.body;
+                    let name=der::expect(bytes,&mut s,m.end,6u8)?;
+                    if !oid(bytes,name,&[42u8,134u8,72u8,134u8,247u8,13u8,1u8,1u8,8u8]){return Err(error("The certificate uses an unsupported RSA-PSS mask."));}
+                    let h=der::expect(bytes,&mut s,m.end,48u8)?;mgf=hash_algorithm(bytes,h)?;der::done(s,m.end)?;
+                }else if field.tag==162u8{
+                    let n=der::expect(bytes,&mut r,field.end,2u8)?;salt=der::number(bytes,n)?;
+                }else{
+                    let n=der::expect(bytes,&mut r,field.end,2u8)?;
+                    if der::number(bytes,n)?!=1u64{return Err(error("The certificate uses an unsupported RSA-PSS trailer."));}
+                    // DER omits DEFAULT trailerField=1. Reject an explicitly encoded default.
+                    return Err(error("The certificate has noncanonical RSA-PSS parameters."));
+                }
+                der::done(r,field.end)?;
+            }
+            if hash==0u16 || hash!=mgf || salt!=hash as u64/8u64{return Err(error("The certificate uses unsupported RSA-PSS parameters."));}
+            return Ok(Algorithm{kind:1u16,hash,pss:true});
+        }
+    }
+    if value.len()==8usize && value[..7usize]==[42u8,134u8,72u8,206u8,61u8,4u8,3u8][..]{
+        let last=value[7usize];
+        if last==2u8 || last==3u8 || last==4u8{
+            der::done(p,e.end)?;
+            return Ok(Algorithm{kind:2u16,hash:if last==2u8{256u16}else if last==3u8{384u16}else{512u16},pss:false});
+        }
+    }
+    // An anchor's self-signature is not a path edge and may use a legacy algorithm.
+    // An unknown algorithm can never verify a non-anchor certificate.
+    while p<e.end{der::read(bytes,&mut p,e.end)?;}
+    Ok(Algorithm{kind:0u16,hash:0u16,pss:false})
+}
+fn name(bytes:&[u8],e:Element)->Result<Vec<u8>,String>{
+    let mut p=e.body;let mut count=0usize;
+    while p<e.end{
+        let set=der::expect(bytes,&mut p,e.end,49u8)?;let mut q=set.body;
+        if q==set.end{return Err(error("The certificate has an empty name component."));}
+        while q<set.end{
+            count+=1;if count>128usize{return Err(error("The certificate name has too many components."));}
+            let pair=der::expect(bytes,&mut q,set.end,48u8)?;let mut r=pair.body;
+            let key=der::expect(bytes,&mut r,pair.end,6u8)?;
+            if key.body==key.end{return Err(error("The certificate name has an empty identifier."));}
+            let value=der::read(bytes,&mut r,pair.end)?;
+            if value.tag!=12u8 && value.tag!=19u8 && value.tag!=20u8 && value.tag!=22u8 && value.tag!=28u8 && value.tag!=30u8{
+                return Err(error("The certificate name uses an unsupported string type."));
+            }
+            der::done(r,pair.end)?;
+        }
+    }
+    Ok(der::encoded(bytes,e))
+}
+fn digit(bytes:&[u8],p:usize)->Result<i64,String>{
+    let b=bytes[p];if b<b'0' || b>b'9'{return Err(error("The certificate contains an invalid date."));}Ok((b-b'0') as i64)
+}
+fn pair(bytes:&[u8],p:usize)->Result<i64,String>{Ok(digit(bytes,p)?*10i64+digit(bytes,p+1usize)?)}
+fn leap(year:i64)->bool{year%4i64==0i64 && (year%100i64!=0i64 || year%400i64==0i64)}
+fn year_days(year:i64)->i64{let y=year-1i64;y*365i64+y/4i64-y/100i64+y/400i64}
+pub fn time(bytes:&[u8],e:Element)->Result<i64,String>{
+    let n=e.end-e.body;let mut p=e.body;
+    let year=if e.tag==23u8 && n==13usize{
+        let short=pair(bytes,p)?;p+=2usize;if short>=50i64{1900i64+short}else{2000i64+short}
+    }else if e.tag==24u8 && n==15usize{
+        let value=pair(bytes,p)?*100i64+pair(bytes,p+2usize)?;p+=4usize;value
+    }else{return Err(error("The certificate uses an unsupported date format."));};
+    if year<1950i64 || year>9999i64 || bytes[e.end-1usize]!=b'Z'{return Err(error("The certificate contains an invalid date."));}
+    let month=pair(bytes,p)?;let day=pair(bytes,p+2usize)?;let hour=pair(bytes,p+4usize)?;
+    let minute=pair(bytes,p+6usize)?;let second=pair(bytes,p+8usize)?;
+    if month<1i64 || month>12i64 || hour>23i64 || minute>59i64 || second>59i64{return Err(error("The certificate contains an invalid date."));}
+    let lengths=[31i64,28i64,31i64,30i64,31i64,30i64,31i64,31i64,30i64,31i64,30i64,31i64];
+    let max=lengths[(month-1i64) as usize]+if month==2i64 && leap(year){1i64}else{0i64};
+    if day<1i64 || day>max{return Err(error("The certificate contains an invalid date."));}
+    let mut days=year_days(year)-year_days(1970i64);let mut m=1i64;
+    while m<month{days+=lengths[(m-1i64) as usize];if m==2i64 && leap(year){days+=1i64;}m+=1i64;}
+    days+=day-1i64;Ok(days*86400i64+hour*3600i64+minute*60i64+second)
+}
+fn public_key(bytes:&[u8],e:Element,cert:&mut Certificate)->Result<(),String>{
+    let mut p=e.body;let alg=der::expect(bytes,&mut p,e.end,48u8)?;let bit=der::expect(bytes,&mut p,e.end,3u8)?;der::done(p,e.end)?;
+    let key=der::bits(bytes,bit)?;let mut q=alg.body;let o=der::expect(bytes,&mut q,alg.end,6u8)?;
+    if oid(bytes,o,&[42u8,134u8,72u8,134u8,247u8,13u8,1u8,1u8,1u8]){
+        null_or_absent(bytes,&mut q,alg.end)?;
+        let seq=der::single(&key,48u8)?;let mut r=seq.body;
+        let n=der::expect(&key,&mut r,seq.end,2u8)?;let x=der::expect(&key,&mut r,seq.end,2u8)?;der::done(r,seq.end)?;
+        cert.modulus=der::unsigned(&key,n)?;cert.exponent=der::unsigned(&key,x)?;
+        if cert.modulus.len()<256usize || cert.modulus.len()>512usize || cert.modulus.len()==256usize && cert.modulus[0usize]<128u8{
+            return Err(error("The certificate RSA key must be between 2048 and 4096 bits."));
+        }
+        let exponent=der::number(&key,x)?;
+        if exponent<3u64 || exponent&1u64==0u64 || exponent>4294967295u64{return Err(error("The certificate has an unsupported RSA public exponent."));}
+        if cert.modulus[cert.modulus.len()-1usize]&1u8==0u8{return Err(error("The certificate has an invalid RSA modulus."));}
+        cert.key_kind=1u16;
+    }else if oid(bytes,o,&[42u8,134u8,72u8,206u8,61u8,2u8,1u8]){
+        let curve=der::expect(bytes,&mut q,alg.end,6u8)?;der::done(q,alg.end)?;
+        cert.curve=if oid(bytes,curve,&[42u8,134u8,72u8,206u8,61u8,3u8,1u8,7u8]){23u16}
+            else if oid(bytes,curve,&[43u8,129u8,4u8,0u8,34u8]){24u16}
+            else{return Err(error("The certificate uses an unsupported elliptic curve."));};
+        let expected=if cert.curve==23u16{65usize}else{97usize};
+        if key.len()!=expected || key[0usize]!=4u8{return Err(error("The certificate has an invalid elliptic-curve public key."));}
+        cert.key_kind=2u16;cert.public_key=key;
+    }else{return Err(error("The certificate uses an unsupported public-key algorithm."));}
+    Ok(())
+}
+fn ascii_name(bytes:&[u8])->Result<String,String>{
+    if bytes.is_empty() || bytes.len()>253usize || bytes.iter().any(|b|*b<33u8 || *b>126u8){
+        return Err(error("The certificate contains an invalid DNS name."));
+    }
+    let name=match std::str::from_utf8(bytes){Ok(s)=>s.to_ascii_lowercase(),Err(_)=>return Err(error("The certificate contains an invalid DNS name."))};
+    Ok(name)
+}
+fn extensions(bytes:&[u8],e:Element,cert:&mut Certificate)->Result<(),String>{
+    let mut p=e.body;let seq=der::expect(bytes,&mut p,e.end,48u8)?;der::done(p,e.end)?;
+    let mut q=seq.body;let mut seen:Vec<Vec<u8>>=Vec::new();
+    while q<seq.end{
+        if seen.len()>=64usize{return Err(error("The certificate has too many extensions."));}
+        let ext=der::expect(bytes,&mut q,seq.end,48u8)?;let mut r=ext.body;
+        let id=der::expect(bytes,&mut r,ext.end,6u8)?;let id_bytes=der::value(bytes,id);
+        for previous in &seen{if *previous==id_bytes{return Err(error("The certificate repeats an extension."));}}
+        seen.push(id_bytes);
+        let mut field=der::read(bytes,&mut r,ext.end)?;let mut critical=false;
+        if field.tag==1u8{critical=der::boolean(bytes,field)?;if !critical{return Err(error("The certificate encodes a default critical flag."));}field=der::read(bytes,&mut r,ext.end)?;}
+        if field.tag!=4u8{return Err(error("The certificate extension is not an OCTET STRING."));}der::done(r,ext.end)?;
+        let value=&bytes[field.body..field.end];
+        if oid(bytes,id,&[85u8,29u8,19u8]){
+            cert.basic_constraints=true;cert.basic_critical=critical;
+            let inner=der::single(value,48u8)?;let mut s=inner.body;
+            if s<inner.end{
+                let first=der::read(value,&mut s,inner.end)?;
+                if first.tag!=1u8{return Err(error("The certificate has invalid basic constraints."));}
+                cert.ca=der::boolean(value,first)?;
+                if !cert.ca{return Err(error("The certificate encodes a default CA constraint."));}
+                if s<inner.end{
+                    let n=der::expect(value,&mut s,inner.end,2u8)?;let length=der::number(value,n)?;
+                    if length>64u64{return Err(error("The certificate path-length constraint is too large."));}
+                    cert.path_length=Some(length as usize);
+                }
+            }der::done(s,inner.end)?;
+        }else if oid(bytes,id,&[85u8,29u8,15u8]){
+            let bits=der::single(value,3u8)?;
+            if bits.end-bits.body<2usize || bits.end-bits.body>3usize{return Err(error("The certificate has invalid key usage."));}
+            let unused=value[bits.body];if unused>7u8{return Err(error("The certificate has invalid key usage."));}
+            let last=value[bits.end-1usize];let mask=if unused==0u8{0u8}else{(1u8<<unused as u32)-1u8};
+            if last&mask!=0u8 || last&(1u8<<unused as u32)==0u8{return Err(error("The certificate has noncanonical key usage."));}
+            if bits.end-bits.body==3usize && (last!=128u8 || unused!=7u8){return Err(error("The certificate has invalid key usage."));}
+            cert.key_usage=true;cert.digital_signature=value[bits.body+1usize]&128u8!=0u8;cert.key_cert_sign=value[bits.body+1usize]&4u8!=0u8;
+        }else if oid(bytes,id,&[85u8,29u8,37u8]){
+            let inner=der::single(value,48u8)?;let mut s=inner.body;
+            if s==inner.end{return Err(error("The certificate has empty extended key usage."));}
+            cert.eku=true;cert.server_auth=false;
+            while s<inner.end{
+                let usage=der::expect(value,&mut s,inner.end,6u8)?;
+                if oid(value,usage,&[43u8,6u8,1u8,5u8,5u8,7u8,3u8,1u8]) || oid(value,usage,&[85u8,29u8,37u8,0u8]){cert.server_auth=true;}
+            }
+        }else if oid(bytes,id,&[85u8,29u8,17u8]){
+            let inner=der::single(value,48u8)?;let mut s=inner.body;cert.san_critical=critical;
+            if s==inner.end{return Err(error("The certificate has empty alternative names."));}
+            let mut count=0usize;
+            while s<inner.end{
+                count+=1;if count>1024usize{return Err(error("The certificate has too many alternative names."));}
+                let gn=der::read(value,&mut s,inner.end)?;
+                if gn.tag==130u8{cert.names.push(ascii_name(&value[gn.body..gn.end])?);}
+                else if gn.tag==135u8{
+                    let len=gn.end-gn.body;if len!=4usize && len!=16usize{return Err(error("The certificate has an invalid IP address."));}
+                    cert.addresses.push(der::value(value,gn));
+                }else if gn.tag!=160u8 && gn.tag!=129u8 && gn.tag!=163u8 && gn.tag!=164u8 && gn.tag!=165u8 && gn.tag!=134u8 && gn.tag!=136u8{return Err(error("The certificate has an invalid alternative name."));}
+            }
+        }else if oid(bytes,id,&[85u8,29u8,30u8]) || oid(bytes,id,&[85u8,29u8,33u8]) || oid(bytes,id,&[85u8,29u8,36u8]) || oid(bytes,id,&[85u8,29u8,54u8]){
+            return Err(error("The certificate has a name or policy constraint this browser cannot verify."));
+        }else if critical{
+            return Err(error("The certificate has a critical extension this browser cannot verify."));
+        }
+    }Ok(())
+}
+pub fn parse(bytes:&[u8])->Result<Certificate,String>{
+    if bytes.len()>1048576usize{return Err(error("The certificate exceeds the one-MiB limit."));}
+    let outer=der::single(bytes,48u8)?;let mut p=outer.body;
+    let tbs=der::expect(bytes,&mut p,outer.end,48u8)?;let alg=der::expect(bytes,&mut p,outer.end,48u8)?;
+    let sig=der::expect(bytes,&mut p,outer.end,3u8)?;der::done(p,outer.end)?;
+    let algorithm=signature_algorithm(bytes,alg)?;let signature=der::bits(bytes,sig)?;
+    let mut cert=Certificate{der:bytes.to_vec(),tbs:der::encoded(bytes,tbs),signature,algorithm,
+        issuer:Vec::new(),subject:Vec::new(),key_kind:0u16,curve:0u16,modulus:Vec::new(),exponent:Vec::new(),public_key:Vec::new(),
+        not_before:0i64,not_after:0i64,ca:false,basic_constraints:false,basic_critical:false,path_length:None,
+        key_usage:false,digital_signature:false,key_cert_sign:false,eku:false,server_auth:false,
+        names:Vec::new(),addresses:Vec::new(),san_critical:false};
+    let mut q=tbs.body;let first=der::read(bytes,&mut q,tbs.end)?;let mut version=0u64;
+    let serial=if first.tag==160u8{
+        let mut r=first.body;let v=der::expect(bytes,&mut r,first.end,2u8)?;version=der::number(bytes,v)?;der::done(r,first.end)?;
+        if version==0u64 || version>2u64{return Err(error("The certificate has an invalid version."));}
+        der::expect(bytes,&mut q,tbs.end,2u8)?
+    }else{first};
+    let serial_value=der::unsigned(bytes,serial)?;
+    if serial_value.len()>32usize{return Err(error("The certificate serial number is too long."));}
+    let inner_alg=der::expect(bytes,&mut q,tbs.end,48u8)?;
+    if bytes[inner_alg.start..inner_alg.end]!=bytes[alg.start..alg.end]{return Err(error("The certificate signature algorithms disagree."));}
+    let issuer=der::expect(bytes,&mut q,tbs.end,48u8)?;cert.issuer=name(bytes,issuer)?;
+    let dates=der::expect(bytes,&mut q,tbs.end,48u8)?;let mut r=dates.body;
+    let from=der::read(bytes,&mut r,dates.end)?;let until=der::read(bytes,&mut r,dates.end)?;der::done(r,dates.end)?;
+    cert.not_before=time(bytes,from)?;cert.not_after=time(bytes,until)?;
+    if cert.not_after<cert.not_before{return Err(error("The certificate validity interval is reversed."));}
+    let subject=der::expect(bytes,&mut q,tbs.end,48u8)?;cert.subject=name(bytes,subject)?;
+    let key=der::expect(bytes,&mut q,tbs.end,48u8)?;public_key(bytes,key,&mut cert)?;
+    let mut last_tag=128u8;
+    while q<tbs.end{
+        let optional=der::read(bytes,&mut q,tbs.end)?;
+        if optional.tag<=last_tag{return Err(error("The certificate repeats an optional field."));}last_tag=optional.tag;
+        if optional.tag==163u8{
+            if version!=2u64{return Err(error("Certificate extensions require version three."));}
+            extensions(bytes,optional,&mut cert)?;
+        }else if optional.tag==129u8 || optional.tag==130u8{
+            if version==0u64 || optional.body==optional.end || bytes[optional.body]>7u8{return Err(error("The certificate has an invalid unique identifier."));}
+            let unused=bytes[optional.body];
+            if optional.end-optional.body==1usize{if unused!=0u8{return Err(error("The certificate has an invalid unique identifier."));}}
+            else{let mask=if unused==0u8{0u8}else{(1u8<<unused as u32)-1u8};if bytes[optional.end-1usize]&mask!=0u8{return Err(error("The certificate has nonzero unused identifier bits."));}}
+        }else{return Err(error("The certificate contains an unsupported optional field."));}
+    }
+    if subject.body==subject.end && (!cert.san_critical || cert.names.is_empty() && cert.addresses.is_empty()){
+        return Err(error("A certificate with an empty subject needs critical alternative names."));
+    }
+    Ok(cert)
+}
+fn b64_value(b:u8)->i32{
+    if b>=b'A' && b<=b'Z'{(b-b'A') as i32}
+    else if b>=b'a' && b<=b'z'{(b-b'a') as i32+26i32}
+    else if b>=b'0' && b<=b'9'{(b-b'0') as i32+52i32}
+    else if b==b'+'{62i32}else if b==b'/'{63i32}else{-1i32}
+}
+pub fn base64(bytes:&[u8])->Result<Vec<u8>,String>{
+    if bytes.is_empty() || bytes.len()%4usize!=0usize{return Err(error("The trust file contains invalid Base64."));}
+    let mut out=Vec::new();let mut p=0usize;
+    while p<bytes.len(){
+        let a=b64_value(bytes[p]);let b=b64_value(bytes[p+1usize]);
+        if a<0i32 || b<0i32{return Err(error("The trust file contains invalid Base64."));}
+        out.push(((a<<2u32)|(b>>4u32)) as u8);
+        let c=bytes[p+2usize];let d=bytes[p+3usize];
+        if c==b'='{
+            if d!=b'=' || p+4usize!=bytes.len() || b&15i32!=0i32{return Err(error("The trust file contains invalid Base64 padding."));}
+        }else{
+            let x=b64_value(c);if x<0i32{return Err(error("The trust file contains invalid Base64."));}
+            out.push((((b&15i32)<<4u32)|(x>>2u32)) as u8);
+            if d==b'='{
+                if p+4usize!=bytes.len() || x&3i32!=0i32{return Err(error("The trust file contains invalid Base64 padding."));}
+            }else{
+                let y=b64_value(d);if y<0i32{return Err(error("The trust file contains invalid Base64."));}
+                out.push((((x&3i32)<<6u32)|y) as u8);
+            }
+        }p+=4usize;
+    }Ok(out)
+}
+pub fn parse_pem(bytes:&[u8])->Result<Vec<Vec<u8>>,String>{
+    if bytes.len()>16777216usize{return Err(error("The trust file exceeds the 16-MiB limit."));}
+    let text=match std::str::from_utf8(bytes){Ok(s)=>s,Err(_)=>return Err(error("The trust file must be a PEM certificate bundle."))};
+    let mut result=Vec::new();let mut body=Vec::new();let mut inside=false;
+    for line in text.lines(){
+        let line=std::str::trim_ascii(line);
+        if line=="-----BEGIN CERTIFICATE-----"{
+            if inside{return Err(error("The trust file contains a nested certificate."));}inside=true;body.clear();
+        }else if line=="-----END CERTIFICATE-----"{
+            if !inside{return Err(error("The trust file contains an unmatched certificate ending."));}
+            let cert=base64(&body)?;der::single(&cert,48u8)?;result.push(cert);inside=false;
+            if result.len()>1024usize{return Err(error("The trust file has too many certificates."));}
+        }else if inside{
+            if body.len()+line.len()>1398104usize{return Err(error("A trust-file certificate exceeds one MiB."));}
+            body.extend_from_slice(line.as_bytes());
+        }
+    }
+    if inside{return Err(error("The trust file contains an incomplete certificate."));}
+    if result.is_empty(){return Err(error("The trust file contains no certificates."));}Ok(result)
+}
+fn valid_dns(name:&str,wildcard:bool)->bool{
+    if name.is_empty() || name.len()>253usize{return false;}
+    let mut index=0usize;
+    for label in name.split('.'){
+        if label.is_empty() || label.len()>63usize{return false;}
+        if wildcard && index==0usize && label=="*"{index+=1usize;continue;}
+        let b=label.as_bytes();
+        if b[0usize]==b'-' || b[b.len()-1usize]==b'-'{return false;}
+        for c in b{
+            if !(*c>=b'a' && *c<=b'z' || *c>=b'A' && *c<=b'Z' || *c>=b'0' && *c<=b'9' || *c==b'-'){return false;}
+        }index+=1usize;
+    }index>0usize
+}
+pub fn dns_matches(pattern:&str,host:&str)->bool{
+    if !valid_dns(pattern,true) || !valid_dns(host,false){return false;}
+    if pattern.eq_ignore_ascii_case(host){return true;}
+    if !pattern.starts_with("*."){return false;}
+    let suffix=&pattern[2usize..];
+    // Restrict wildcard certificates to at least two literal suffix labels.
+    if !suffix.contains('.'){return false;}
+    match host.split_once('.'){Some((first,rest))=>!first.is_empty() && rest.eq_ignore_ascii_case(suffix),None=>false}
+}
+fn ip4(host:&str)->Option<Vec<u8>>{
+    let mut result=Vec::new();
+    for part in host.split('.'){
+        if part.is_empty() || part.as_bytes().iter().any(|b|*b<b'0' || *b>b'9'){return None;}
+        match part.parse::<u8>(){Ok(n)=>result.push(n),Err(_)=>return None}
+    }
+    if result.len()==4usize{Some(result)}else{None}
+}
+pub fn verify_name(cert:&Certificate,host:&str)->Result<(),String>{
+    let normalized=if host.ends_with('.') {host[..host.len()-1usize].to_string()}else{host.to_string()};
+    if let Some(ip)=ip4(normalized.as_str()){
+        for present in &cert.addresses{if *present==ip{return Ok(());}}
+    }else{
+        if !valid_dns(normalized.as_str(),false){return Err(error("The address needs an ASCII DNS name or IPv4 address for certificate verification."));}
+        for present in &cert.names{if dns_matches(present.as_str(),normalized.as_str()){return Ok(());}}
+    }
+    Err(error("The certificate is for a different host name. Check the address."))
+}
+fn verify_time(cert:&Certificate,now:i64)->Result<(),String>{
+    if now<cert.not_before{return Err(error("The server certificate is not valid yet. Check the computer clock."));}
+    if now>cert.not_after{return Err(error("The server certificate has expired. Check the computer clock."));}Ok(())
+}
+fn verify_signature(cert:&Certificate,issuer:&Certificate)->Result<(),String>{
+    if cert.algorithm.kind==1u16 && issuer.key_kind==1u16{
+        signature::verify_rsa(&issuer.modulus,&issuer.exponent,&cert.signature,&cert.tbs,cert.algorithm.hash,cert.algorithm.pss)
+            .map_err(|_:String|->String{error("The certificate chain contains an invalid signature.")})
+    }else if cert.algorithm.kind==2u16 && issuer.key_kind==2u16{
+        signature::verify_ecdsa(issuer.curve,&issuer.public_key,&cert.signature,&cert.tbs,cert.algorithm.hash)
+            .map_err(|_:String|->String{error("The certificate chain contains an invalid signature.")})
+    }else{Err(error("The certificate chain uses an unsupported signature algorithm."))}
+}
+pub fn verify_handshake(cert:&Certificate,scheme:u16,message:&[u8],sig:&[u8])->Result<(),String>{
+    if scheme==1027u16 && cert.key_kind==2u16 && cert.curve==23u16{
+        signature::verify_ecdsa(23u16,&cert.public_key,sig,message,256u16)
+    }else if scheme==1283u16 && cert.key_kind==2u16 && cert.curve==24u16{
+        signature::verify_ecdsa(24u16,&cert.public_key,sig,message,384u16)
+    }else if (scheme==2052u16 || scheme==2053u16 || scheme==2054u16) && cert.key_kind==1u16{
+        let hash=if scheme==2052u16{256u16}else if scheme==2053u16{384u16}else{512u16};
+        signature::verify_rsa(&cert.modulus,&cert.exponent,sig,message,hash,true)
+    }else{Err(error("The server selected an unsupported certificate signature scheme."))}
+}
+fn issuer_policy(cert:&Certificate,now:i64,below:usize,anchor:bool)->Result<(),String>{
+    verify_time(cert,now)?;
+    if !anchor && (!cert.ca || !cert.basic_constraints || !cert.basic_critical){return Err(error("The certificate issuer is not authorized as a certificate authority."));}
+    if cert.basic_constraints && !cert.ca{return Err(error("The certificate issuer is not a certificate authority."));}
+    if cert.key_usage && !cert.key_cert_sign{return Err(error("The certificate issuer is not allowed to sign certificates."));}
+    if cert.eku && !cert.server_auth{return Err(error("The certificate authority is not allowed to authenticate web servers."));}
+    if let Some(max)=cert.path_length{if below>max{return Err(error("The certificate chain exceeds its permitted path length."));}}
+    Ok(())
+}
+fn subject_der(bytes:&[u8])->Result<Vec<u8>,String>{
+    let outer=der::single(bytes,48u8)?;let mut p=outer.body;let tbs=der::expect(bytes,&mut p,outer.end,48u8)?;
+    let mut q=tbs.body;let first=der::read(bytes,&mut q,tbs.end)?;
+    if first.tag==160u8{der::expect(bytes,&mut q,tbs.end,2u8)?;}else if first.tag!=2u8{return Err(error("Invalid root certificate serial number."));}
+    der::expect(bytes,&mut q,tbs.end,48u8)?;der::expect(bytes,&mut q,tbs.end,48u8)?;der::expect(bytes,&mut q,tbs.end,48u8)?;
+    let subject=der::expect(bytes,&mut q,tbs.end,48u8)?;Ok(der::encoded(bytes,subject))
+}
+fn path(current:&Certificate,intermediates:&[Certificate],roots:&[Vec<u8>],used:&[usize],now:i64,below:usize,budget:&mut usize)->Result<(),String>{
+    if used.len()>10usize{return Err(error("The certificate chain exceeds ten intermediate certificates."));}
+    let mut failure=if current.issuer==current.subject{
+        error("The server presented a self-signed certificate that is not trusted.")
+    }else{error("The certificate chain does not lead to a trusted root.")};
+    // Try explicit trust anchors first; a peer's self-signed certificate is never one.
+    for bytes in roots{
+        let candidate_name=match subject_der(bytes){Ok(n)=>n,Err(_)=>continue};
+        if candidate_name!=current.issuer{continue;}
+        if *budget==0usize{return Err(error("The certificate path search exceeds its verification limit."));}*budget-=1usize;
+        let anchor=match parse(bytes){Ok(c)=>c,Err(e)=>{failure=e;continue;}};
+        match issuer_policy(&anchor,now,below,true){Ok(())=>{},Err(e)=>{failure=e;continue;}}
+        match verify_signature(current,&anchor){Ok(())=>return Ok(()),Err(e)=>{failure=e;}}
+    }
+    let mut index=0usize;
+    while index<intermediates.len(){
+        let candidate=&intermediates[index];
+        let mut repeated=false;for seen in used{if *seen==index{repeated=true;}}
+        if !repeated && candidate.subject==current.issuer{
+            if *budget==0usize{return Err(error("The certificate path search exceeds its verification limit."));}*budget-=1usize;
+            let policy=issuer_policy(candidate,now,below,false);
+            let mut accepted=true;
+            match policy{Ok(())=>{},Err(e)=>{failure=e;accepted=false;}}
+            if accepted{
+                match verify_signature(current,candidate){Ok(())=>{},Err(e)=>{failure=e;accepted=false;}}
+            }
+            if accepted{
+                let mut next=used.to_vec();next.push(index);
+                let add=if candidate.subject==candidate.issuer{0usize}else{1usize};
+                match path(candidate,intermediates,roots,&next,now,below+add,budget){Ok(())=>return Ok(()),Err(e)=>failure=e}
+            }
+        }index+=1usize;
+    }Err(failure)
+}
+pub fn validate(chain:&[Vec<u8>],roots:&[Vec<u8>],host:&str,now:u64)->Result<Certificate,String>{
+    if chain.is_empty(){return Err(error("The server did not send a certificate."));}
+    if chain.len()>12usize{return Err(error("The server sent too many certificates."));}
+    if roots.is_empty(){return Err(error("No trusted root certificates are available."));}
+    if now>9223372036854775807u64{return Err(error("The computer clock cannot be used for certificate verification."));}
+    let leaf=parse(&chain[0usize])?;verify_time(&leaf,now as i64)?;verify_name(&leaf,host)?;
+    if leaf.ca{return Err(error("The server sent a CA certificate as its server certificate."));}
+    if leaf.key_usage && !leaf.digital_signature{return Err(error("The server certificate is not allowed to sign the TLS handshake."));}
+    if leaf.eku && !leaf.server_auth{return Err(error("The certificate is not allowed to authenticate a web server."));}
+    let mut rest=Vec::new();let mut i=1usize;
+    while i<chain.len(){rest.push(parse(&chain[i])?);i+=1usize;}
+    let used:Vec<usize>=Vec::new();let mut budget=64usize;path(&leaf,&rest,roots,&used,now as i64,0usize,&mut budget)?;Ok(leaf)
+}
+#[test]
+fn strict_base64(){
+    assert_eq!(base64(b"TWFu").unwrap(),b"Man"[..].to_vec());
+    assert_eq!(base64(b"TWE=").unwrap(),b"Ma"[..].to_vec());
+    assert_eq!(base64(b"TQ==").unwrap(),b"M"[..].to_vec());
+    assert!(base64(b"TR==").is_err());assert!(base64(b"TWF=").is_err());
+    assert!(base64(b"TQ==AAAA").is_err());assert!(base64(b"TQ=A").is_err());
+}
+#[test]
+fn identity_rules(){
+    assert!(dns_matches("*.example.com","www.example.com"));
+    assert!(dns_matches("WWW.EXAMPLE.COM","www.example.com"));
+    assert!(!dns_matches("*.example.com","a.b.example.com"));
+    assert!(!dns_matches("*.example.com","example.com"));
+    assert!(!dns_matches("w*.example.com","www.example.com"));
+    assert!(!dns_matches("*.com","example.com"));
+    assert!(!dns_matches("www.example.com","www.example.com.attacker"));
+    assert!(!dns_matches("*.example.com","a..example.com"));
+    assert!(!dns_matches("*.example.com","-x.example.com"));
+}
+#[test]
+fn exact_time(){
+    let epoch=b"\x17\x0d700101000000Z";assert_eq!(time(epoch,der::single(epoch,23u8).unwrap()).unwrap(),0i64);
+    let leap_day=b"\x18\x0f20000229000000Z";assert_eq!(time(leap_day,der::single(leap_day,24u8).unwrap()).unwrap(),951782400i64);
+    let invalid=b"\x18\x0f21000229000000Z";assert!(time(invalid,der::single(invalid,24u8).unwrap()).is_err());
+    let offset=b"\x17\x0d700101000000+";assert!(time(offset,der::single(offset,23u8).unwrap()).is_err());
+}
