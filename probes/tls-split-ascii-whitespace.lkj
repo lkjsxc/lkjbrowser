@@ -1,0 +1,1 @@
+pub fn main(){for token in "alternate stylesheet".split_ascii_whitespace(){assert!(!token.is_empty());}}

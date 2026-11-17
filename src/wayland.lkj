@@ -42,6 +42,10 @@ fn io(result: Result<(), i64>, step: &str) -> Result<(), String> {
     match result { Ok(()) => Ok(()), Err(e) => Err(failure(step, e)) }
 }
 impl Wayland {
+    pub fn set_title(&mut self,title:&str)->Result<(),String>{
+        let mut bytes=Vec::new();wire_string(&mut bytes,title);
+        let top=self.top;self.send(top,2u32,bytes,false)
+    }
     pub fn open(world: &mut World, port: u16, width: i32, height: i32, title: &str) -> Result<Wayland, String> {
         if width < 1i32 || height < 1i32 || width > 8192i32 || height > 8192i32 {
             return Err("Wayland: viewport outside 1..8192".to_string());

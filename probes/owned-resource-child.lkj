@@ -1,0 +1,61 @@
+//! Positive probe at e6d13590b: owned same-executable resource worker.
+//! Output is an anonymous memfd; no port, named temporary file or foreign command.
+fn spawn(world:&mut World,mode:&str)->Result<(Child,File),i64>{
+    let executable=world.executable()?;
+    let input=world.temporary_file()?;let output=world.temporary_file()?;
+    let errors=world.temporary_file()?;let result=world.temporary_file()?;
+    let args=vec![mode.as_bytes().to_vec()];let mut process=world.process();
+    let child=process.spawn_file(&executable,&args,&input,&output,&errors,&result)?;
+    Ok((child,output))
+}
+fn wait_until(world:&mut World,child:&mut Child,deadline:usize)->Result<i64,i64>{
+    let mut clock=world.clock();let mut ready=world.readiness()?;
+    loop{
+        if let Some(status)=child.try_wait()?{return Ok(status);}
+        let now=clock.nanoseconds()?;if now>=deadline{return Err(110i64);}
+        // An empty readiness set sleeps without spinning; no child-watch API is needed.
+        let _=ready.wait(&mut clock,(now+10000000usize).min(deadline))?;
+    }
+}
+fn bounded_output(file:&mut File)->Result<Vec<u8>,i64>{
+    file.rewind()?;let mut bytes=Vec::new();let mut block=[0u8;4096];
+    loop{let n=file.read(&mut block)?;if n==0usize{break;}
+        if bytes.len()+n>1049600usize{return Err(27i64);}bytes.extend_from_slice(&block[..n]);}
+    Ok(bytes)
+}
+pub fn main(mut world:World){
+    let args=world.args();
+    if !args.is_empty(){
+        if args[0]==b"child-ok"[..].to_vec(){
+            let mut output=world.stdout_file().unwrap();output.write_all(b"CSS1").unwrap();
+            output.write_all(&vec![b'x';131072usize]).unwrap();return;
+        }
+        if args[0]==b"child-stall"[..].to_vec(){
+            let mut clock=world.clock();let end=clock.nanoseconds().unwrap()+5000000000usize;
+            let mut ready=world.readiness().unwrap();let _=ready.wait(&mut clock,end).unwrap();return;
+        }
+    }
+    let mut clock=world.clock();let start=clock.nanoseconds().unwrap();
+    {
+        let (mut child,mut output)=spawn(&mut world,"child-ok").unwrap();
+        assert_eq!(wait_until(&mut world,&mut child,start+1000000000usize).unwrap(),0i64);
+        let bytes=bounded_output(&mut output).unwrap();assert_eq!(bytes.len(),131076usize);
+        assert_eq!(&bytes[..4usize],b"CSS1");assert!(bytes[4usize..].iter().all(|b|*b==b'x'));
+    }
+    let good=clock.nanoseconds().unwrap()-start;
+    let slow_start=clock.nanoseconds().unwrap();
+    {
+        let (mut child,_output)=spawn(&mut world,"child-stall").unwrap();
+        assert_eq!(wait_until(&mut world,&mut child,slow_start+100000000usize),Err(110i64));
+        child.terminate().unwrap();assert_eq!(child.wait().unwrap(),137i64);
+        assert!(child.try_wait().is_err());
+    }
+    let killed=clock.nanoseconds().unwrap()-slow_start;assert!(killed<1000000000usize);
+    let drop_start=clock.nanoseconds().unwrap();
+    {
+        let (child,_output)=spawn(&mut world,"child-stall").unwrap();
+        drop(child); // owned drop kills and synchronously reaps the still-live child.
+    }
+    let dropped=clock.nanoseconds().unwrap()-drop_start;assert!(dropped<1000000000usize);
+    world.stdout().write(format!("same-image bytes=131076 success_ns={} deadline_kill_reap_ns={} drop_kill_reap_ns={}\n",good,killed,dropped).as_bytes());
+}

@@ -81,7 +81,11 @@ fn ua_style(tag: &str, parent: Style) -> Style {
     match tag {
         "#document" | "html" | "body" | "main" | "article" | "section" | "div" | "header" |
         "footer" | "nav" | "aside" | "address" | "form" | "figure" | "figcaption" | "details" |
-        "summary" | "dl" | "dt" | "dd" | "fieldset" => { s.display = BLOCK; },
+        "summary" | "dl" | "dt" | "dd" | "fieldset" | "thead" | "tbody" | "tfoot" | "tr" => { s.display = BLOCK; },
+        "table" => { s.display = BLOCK; s.margin_bottom = 18; },
+        "caption" => { s.display = BLOCK; s.bold = true; s.margin_bottom = 8; },
+        "td" | "th" => { s.display = BLOCK; s.padding_top = 4; s.padding_bottom = 4;
+            if tag == "th" { s.bold = true; } },
         "head" | "style" | "script" | "title" | "meta" | "link" | "base" | "template" | "noscript" => {
             s.display = NONE;
         },
@@ -173,15 +177,27 @@ fn clamp(value: i32, low: i32, high: i32) -> i32 {
 }
 
 pub fn length(value: &str, font_size: i32) -> Option<i32> {
+    length_viewport(value, font_size, 0, 0)
+}
+
+/// Zero viewport axes mean that viewport-relative units cannot be resolved.
+pub fn length_viewport(value: &str, font_size: i32, viewport_width: i32, viewport_height: i32) -> Option<i32> {
     let text = trim(value);
     let mut end = text.len();
-    let mut scale = 1000i32;
+    let mut scale = 1000i64;
     if text.ends_with("px") { end -= 2usize; }
     else if text.ends_with("rem") { end -= 3usize; scale = 18000; }
-    else if text.ends_with("em") { end -= 2usize; scale = font_size * 1000; }
-    else if text.ends_with('%') { end -= 1usize; scale = font_size * 10; }
+    else if text.ends_with("em") { end -= 2usize; scale = font_size as i64 * 1000i64; }
+    else if text.ends_with('%') { end -= 1usize; scale = font_size as i64 * 10i64; }
+    else if text.ends_with("vw") { if viewport_width <= 0 { return None; } end -= 2usize; scale = viewport_width as i64 * 10i64; }
+    else if text.ends_with("vh") { if viewport_height <= 0 { return None; } end -= 2usize; scale = viewport_height as i64 * 10i64; }
     let parsed = number_milli(&text[..end])?;
-    let scaled = (parsed as i64 * scale as i64) / 1000000i64;
+    // Reject values outside the bounded coordinate range before multiplying.
+    // Public callers can supply an i32-sized viewport or font-size axis.
+    let magnitude = if parsed < 0 { -(parsed as i64) } else { parsed as i64 };
+    let divisor = if scale < 0 { -scale } else { scale };
+    if divisor > 0i64 && magnitude > 8193000000i64 / divisor { return None; }
+    let scaled = (parsed as i64 * scale) / 1000000i64;
     if scaled < -8192i64 || scaled > 8192i64 { return None; }
     Some(scaled as i32)
 }
@@ -247,6 +263,42 @@ pub fn color(value: &str) -> Option<u32> {
     None
 }
 
+// Expand the supported font shorthand components before the cascade's font-size pass.
+// Font family selection remains the existing installed-font fallback.
+fn font_shorthand(value:&str,important:bool)->Option<Vec<Declaration>>{
+    let mut separated=String::new();
+    for ch in value.chars(){if ch=='/'{separated.push_str(" / ");}else{separated.push(ch);}}
+    let tokens=words(separated.as_str());let mut i=0usize;
+    let mut weight="normal".to_string();let mut posture="normal".to_string();
+    while i<tokens.len(){
+        let token=tokens[i].as_str();
+        if token=="italic" || token=="oblique"{posture=token.to_string();}
+        else if token=="bold" || token=="bolder" || token=="lighter" || token=="100" || token=="200" || token=="300" || token=="400" || token=="500" || token=="600" || token=="700" || token=="800" || token=="900"{weight=token.to_string();}
+        else if token!="normal"{break;}
+        i+=1usize;
+    }
+    if i>=tokens.len(){return None;}
+    let size=tokens[i].clone();let raw=size.as_str();
+    if !(raw.ends_with("px") || raw.ends_with("em") || raw.ends_with('%') || raw.ends_with("vh") || raw.ends_with("vw")){return None;}
+    if length_viewport(raw,18,100,100)?<=0{return None;}
+    i+=1usize;let mut line="normal".to_string();
+    if i<tokens.len() && tokens[i]=="/"{
+        i+=1usize;if i>=tokens.len(){return None;}line=tokens[i].clone();i+=1usize;
+        if line!="normal"{
+            if let Some(n)=number_milli(line.as_str()){if n<0{return None;}}
+            else if let Some(n)=box_length(line.as_str(),18,100,100){if n<0{return None;}}
+            else{return None;}
+        }
+    }
+    // A size without the required family is not a font shorthand.
+    if i>=tokens.len() || tokens[i]=="/"{return None;}
+    let mut result=Vec::new();
+    result.push(Declaration{name:"font-size".to_string(),value:size,important});
+    result.push(Declaration{name:"font-weight".to_string(),value:weight,important});
+    result.push(Declaration{name:"font-style".to_string(),value:posture,important});
+    result.push(Declaration{name:"line-height".to_string(),value:line,important});Some(result)
+}
+
 pub fn declarations(source: &str) -> Vec<Declaration> {
     let mut result: Vec<Declaration> = Vec::new();
     let bytes = source.as_bytes();
@@ -266,7 +318,11 @@ pub fn declarations(source: &str) -> Vec<Declaration> {
                 }
                 let value = trim(&raw[..end]).to_string();
                 if !name.is_empty() && !value.is_empty() {
-                    result.push(Declaration { name, value, important });
+                    if name == "font" {
+                        if let Some(expanded) = font_shorthand(value.as_str(), important) {
+                            for declaration in expanded { result.push(declaration); }
+                        }
+                    } else { result.push(Declaration { name, value, important }); }
                 }
             }
             start = at + 1usize;
@@ -336,48 +392,100 @@ fn specificity_greater(left: [usize; 3], right: [usize; 3]) -> bool {
     else { left[2] > right[2] }
 }
 
-pub fn parse(source: &str) -> Vec<Rule> {
-    let cleaned = strip_comments(source);
-    let source = cleaned.as_str();
-    let bytes = source.as_bytes();
-    let mut result: Vec<Rule> = Vec::new();
-    let mut at = 0usize;
-    while at < bytes.len() {
-        let selector_start = at;
-        while at < bytes.len() && bytes[at] != 123u8 { at += 1; }
-        if at == bytes.len() { break; }
-        let selector_end = at;
-        at += 1;
-        let body_start = at;
-        let mut depth = 1usize;
-        while at < bytes.len() && depth > 0usize {
-            if bytes[at] == 123u8 { depth += 1; }
-            if bytes[at] == 125u8 { depth -= 1; }
-            if depth == 0usize { break; }
-            at += 1;
-        }
-        let body_end = at;
-        if at < bytes.len() { at += 1; }
-        let selectors = trim(&source[selector_start..selector_end]);
-        if selectors.starts_with('@') { continue; }
-        let sb = selectors.as_bytes();
-        let mut start = 0usize;
-        let mut i = 0usize;
-        while i <= sb.len() {
-            if i == sb.len() || sb[i] == 44u8 {
-                let selector = trim(&selectors[start..i]);
-                let parts = selector_parts(selector);
-                if !parts.is_empty() {
-                    let score = specificity(&parts);
-                    result.push(Rule { parts, specificity: score,
-                        declarations: declarations(&source[body_start..body_end]) });
-                }
-                start = i + 1usize;
-            }
-            i += 1;
-        }
+// Bounded width-only media queries. Unsupported conditions never broaden a
+// selector. Query lengths, condition counts and nesting are independently capped.
+fn media_width(value:&str)->Option<i64>{
+    let text=trim(value);let mut end=text.len();let mut scale=1i64;
+    if text.ends_with("px"){end-=2usize;}
+    else if text.ends_with("rem"){end-=3usize;scale=18i64;}
+    else if text.ends_with("em"){end-=2usize;scale=18i64;}
+    else if text!="0"{return None;}
+    let number=number_milli(&text[..end])?;
+    if number<0{return None;}
+    let result=number as i64*scale;
+    if result>8192000i64{return None;}
+    Some(result)
+}
+fn media_one(query:&str,viewport_width:i32)->bool{
+    let trimmed=trim(query);let text=if trimmed.starts_with("only "){trim(&trimmed[5usize..])}else{trimmed};
+    let bytes=text.as_bytes();if bytes.is_empty(){return false;}
+    let mut at=0usize;let mut needs_and=false;
+    if bytes[at]!=40u8{
+        while at<bytes.len() && !whitespace(bytes[at]){at+=1usize;}
+        let kind=&text[..at];if kind!="screen" && kind!="all"{return false;}needs_and=true;
     }
-    result
+    let mut result=true;let mut conditions=0usize;
+    loop{
+        while at<bytes.len() && whitespace(bytes[at]){at+=1usize;}
+        if at==bytes.len(){return result;}
+        if needs_and{
+            if !text[at..].starts_with("and"){return false;}at+=3usize;
+            while at<bytes.len() && whitespace(bytes[at]){at+=1usize;}
+        }
+        if at==bytes.len() || bytes[at]!=40u8{return false;}at+=1usize;
+        let start=at;while at<bytes.len() && bytes[at]!=41u8{at+=1usize;}
+        if at==bytes.len(){return false;}
+        let condition=trim(&text[start..at]);let colon=match condition.find(':'){Some(i)=>i,None=>return false};
+        let feature=trim(&condition[..colon]);let width=match media_width(&condition[colon+1usize..]){Some(n)=>n,None=>return false};
+        let actual=viewport_width as i64*1000i64;
+        if feature=="min-width"{result=result && actual>=width;}
+        else if feature=="max-width"{result=result && actual<=width;}
+        else{return false;}
+        conditions+=1usize;if conditions>16usize{return false;}
+        at+=1usize;needs_and=true;
+    }
+}
+
+pub fn media_matches(query:&str,viewport_width:i32)->bool{
+    if viewport_width<=0 || query.len()>1024usize{return false;}
+    let lower=query.to_ascii_lowercase();
+    for alternative in lower.as_str().split(','){
+        if media_one(alternative,viewport_width){return true;}
+    }false
+}
+fn parse_rules(source:&str,viewport_width:i32,nesting:usize)->Vec<Rule>{
+    let bytes=source.as_bytes();let mut result:Vec<Rule>=Vec::new();let mut at=0usize;
+    while at<bytes.len(){
+        let selector_start=at;let mut statement=false;
+        while at<bytes.len() && bytes[at]!=123u8{
+            if bytes[at]==59u8 && trim(&source[selector_start..at]).starts_with('@'){at+=1usize;statement=true;break;}
+            at+=1usize;
+        }
+        if statement{continue;}
+        if at==bytes.len(){break;}
+        let selector_end=at;at+=1usize;let body_start=at;let mut depth=1usize;
+        while at<bytes.len() && depth>0usize{
+            if bytes[at]==123u8{depth+=1usize;}
+            if bytes[at]==125u8{depth-=1usize;}
+            if depth==0usize{break;}
+            at+=1usize;
+        }
+        let body_end=at;if at<bytes.len(){at+=1usize;}
+        let selectors=trim(&source[selector_start..selector_end]);
+        if selectors.starts_with('@'){
+            let lowered=selectors.to_ascii_lowercase();
+            if nesting<8usize && lowered.starts_with("@media") && lowered.len()>6usize{
+                let condition=&lowered.as_str()[6usize..];
+                if (condition.starts_with('(') || whitespace(condition.as_bytes()[0])) && media_matches(condition,viewport_width){
+                    let nested=parse_rules(&source[body_start..body_end],viewport_width,nesting+1usize);
+                    for rule in nested{result.push(rule);}
+                }
+            }
+            continue;
+        }
+        let sb=selectors.as_bytes();let mut start=0usize;let mut i=0usize;
+        while i<=sb.len(){
+            if i==sb.len() || sb[i]==44u8{
+                let selector=trim(&selectors[start..i]);let parts=selector_parts(selector);
+                if !parts.is_empty(){let score=specificity(&parts);result.push(Rule{parts,specificity:score,declarations:declarations(&source[body_start..body_end])});}
+                start=i+1usize;
+            }i+=1usize;
+        }
+    }result
+}
+pub fn parse(source:&str)->Vec<Rule>{parse_viewport(source,0)}
+pub fn parse_viewport(source:&str,viewport_width:i32)->Vec<Rule>{
+    let cleaned=strip_comments(source);parse_rules(cleaned.as_str(),viewport_width,0usize)
 }
 
 fn selector_name_byte(b: u8) -> bool {
@@ -443,13 +551,13 @@ pub fn matches(doc: &Document, node: usize, rule: &Rule) -> bool {
     true
 }
 
-fn box_values(value: &str, size: i32) -> Option<[i32; 4]> {
+fn box_values(value: &str, size: i32, viewport_width: i32, viewport_height: i32) -> Option<[i32; 4]> {
     let tokens = words(value);
     if tokens.len() == 0usize || tokens.len() > 4usize { return None; }
     let mut values = [0i32; 4];
     let mut i = 0usize;
     while i < tokens.len() {
-        values[i] = if tokens[i] == "auto" { 0 } else { box_length(tokens[i].as_str(), size)? };
+        values[i] = if tokens[i] == "auto" { 0 } else { box_length(tokens[i].as_str(), size, viewport_width, viewport_height)? };
         i += 1;
     }
     if tokens.len() == 1usize { values[1] = values[0]; values[2] = values[0]; values[3] = values[0]; }
@@ -458,11 +566,11 @@ fn box_values(value: &str, size: i32) -> Option<[i32; 4]> {
     Some(values)
 }
 
-fn box_length(value: &str, size: i32) -> Option<i32> {
-    if trim(value).ends_with('%') { None } else { length(value, size) }
+fn box_length(value: &str, size: i32, viewport_width: i32, viewport_height: i32) -> Option<i32> {
+    if trim(value).ends_with('%') { None } else { length_viewport(value, size, viewport_width, viewport_height) }
 }
 
-fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32) {
+fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32, viewport_width: i32, viewport_height: i32) {
     let size = style.font_size;
     match name {
         "display" => match value {
@@ -477,12 +585,12 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32) {
             else if let Some(c) = color(value) { style.background = c; style.has_background = true; }
         },
         "font-size" => {
-            if let Some(v) = length(value, parent_size) { style.font_size = clamp(v, 6, 160); }
+            if let Some(v) = length_viewport(value, parent_size, viewport_width, viewport_height) { style.font_size = clamp(v, 6, 160); }
         },
         "font-weight" => {
             if value == "bold" || value == "bolder" || value == "600" || value == "700" || value == "800" || value == "900" {
                 style.bold = true;
-            } else if value == "normal" || value == "400" || value == "300" || value == "200" || value == "100" {
+            } else if value == "normal" || value == "lighter" || value == "500" || value == "400" || value == "300" || value == "200" || value == "100" {
                 style.bold = false;
             }
         },
@@ -509,13 +617,13 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32) {
             else if let Some(n) = number_milli(value) {
                 style.line_height_scale = clamp(n, 100, 10000);
                 style.line_height = 0;
-            } else if let Some(v) = box_length(value, size) {
+            } else if let Some(v) = box_length(value, size, viewport_width, viewport_height) {
                 style.line_height = clamp(v, 6, 256);
                 style.line_height_scale = 0;
             }
         },
         "margin" => {
-            if let Some(v) = box_values(value, size) {
+            if let Some(v) = box_values(value, size, viewport_width, viewport_height) {
                 style.margin_top = v[0]; style.margin_right = v[1];
                 style.margin_bottom = v[2]; style.margin_left = v[3];
                 let tokens = words(value);
@@ -527,31 +635,31 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32) {
             }
         },
         "padding" => {
-            if let Some(v) = box_values(value, size) {
+            if let Some(v) = box_values(value, size, viewport_width, viewport_height) {
                 style.padding_top = clamp(v[0], 0, 8192); style.padding_right = clamp(v[1], 0, 8192);
                 style.padding_bottom = clamp(v[2], 0, 8192); style.padding_left = clamp(v[3], 0, 8192);
             }
         },
-        "margin-top" => { if let Some(v) = box_length(value, size) { style.margin_top = v; } },
-        "margin-bottom" => { if let Some(v) = box_length(value, size) { style.margin_bottom = v; } },
+        "margin-top" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.margin_top = v; } },
+        "margin-bottom" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.margin_bottom = v; } },
         "margin-left" => {
             style.auto_left = value == "auto";
             if style.auto_left { style.margin_left = 0; }
-            else if let Some(v) = box_length(value, size) { style.margin_left = v; }
+            else if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.margin_left = v; }
         },
         "margin-right" => {
             style.auto_right = value == "auto";
             if style.auto_right { style.margin_right = 0; }
-            else if let Some(v) = box_length(value, size) { style.margin_right = v; }
+            else if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.margin_right = v; }
         },
-        "padding-top" => { if let Some(v) = box_length(value, size) { style.padding_top = clamp(v, 0, 8192); } },
-        "padding-right" => { if let Some(v) = box_length(value, size) { style.padding_right = clamp(v, 0, 8192); } },
-        "padding-bottom" => { if let Some(v) = box_length(value, size) { style.padding_bottom = clamp(v, 0, 8192); } },
-        "padding-left" => { if let Some(v) = box_length(value, size) { style.padding_left = clamp(v, 0, 8192); } },
-        "width" => { if let Some(v) = box_length(value, size) { style.width = clamp(v, 1, 8192); } },
-        "max-width" => { if let Some(v) = box_length(value, size) { style.max_width = clamp(v, 1, 8192); } },
-        "height" | "min-height" => { if let Some(v) = box_length(value, size) { style.height = clamp(v, 0, 8192); } },
-        "border-width" => { if let Some(v) = box_length(value, size) { style.border_width = clamp(v, 0, 16); } },
+        "padding-top" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.padding_top = clamp(v, 0, 8192); } },
+        "padding-right" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.padding_right = clamp(v, 0, 8192); } },
+        "padding-bottom" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.padding_bottom = clamp(v, 0, 8192); } },
+        "padding-left" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.padding_left = clamp(v, 0, 8192); } },
+        "width" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.width = clamp(v, 1, 8192); } },
+        "max-width" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.max_width = clamp(v, 1, 8192); } },
+        "height" | "min-height" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.height = clamp(v, 0, 8192); } },
+        "border-width" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.border_width = clamp(v, 0, 16); } },
         "border-color" => { if let Some(c) = color(value) { style.border_color = c; } },
         "border" => {
             if value == "none" || value == "0" { style.border_width = 0; }
@@ -559,7 +667,7 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32) {
                 let tokens = words(value);
                 let mut i = 0usize;
                 while i < tokens.len() {
-                    if let Some(v) = length(tokens[i].as_str(), size) { style.border_width = clamp(v, 0, 16); }
+                    if let Some(v) = length_viewport(tokens[i].as_str(), size, viewport_width, viewport_height) { style.border_width = clamp(v, 0, 16); }
                     if let Some(c) = color(tokens[i].as_str()) { style.border_color = c; }
                     i += 1;
                 }
@@ -570,18 +678,22 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32) {
 }
 
 fn apply_declarations(style: &mut Style, values: &[Declaration], important: bool,
-    parent_size: i32, font_only: bool) {
+    parent_size: i32, font_only: bool, viewport_width: i32, viewport_height: i32) {
     let mut i = 0usize;
     while i < values.len() {
         if values[i].important == important && (values[i].name == "font-size") == font_only {
-            apply(style, values[i].name.as_str(), values[i].value.as_str(), parent_size);
+            apply(style, values[i].name.as_str(), values[i].value.as_str(), parent_size, viewport_width, viewport_height);
         }
         i += 1;
     }
 }
 
 pub fn compute(doc: &Document) -> Vec<Style> {
-    let rules = parse(doc.styles.as_str());
+    compute_viewport(doc, 0, 0)
+}
+
+pub fn compute_viewport(doc: &Document, viewport_width: i32, viewport_height: i32) -> Vec<Style> {
+    let rules = parse_viewport(doc.styles.as_str(), viewport_width);
     let mut result: Vec<Style> = Vec::new();
     let mut node = 0usize;
     while node < doc.nodes.len() {
@@ -614,11 +726,11 @@ pub fn compute(doc: &Document) -> Vec<Style> {
                 let mut i = 0usize;
                 while i < matching.len() {
                     apply_declarations(&mut style, &rules[matching[i].0].declarations,
-                        phase == 1usize, parent.font_size, pass == 0usize);
+                        phase == 1usize, parent.font_size, pass == 0usize, viewport_width, viewport_height);
                     i += 1;
                 }
                 apply_declarations(&mut style, &inline, phase == 1usize,
-                    parent.font_size, pass == 0usize);
+                    parent.font_size, pass == 0usize, viewport_width, viewport_height);
                 phase += 1;
             }
             pass += 1;
@@ -849,4 +961,59 @@ fn nested_big_and_small_defaults_keep_the_font_size_policy() {
         i += 1usize;
     }
     assert!(largest && smallest);
+}
+
+#[test]
+fn viewport_lengths_and_font_shorthand_cascade(){
+    let doc=crate::html::parse("<style>body{font:16px/1.6 system-ui,sans-serif;max-width:26em;margin:auto;padding:25vh 2em 2em}p{font-weight:bold;font:italic 18px / 2 serif;font-size:20px}</style><body><p>Readable</p></body>");
+    let styles=compute_viewport(&doc,1000,600);let mut i=0usize;
+    while i<doc.nodes.len(){
+        if doc.nodes[i].tag=="body"{
+            assert_eq!(styles[i].font_size,16);assert_eq!(styles[i].line_height_scale,1600);
+            assert_eq!(styles[i].padding_top,150);assert_eq!(styles[i].padding_left,32);
+            assert_eq!(styles[i].padding_bottom,32);assert_eq!(styles[i].max_width,416);
+            assert!(styles[i].auto_left && styles[i].auto_right);
+        }
+        if doc.nodes[i].tag=="p"{assert_eq!(styles[i].font_size,20);assert!(!styles[i].bold);assert!(styles[i].italic);assert_eq!(styles[i].line_height_scale,2000);}
+        i+=1usize;
+    }
+    assert_eq!(length_viewport("12.5vw",18,800,600),Some(100));
+    assert_eq!(length_viewport("-10vh",18,800,600),Some(-60));
+    assert_eq!(length("25vh",18),None);
+    assert_eq!(length_viewport("999999999999vh",18,800,600),None);
+    assert_eq!(length_viewport("1000000vw",18,2147483647,600),None);
+}
+#[test]
+fn font_shorthand_importance_and_invalid_values(){
+    let doc=crate::html::parse("<style>p{font:bold 22px/1.2 serif!important;font-size:12px;font-weight:normal}#bad{font:31px}#bad{font-style:italic}</style><p id='good'>Good</p><p id='bad'>Bad</p>");
+    let styles=compute_viewport(&doc,1000,600);let mut i=0usize;
+    while i<doc.nodes.len(){if doc.nodes[i].tag=="p"{assert_eq!(styles[i].font_size,22);assert!(styles[i].bold);assert_eq!(styles[i].line_height_scale,1200);}i+=1usize;}
+}
+
+#[test]
+fn width_media_queries_hide_only_the_correct_navigation(){
+    let doc=crate::html::parse("<style>@import url(ignored.css);#mobile{display:none}@media screen and (max-width:899px){#desktop{display:none}#mobile{display:block}}@media all and (min-width:900px){#desktop{display:block}#mobile{display:none}}@media print{body{display:none}}@media screen and (orientation:portrait){body{display:none}}</style><body><div id='desktop'>Desktop</div><div id='mobile'>Mobile</div></body>");
+    let wide=compute_viewport(&doc,1000,662);let narrow=compute_viewport(&doc,500,662);let mut found=0usize;let mut i=0usize;
+    while i<doc.nodes.len(){
+        let id=doc.attribute(i,"id");
+        if id=="desktop"{assert_eq!(wide[i].display,BLOCK);assert_eq!(narrow[i].display,NONE);found+=1usize;}
+        if id=="mobile"{assert_eq!(wide[i].display,NONE);assert_eq!(narrow[i].display,BLOCK);found+=1usize;}
+        if doc.nodes[i].tag=="body"{assert_eq!(wide[i].display,BLOCK);assert_eq!(narrow[i].display,BLOCK);}
+        i+=1usize;
+    }assert_eq!(found,2usize);
+}
+#[test]
+fn bounded_media_conditions_preserve_source_order_and_exact_boundaries(){
+    assert!(media_matches("only screen and (min-width: 1000px) and (max-width: 1000px)",1000));
+    assert!(!media_matches("screen and (min-width: 1000.001px)",1000));
+    assert!(!media_matches("screen and (max-width: 999.999px)",1000));
+    assert!(media_matches("print, (min-width:50em)",1000));
+    assert!(!media_matches("screen and (min-width:10vw)",1000));
+    assert!(!media_matches("not screen and (min-width:1px)",1000));
+    assert!(!media_matches("screen and (max-width:900px) garbage",1000));
+    assert!(!media_matches("screen and (min-width:999999999999px)",1000));
+    assert!(!media_matches("screen and (min-width:1px)",0));
+    let doc=crate::html::parse("<style>#item{color:blue}@media screen and (min-width:900px){#item{color:red}@media all and (max-width:1100px){#item{font-size:24px}}}#item{color:green}</style><p id='item'>Text</p>");
+    let styles=compute_viewport(&doc,1000,662);let mut i=0usize;
+    while i<doc.nodes.len(){if doc.attribute(i,"id")=="item"{assert_eq!(styles[i].color,0xff008000u32);assert_eq!(styles[i].font_size,24);}i+=1usize;}
 }

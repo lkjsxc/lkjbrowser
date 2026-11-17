@@ -1,0 +1,197 @@
+//! TLS 1.3 handshake wire structures and transcript/key schedule, without socket or browser state.
+use super::hkdf;
+pub const MAX_HANDSHAKE:usize=1048576usize;
+pub fn put16(out:&mut Vec<u8>,n:usize){out.push((n>>8usize) as u8);out.push(n as u8);}
+pub fn put24(out:&mut Vec<u8>,n:usize){out.push((n>>16usize) as u8);out.push((n>>8usize) as u8);out.push(n as u8);}
+pub fn byte(bytes:&[u8],at:&mut usize)->Result<u8,String>{
+    if *at>=bytes.len(){return Err("The server sent a truncated TLS handshake".to_string());}
+    let v=bytes[*at];*at+=1usize;Ok(v)
+}
+pub fn word(bytes:&[u8],at:&mut usize)->Result<usize,String>{
+    let a=byte(bytes,at)?;let b=byte(bytes,at)?;Ok(((a as usize)<<8usize)|b as usize)
+}
+pub fn size24(bytes:&[u8],at:&mut usize)->Result<usize,String>{
+    let a=byte(bytes,at)?;let b=byte(bytes,at)?;let c=byte(bytes,at)?;
+    Ok(((a as usize)<<16usize)|((b as usize)<<8usize)|c as usize)
+}
+pub fn take(bytes:&[u8],at:&mut usize,n:usize)->Result<Vec<u8>,String>{
+    if *at>bytes.len() || n>bytes.len()-*at{return Err("The server sent a truncated TLS handshake".to_string());}
+    let out=bytes[*at..*at+n].to_vec();*at+=n;Ok(out)
+}
+pub fn end(bytes:&[u8],at:usize)->Result<(),String>{
+    if at!=bytes.len(){return Err("TLS handshake contains unexpected trailing bytes".to_string());}Ok(())
+}
+pub fn message(kind:u8,body:&[u8])->Result<Vec<u8>,String>{
+    if body.len()>MAX_HANDSHAKE{return Err("TLS handshake exceeds the one MiB limit".to_string());}
+    let mut out=vec![kind];put24(&mut out,body.len());out.extend_from_slice(body);Ok(out)
+}
+pub fn body(message:&[u8],kind:u8)->Result<Vec<u8>,String>{
+    let mut at=0usize;
+    if byte(message,&mut at)?!=kind{return Err("The server sent TLS handshake messages in an invalid order".to_string());}
+    let n=size24(message,&mut at)?;
+    if n>MAX_HANDSHAKE{return Err("TLS handshake exceeds the one MiB limit".to_string());}
+    let out=take(message,&mut at,n)?;end(message,at)?;Ok(out)
+}
+pub struct Messages{bytes:Vec<u8>}
+impl Messages{
+    pub fn new()->Messages{Messages{bytes:Vec::new()}}
+    pub fn is_empty(&self)->bool{self.bytes.is_empty()}
+    pub fn feed(&mut self,bytes:&[u8])->Result<(),String>{
+        if self.bytes.len()+bytes.len()>MAX_HANDSHAKE+16388usize{return Err("TLS handshake buffer exceeds its limit".to_string());}
+        self.bytes.extend_from_slice(bytes);Ok(())
+    }
+    pub fn next(&mut self)->Result<Option<Vec<u8>>,String>{
+        if self.bytes.len()<4usize{return Ok(None);}
+        let mut at=1usize;let n=size24(&self.bytes,&mut at)?;
+        if n>MAX_HANDSHAKE{return Err("TLS handshake exceeds the one MiB limit".to_string());}
+        if self.bytes.len()<n+4usize{return Ok(None);}
+        let first=self.bytes[..n+4usize].to_vec();
+        self.bytes={let rest=&self.bytes[n+4usize..];rest.to_vec()};
+        Ok(Some(first))
+    }
+}
+pub struct Extension{pub kind:usize,pub data:Vec<u8>}
+pub fn extensions(bytes:&[u8],at:&mut usize)->Result<Vec<Extension>,String>{
+    let n=word(bytes,at)?;let data=take(bytes,at,n)?;let mut p=0usize;
+    let mut out=Vec::new();let mut seen:Vec<usize>=Vec::new();
+    while p<data.len(){
+        if seen.len()>=128usize{return Err("TLS extension count exceeds the connection budget".to_string());}
+        let kind=word(&data,&mut p)?;let len=word(&data,&mut p)?;let value=take(&data,&mut p,len)?;
+        if seen.contains(&kind){return Err("TLS contains a duplicate extension".to_string());}
+        seen.push(kind);out.push(Extension{kind,data:value});
+    }Ok(out)
+}
+fn extension(out:&mut Vec<u8>,kind:usize,data:&[u8]){put16(out,kind);put16(out,data.len());out.extend_from_slice(data);}
+pub fn numeric(host:&str)->bool{
+    let mut n=0usize;for part in host.split('.'){
+        if part.is_empty() || part.parse::<u8>().is_err(){return false;}n+=1usize;
+    }n==4usize
+}
+pub fn client_hello(host:&str,random:&[u8],session:&[u8],share:&[u8],cookie:&[u8])->Result<Vec<u8>,String>{
+    if random.len()!=32usize || share.len()!=32usize || session.len()>32usize || host.len()>253usize ||
+        host.is_empty() || !host.as_bytes().iter().all(|b|*b>=33u8 && *b<127u8) || cookie.len()>4096usize{
+        return Err("Invalid TLS client hostname or random values".to_string());
+    }
+    let mut ext=Vec::new();
+    if !numeric(host){
+        let mut names=Vec::new();put16(&mut names,host.len()+3usize);names.push(0u8);
+        put16(&mut names,host.len());names.extend_from_slice(host.as_bytes());extension(&mut ext,0usize,&names);
+    }
+    extension(&mut ext,43usize,&[2u8,3u8,4u8]);
+    extension(&mut ext,10usize,&[0u8,2u8,0u8,29u8]);
+    extension(&mut ext,13usize,&[0u8,8u8,4u8,3u8,5u8,3u8,8u8,4u8,8u8,5u8]);
+    extension(&mut ext,50usize,&[0u8,12u8,4u8,3u8,5u8,3u8,8u8,4u8,8u8,5u8,4u8,1u8,5u8,1u8]);
+    extension(&mut ext,16usize,&[0u8,9u8,8u8,b'h',b't',b't',b'p',b'/',b'1',b'.',b'1']);
+    let mut shares=vec![0u8,36u8,0u8,29u8,0u8,32u8];shares.extend_from_slice(share);
+    extension(&mut ext,51usize,&shares);
+    if !cookie.is_empty(){let mut value=Vec::new();put16(&mut value,cookie.len());value.extend_from_slice(cookie);extension(&mut ext,44usize,&value);}
+    let mut out=vec![3u8,3u8];out.extend_from_slice(random);out.push(session.len() as u8);
+    out.extend_from_slice(session);out.extend_from_slice(&[0u8,2u8,19u8,1u8,1u8,0u8]);
+    put16(&mut out,ext.len());out.extend_from_slice(&ext);message(1u8,&out)
+}
+pub struct ServerHello{pub retry:bool,pub share:Vec<u8>,pub cookie:Vec<u8>}
+pub fn server_hello(message:&[u8],session:&[u8])->Result<ServerHello,String>{
+    let data=body(message,2u8)?;let mut p=0usize;
+    if word(&data,&mut p)?!=771usize{return Err("The server did not negotiate TLS 1.3".to_string());}
+    let random=take(&data,&mut p,32usize)?;
+    let retry=random==vec![0xcfu8,0x21u8,0xadu8,0x74u8,0xe5u8,0x9au8,0x61u8,0x11u8,0xbeu8,0x1du8,0x8cu8,0x02u8,0x1eu8,0x65u8,0xb8u8,0x91u8,0xc2u8,0xa2u8,0x11u8,0x16u8,0x7au8,0xbbu8,0x8cu8,0x5eu8,0x07u8,0x9eu8,0x09u8,0xe2u8,0xc8u8,0xa8u8,0x33u8,0x9cu8];
+    let slen=byte(&data,&mut p)? as usize;let sid=take(&data,&mut p,slen)?;
+    if sid.as_slice()!=session{return Err("TLS server session identifier does not match".to_string());}
+    if word(&data,&mut p)?!=4865usize{return Err("The server selected an unsupported TLS cipher suite".to_string());}
+    if byte(&data,&mut p)?!=0u8{return Err("TLS compression is forbidden".to_string());}
+    let ext=extensions(&data,&mut p)?;end(&data,p)?;
+    let mut version=false;let mut share=Vec::new();let mut cookie=Vec::new();
+    for e in ext{
+        if e.kind==43usize{
+            if e.data!=vec![3u8,4u8]{return Err("The server did not negotiate TLS 1.3".to_string());}version=true;
+        }else if e.kind==51usize{
+            if retry{
+                let mut q=0usize;let group=word(&e.data,&mut q)?;end(&e.data,q)?;
+                if group!=29usize{return Err("This server needs a key exchange lkjbrowser does not have yet.".to_string());}
+                return Err("The server requested the TLS key share that was already sent".to_string());
+            }
+            let mut q=0usize;
+            if word(&e.data,&mut q)?!=29usize{return Err("This server needs a key exchange lkjbrowser does not have yet.".to_string());}
+            let n=word(&e.data,&mut q)?;
+            if n!=32usize{return Err("The server sent an invalid X25519 key share".to_string());}
+            share=take(&e.data,&mut q,n)?;end(&e.data,q)?;
+        }else if e.kind==44usize && retry{
+            let mut q=0usize;let n=word(&e.data,&mut q)?;
+            if n==0usize || n>4096usize{return Err("TLS retry cookie has an invalid length".to_string());}
+            cookie=take(&e.data,&mut q,n)?;end(&e.data,q)?;
+        }else{return Err("The server sent an unoffered TLS ServerHello extension".to_string());}
+    }
+    if !version || (!retry && share.is_empty()) || (retry && cookie.is_empty()){
+        return Err("The TLS ServerHello is missing a required extension".to_string());
+    }Ok(ServerHello{retry,share,cookie})
+}
+pub fn encrypted_extensions(message:&[u8],dns_name:bool)->Result<(),String>{
+    let data=body(message,8u8)?;let mut p=0usize;let list=extensions(&data,&mut p)?;end(&data,p)?;
+    for e in list{
+        if e.kind==0usize{
+            if !dns_name || !e.data.is_empty(){return Err("The server sent an invalid TLS server-name acknowledgement".to_string());}
+        }else if e.kind==16usize{
+            if e.data!=vec![0u8,9u8,8u8,b'h',b't',b't',b'p',b'/',b'1',b'.',b'1']{
+                return Err("The server did not select HTTP/1.1".to_string());
+            }
+        }else if e.kind==10usize{
+            let mut q=0usize;let n=word(&e.data,&mut q)?;
+            if n==0usize || n%2usize!=0usize || n+2usize!=e.data.len(){return Err("Invalid TLS supported-groups extension".to_string());}
+        }else{return Err("The server sent an unoffered TLS extension".to_string());}
+    }Ok(())
+}
+pub fn certificates(message:&[u8])->Result<Vec<Vec<u8>>,String>{
+    let data=body(message,11u8)?;let mut p=0usize;
+    if byte(&data,&mut p)?!=0u8{return Err("Unexpected TLS certificate request context".to_string());}
+    let n=size24(&data,&mut p)?;let list=take(&data,&mut p,n)?;end(&data,p)?;
+    let mut q=0usize;let mut chain=Vec::new();
+    while q<list.len(){
+        if chain.len()>=12usize{return Err("The certificate chain exceeds twelve certificates".to_string());}
+        let len=size24(&list,&mut q)?;if len==0usize{return Err("The server sent an empty certificate".to_string());}
+        let der=take(&list,&mut q,len)?;let ext=extensions(&list,&mut q)?;
+        if !ext.is_empty(){return Err("The server sent an unrequested certificate extension".to_string());}
+        chain.push(der);
+    }
+    if chain.is_empty(){return Err("The server did not send a certificate".to_string());}Ok(chain)
+}
+pub fn certificate_verify(message:&[u8])->Result<(u16,Vec<u8>),String>{
+    let data=body(message,15u8)?;let mut p=0usize;let scheme=word(&data,&mut p)? as u16;
+    if scheme!=0x0403u16 && scheme!=0x0503u16 && scheme!=0x0804u16 && scheme!=0x0805u16{
+        return Err("The server selected an unsupported handshake signature".to_string());
+    }
+    let n=word(&data,&mut p)?;let signature=take(&data,&mut p,n)?;end(&data,p)?;
+    if signature.is_empty(){return Err("The server sent an empty handshake signature".to_string());}
+    Ok((scheme,signature))
+}
+pub fn signature_input(transcript:&[u8])->Vec<u8>{
+    let mut out=vec![32u8;64usize];out.extend_from_slice(b"TLS 1.3, server CertificateVerify");out.push(0u8);
+    out.extend_from_slice(&std::sha256::digest(transcript));out
+}
+pub fn derive(secret:&[u8],label:&str,transcript:&[u8])->Result<Vec<u8>,String>{
+    hkdf::label(secret,label,&std::sha256::digest(transcript),32usize)
+}
+pub struct Schedule{pub handshake:Vec<u8>,pub client:Vec<u8>,pub server:Vec<u8>,pub master:Vec<u8>}
+pub fn schedule(shared:&[u8],transcript:&[u8])->Result<Schedule,String>{
+    let zero=[0u8;32];let early=hkdf::extract(&zero,&zero);
+    let derived=derive(&early,"derived",&[0u8;0])?;
+    let handshake=hkdf::extract(&derived,shared);
+    let client=derive(&handshake,"c hs traffic",transcript)?;
+    let server=derive(&handshake,"s hs traffic",transcript)?;
+    let derived=derive(&handshake,"derived",&[0u8;0])?;
+    let master=hkdf::extract(&derived,&zero);
+    Ok(Schedule{handshake,client,server,master})
+}
+pub fn finished(traffic:&[u8],transcript:&[u8])->Result<Vec<u8>,String>{
+    let key=hkdf::label(traffic,"finished",&[0u8;0],32usize)?;
+    let hash=std::sha256::digest(transcript);let value=std::hmac::sha256(&key,&hash);
+    message(20u8,&value)
+}
+pub fn verify_finished(message:&[u8],traffic:&[u8],transcript:&[u8])->Result<(),String>{
+    let actual=body(message,20u8)?;let expected=finished(traffic,transcript)?;
+    if !std::hmac::constant_time_eq(&actual,&expected[4..]){
+        return Err("The server failed the TLS Finished authentication check".to_string());
+    }Ok(())
+}
+pub fn retry_transcript(first:&[u8],retry:&[u8])->Result<Vec<u8>,String>{
+    let mut out=message(254u8,&std::sha256::digest(first))?;out.extend_from_slice(retry);Ok(out)
+}

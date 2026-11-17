@@ -1,0 +1,56 @@
+//! Owned same-executable subresource fetches. No foreign TLS/runtime helper.
+//! The parent's absolute deadline also bounds a child blocked inside Connector.connect.
+use crate::net;
+const STYLE_LIMIT:usize=1048576usize;
+fn io_error(e:i64)->String{format!("resource worker I/O error {}",e)}
+pub fn style_worker(world:&mut World,args:&[Vec<u8>])->Result<(),String>{
+    if args.len()!=5usize{return Err("Invalid stylesheet worker arguments".to_string());}
+    let url=net::text(&args[1]);let dns=net::text(&args[2]);let trust=net::text(&args[3]);
+    let allow=args[4]==b"1"[..].to_vec();
+    let response=net::fetch_style(world,url.as_str(),dns.as_str(),allow,trust.as_str())?;
+    if response.status!=200u16{return Err("The stylesheet did not return HTTP 200".to_string());}
+    if !response.url.starts_with("file://") && !response.content_type.to_ascii_lowercase().starts_with("text/css"){
+        return Err("The stylesheet did not have a CSS content type".to_string());
+    }
+    if response.body.len()>STYLE_LIMIT{return Err("The stylesheet exceeds one MiB".to_string());}
+    let mut output=world.stdout_file().map_err(|e:i64|->String{io_error(e)})?;
+    output.write_all(b"CSS1").map_err(|e:i64|->String{io_error(e)})?;
+    output.write_all(&response.body).map_err(|e:i64|->String{io_error(e)})?;
+    Ok(())
+}
+pub fn stylesheet(world:&mut World,url:&str,dns:&str,allow_file:bool,trust_file:&str,deadline:usize)->Result<String,String>{
+    let mut clock=world.clock();
+    if clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})? >= deadline{return Err("timeout".to_string());}
+    let executable=world.executable().map_err(|e:i64|->String{io_error(e)})?;
+    let input=world.temporary_file().map_err(|e:i64|->String{io_error(e)})?;let mut output=world.temporary_file().map_err(|e:i64|->String{io_error(e)})?;
+    let errors=world.temporary_file().map_err(|e:i64|->String{io_error(e)})?;let result=world.temporary_file().map_err(|e:i64|->String{io_error(e)})?;
+    let allow=if allow_file{"1"}else{"0"};
+    let args=vec![b"--fetch-style"[..].to_vec(),url.as_bytes().to_vec(),dns.as_bytes().to_vec(),trust_file.as_bytes().to_vec(),allow.as_bytes().to_vec()];
+    let mut process=world.process();
+    let mut child=process.spawn_file(&executable,&args,&input,&output,&errors,&result).map_err(|e:i64|->String{io_error(e)})?;
+    let mut ready=world.readiness().map_err(|e:i64|->String{io_error(e)})?;
+    loop{
+        let now=clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})?;
+        if now>=deadline{
+            // Explicit cleanup here; any other early return also drops the owned child and reaps it.
+            let _=child.terminate();let _=child.wait();
+            return Err("timeout".to_string());
+        }
+        if let Some(status)=child.try_wait().map_err(|e:i64|->String{io_error(e)})?{
+            if status!=0i64{return Err("unavailable".to_string());}
+            break;
+        }
+        let _=ready.wait(&mut clock,(now+10000000usize).min(deadline)).map_err(|e:i64|->String{io_error(e)})?;
+    }
+    if clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})? >= deadline{return Err("timeout".to_string());}
+    output.rewind().map_err(|e:i64|->String{io_error(e)})?;
+    let mut bytes=Vec::new();let mut block=[0u8;4096];
+    loop{
+        let n=output.read(&mut block).map_err(|e:i64|->String{io_error(e)})?;if n==0usize{break;}
+        if bytes.len()+n>STYLE_LIMIT+4usize{return Err("invalid worker size".to_string());}
+        bytes.extend_from_slice(&block[..n]);
+    }
+    if bytes.len()<4usize || &bytes[..4usize]!=b"CSS1"{return Err("invalid worker result".to_string());}
+    if clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})? >= deadline{return Err("timeout".to_string());}
+    Ok(net::text(&bytes[4usize..]))
+}

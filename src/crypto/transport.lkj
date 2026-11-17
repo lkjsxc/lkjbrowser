@@ -1,0 +1,50 @@
+//! A bounded-after-connect byte stream built from source-visible capabilities.
+//! The pinned Connector.connect itself is blocking; callers must not call this a total connect deadline.
+const TIMEOUT:usize=6000000000usize;
+fn error(op:&str,e:i64)->String{format!("{}: {} ({})",op,std::io::errno_name(e),e)}
+pub struct Stream {file:File,ready:Readiness,clock:Clock,deadline:usize}
+impl Stream{
+    pub fn open(world:&mut World,address:&str,port:u16)->Result<Stream,String>{
+        let mut connector=world.connector(address,port).map_err(|e:i64|->String{error("Destination",e)})?;
+        let mut file=connector.connect().map_err(|e:i64|->String{error("Connect",e)})?;
+        file.set_nonblocking(true).map_err(|e:i64|->String{error("Nonblocking socket",e)})?;
+        let mut ready=world.readiness().map_err(|e:i64|->String{error("Readiness",e)})?;
+        ready.watch_file(&mut file,1usize,1u8).map_err(|e:i64|->String{error("Watch socket",e)})?;
+        let mut clock=world.clock();
+        let start=clock.nanoseconds().map_err(|e:i64|->String{error("Clock",e)})?;
+        Ok(Stream{file,ready,clock,deadline:start+TIMEOUT})
+    }
+    pub fn check_deadline(&mut self)->Result<(),String>{
+        let now=self.clock.nanoseconds().map_err(|e:i64|->String{error("Clock",e)})?;
+        if now>=self.deadline{return Err("The server did not finish before the six-second deadline".to_string());}
+        Ok(())
+    }
+    fn wait(&mut self,interest:u8)->Result<(),String>{
+        self.check_deadline()?;
+        self.ready.watch_file(&mut self.file,1usize,interest).map_err(|e:i64|->String{error("Watch socket",e)})?;
+        let events=self.ready.wait(&mut self.clock,self.deadline).map_err(|e:i64|->String{error("Wait for socket",e)})?;
+        if events.is_empty(){return Err("The server did not respond before the six-second deadline".to_string());}
+        Ok(())
+    }
+    pub fn send(&mut self,bytes:&[u8])->Result<(),String>{
+        let mut at=0usize;
+        while at<bytes.len(){
+            self.check_deadline()?;
+            match self.file.write(&bytes[at..]){
+                Ok(0)=>return Err("The connection closed while sending".to_string()),
+                Ok(n)=>at+=n,Err(11)=>self.wait(2u8)?,Err(e)=>return Err(error("Send",e)),
+            }
+        }Ok(())
+    }
+    pub fn receive(&mut self,buffer:&mut [u8])->Result<usize,String>{
+        loop{self.check_deadline()?;match self.file.read(buffer){
+            Ok(n)=>return Ok(n),Err(11)=>self.wait(1u8)?,Err(e)=>return Err(error("Receive",e))
+        }}
+    }
+    pub fn exact(&mut self,n:usize)->Result<Vec<u8>,String>{
+        let mut bytes=vec![0u8;n];let mut at=0usize;
+        while at<n{let count=self.receive(&mut bytes[at..])?;
+            if count==0{return Err("The server closed an incomplete message".to_string());}at+=count;}
+        Ok(bytes)
+    }
+}

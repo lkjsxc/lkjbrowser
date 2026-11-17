@@ -1,0 +1,63 @@
+//! TLS 1.3 record protection. Authentication precedes releasing any plaintext.
+use super::aesgcm;
+use super::hkdf;
+pub const RECORD_LIMIT:usize=16640usize;
+const KEY_RECORD_LIMIT:u64=8388608u64;
+pub struct Traffic {pub secret:Vec<u8>,key:Vec<u8>,iv:Vec<u8>,sequence:u64}
+impl Traffic{
+    pub fn new(secret:Vec<u8>)->Result<Traffic,String>{
+        let key=hkdf::label(&secret,"key",&[0u8;0],16usize)?;
+        let iv=hkdf::label(&secret,"iv",&[0u8;0],12usize)?;
+        Ok(Traffic{secret,key,iv,sequence:0u64})
+    }
+    fn nonce(&self)->Vec<u8>{
+        let mut nonce=self.iv.clone();let mut i=0usize;
+        while i<8usize{nonce[11usize-i]^=(self.sequence>>(i*8usize)) as u8;i+=1usize;}nonce
+    }
+    pub fn seal(&mut self,kind:u8,bytes:&[u8])->Result<Vec<u8>,String>{
+        if bytes.len()>16384usize || self.sequence>=KEY_RECORD_LIMIT{return Err("TLS sending record limit reached".to_string());}
+        if kind!=21u8 && kind!=22u8 && kind!=23u8{return Err("Invalid TLS inner record type".to_string());}
+        let n=bytes.len()+17usize;let mut header=vec![23u8,3u8,3u8,(n>>8usize) as u8,n as u8];
+        let mut plain=bytes.to_vec();plain.push(kind);
+        let cipher=aesgcm::seal(&self.key,&self.nonce(),&header,&plain)?;
+        self.sequence+=1u64;header.extend_from_slice(&cipher);Ok(header)
+    }
+    pub fn open(&mut self,header:&[u8],bytes:&[u8])->Result<(u8,Vec<u8>),String>{
+        if header.len()!=5usize || header[0]!=23u8 || header[1]!=3u8 || header[2]!=3u8 ||
+            (((header[3] as usize)<<8usize)|header[4] as usize)!=bytes.len() ||
+            bytes.len()<17usize || bytes.len()>RECORD_LIMIT || self.sequence>=KEY_RECORD_LIMIT {
+            return Err("Invalid or oversized encrypted TLS record".to_string());
+        }
+        let mut plain=aesgcm::open(&self.key,&self.nonce(),header,bytes)
+            .map_err(|_|->String{"The encrypted connection failed its integrity check (tampered TLS record)".to_string()})?;
+        self.sequence+=1u64;
+        if plain.len()>16385usize{return Err("The TLS record's content and padding exceed 16385 bytes".to_string());}
+        while !plain.is_empty() && plain[plain.len()-1usize]==0u8{plain.pop();}
+        if plain.is_empty(){return Err("TLS record has no content type".to_string());}
+        let kind=plain.pop().unwrap();
+        if kind!=21u8 && kind!=22u8 && kind!=23u8{return Err("Invalid TLS inner record type".to_string());}
+        if plain.len()>16384usize || (plain.is_empty() && kind!=23u8){return Err("Invalid TLS plaintext length".to_string());}
+        Ok((kind,plain))
+    }
+    pub fn update(&mut self)->Result<(),String>{
+        let next=hkdf::label(&self.secret,"traffic upd",&[0u8;0],32usize)?;
+        *self=Traffic::new(next)?;Ok(())
+    }
+}
+pub fn plaintext(kind:u8,bytes:&[u8])->Result<Vec<u8>,String>{
+    if bytes.len()>16384usize{return Err("TLS plaintext record is too long".to_string());}
+    let n=bytes.len();let mut out=vec![kind,3u8,3u8,(n>>8usize) as u8,n as u8];
+    out.extend_from_slice(bytes);Ok(out)
+}
+pub fn alert(bytes:&[u8])->String{
+    if bytes.len()!=2usize{return "The server sent a malformed TLS alert".to_string();}
+    match bytes[1]{
+        0u8=>"The server closed the TLS connection".to_string(),
+        40u8=>"The server could not negotiate this browser's TLS algorithms".to_string(),
+        42u8=>"The server rejected a certificate".to_string(),
+        70u8=>"The server does not support TLS 1.3".to_string(),
+        112u8=>"The server does not recognize this hostname".to_string(),
+        120u8=>"The server does not support HTTP/1.1".to_string(),
+        _=>format!("The server ended the secure connection (TLS alert {})",bytes[1]),
+    }
+}

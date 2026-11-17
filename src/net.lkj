@@ -1,7 +1,9 @@
 //! URL loading, DNS over TCP and HTTP/1.1. No external networking helper.
 use std::str::trim_ascii;
 const LIMIT: usize = 16777216usize;
-const TIMEOUT: usize = 6000000000usize;
+use crate::crypto::transport::Stream;
+use crate::crypto::{tls,x509};
+pub const SYSTEM_TRUST:&str="/etc/ssl/certs/ca-certificates.crt";
 
 pub struct Url {
     pub scheme: String,
@@ -84,13 +86,11 @@ pub fn parse(value:&str) -> Result<Url,String> {
             else {return Err("file:// requires an absolute local path".to_string());};
         return Ok(Url {scheme:"file".to_string(),host:String::new(),port:0u16,path,fragment});
     }
-    if address.starts_with("https://") {
-        return Err("HTTPS pages are not supported. Open this address in another browser.".to_string());
+    let secure=address.starts_with("https://");
+    if !secure && !address.starts_with("http://") {
+        return Err("Supported addresses begin with https://, http:// or file://".to_string());
     }
-    if !address.starts_with("http://") {
-        return Err("Supported addresses begin with file:// or http://".to_string());
-    }
-    let rest=&address.as_str()[7..];
+    let rest=&address.as_str()[if secure{8usize}else{7usize}..];
     let end=rest.find('/').unwrap_or(rest.len());
     let q=rest.find('?').unwrap_or(rest.len());
     let boundary=if q<end {q} else {end};
@@ -104,12 +104,15 @@ pub fn parse(value:&str) -> Result<Url,String> {
             if n==0 {return Err("Port zero is not a destination".to_string());}
             (h.to_ascii_lowercase(),n)
         }
-        None=>(authority.to_ascii_lowercase(),80u16)
+        None=>(authority.to_ascii_lowercase(),if secure{443u16}else{80u16})
     };
     let path=if boundary==rest.len() {"/".to_string()}
         else if rest.as_bytes()[boundary]==b'?' {format!("/{}", &rest[boundary..])}
         else {rest[boundary..].to_string()};
-    Ok(Url{scheme:"http".to_string(),host,port,path,fragment})
+    if host.is_empty() || !host.as_bytes().iter().all(|b:&u8|->bool (*b>=b'a' && *b<=b'z') || (*b>=b'0' && *b<=b'9') || *b==b'-' || *b==b'.') {
+        return Err("Use an ASCII hostname, an A-label hostname or a numeric IPv4 address".to_string());
+    }
+    Ok(Url{scheme:if secure{"https".to_string()}else{"http".to_string()},host,port,path,fragment})
 }
 fn normalize(path:&str)->String {
     let (pathname,suffix)=match path.find('?') {
@@ -141,6 +144,15 @@ fn has_scheme(reference:&str)->bool{
     }
     false
 }
+pub fn entered_address(value:&str)->String{
+    let trimmed=trim_ascii(value);
+    if let Some((host,rest))=trimmed.split_once(':'){
+        let port=rest.split('/').next().unwrap_or("");
+        if !host.is_empty() && port.parse::<u16>().is_ok(){return format!("https://{}",trimmed);}
+    }
+    if has_scheme(trimmed){return trimmed.to_string();}
+    format!("https://{}",trimmed)
+}
 pub fn resolve(base:&str, reference:&str)->String {
     if has_scheme(reference) {return reference.to_string();}
     if reference.is_empty(){return base.split_once('#').map(|(a,_)|a).unwrap_or(base).to_string();}
@@ -150,8 +162,8 @@ pub fn resolve(base:&str, reference:&str)->String {
     }
     let u=match parse(base){Ok(u)=>u,Err(_)=>return reference.to_string()};
     let origin=if u.scheme=="file" {"file://".to_string()}
-        else if u.port==80u16 {format!("http://{}",u.host)}
-        else {format!("http://{}:{}",u.host,u.port)};
+        else if (u.scheme=="http" && u.port==80u16) || (u.scheme=="https" && u.port==443u16) {format!("{}://{}",u.scheme,u.host)}
+        else {format!("{}://{}:{}",u.scheme,u.host,u.port)};
     if reference.starts_with("//") {return format!("{}:{}",u.scheme,reference);}
     let full=if reference.starts_with('/') {reference.to_string()}
         else if reference.starts_with('?') {
@@ -165,6 +177,9 @@ pub fn resolve(base:&str, reference:&str)->String {
     format!("{}{}",origin,normalize(full.as_str()))
 }
 pub fn read_path(world:&mut World,path:&str)->Result<Vec<u8>,String> {
+    read_path_limit(world,path,LIMIT)
+}
+fn read_path_limit(world:&mut World,path:&str,limit:usize)->Result<Vec<u8>,String> {
     // Inspect the final inode before opening it for data: FIFOs and devices may block.
     let (root,name)=match path.rfind('/') {
         Some(i)=>if i==0usize {("/", &path[1..])} else {(&path[..i], &path[i+1usize..])},
@@ -176,7 +191,7 @@ pub fn read_path(world:&mut World,path:&str)->Result<Vec<u8>,String> {
     loop {
         let n=match file.read(&mut block){Ok(n)=>n,Err(e)=>return Err(err("Read file",e))};
         if n==0 {break;}
-        if result.len()+n>LIMIT {return Err("File exceeds this browser's 16 MiB document limit".to_string());}
+        if result.len()+n>limit {return Err(format!("File exceeds the {} byte document limit",limit));}
         result.extend_from_slice(&block[..n]);
     }
     Ok(result)
@@ -186,59 +201,6 @@ pub fn write_path(world:&mut World,path:&str,bytes:&[u8])->Result<(),String> {
     let mut dir=match world.directory(root){Ok(d)=>d,Err(e)=>return Err(err("Output directory",e))};
     let mut file=match dir.create(name){Ok(f)=>f,Err(e)=>return Err(err("Create output",e))};
     match file.write_all(bytes){Ok(())=>Ok(()),Err(e)=>Err(err("Write output",e))}
-}
-struct Stream {file:File,ready:Readiness,clock:Clock,deadline:usize}
-impl Stream {
-    fn open(world:&mut World,address:&str,port:u16)->Result<Stream,String> {
-        let mut connector=match world.connector(address,port){Ok(c)=>c,Err(e)=>return Err(err("Destination",e))};
-        // The pin has no deadline-aware connect. GAPS.md records this residual blocking operation.
-        let mut file=match connector.connect(){Ok(f)=>f,Err(e)=>return Err(err("Connect",e))};
-        match file.set_nonblocking(true){Ok(())=>{},Err(e)=>return Err(err("Nonblocking socket",e))}
-        let mut ready=match world.readiness(){Ok(r)=>r,Err(e)=>return Err(err("Readiness",e))};
-        match ready.watch_file(&mut file,1usize,1u8){Ok(())=>{},Err(e)=>return Err(err("Watch socket",e))}
-        let mut clock=world.clock();
-        let start=match clock.nanoseconds(){Ok(v)=>v,Err(e)=>return Err(err("Clock",e))};
-        Ok(Stream{file,ready,clock,deadline:start+TIMEOUT})
-    }
-    fn check_deadline(&mut self)->Result<(),String>{
-        let now=match self.clock.nanoseconds(){Ok(n)=>n,Err(e)=>return Err(err("Clock",e))};
-        if now>=self.deadline{return Err("The server did not finish before the six-second deadline".to_string());}
-        Ok(())
-    }
-    fn wait(&mut self,interest:u8)->Result<(),String> {
-        self.check_deadline()?;
-        match self.ready.watch_file(&mut self.file,1usize,interest){Ok(())=>{},Err(e)=>return Err(err("Watch socket",e))}
-        let events=match self.ready.wait(&mut self.clock,self.deadline){Ok(e)=>e,Err(e)=>return Err(err("Wait for socket",e))};
-        if events.is_empty(){return Err("The server did not respond before the six-second deadline".to_string());}
-        Ok(())
-    }
-    fn send(&mut self,bytes:&[u8])->Result<(),String> {
-        let mut offset=0usize;
-        while offset<bytes.len(){
-            self.check_deadline()?;
-            match self.file.write(&bytes[offset..]){
-                Ok(0)=>return Err("The connection closed while sending".to_string()),
-                Ok(n)=>offset+=n,
-                Err(11)=>self.wait(2u8)?,
-                Err(e)=>return Err(err("Send",e)),
-            }
-        }
-        Ok(())
-    }
-    fn receive(&mut self,buffer:&mut [u8])->Result<usize,String>{
-        loop {self.check_deadline()?;match self.file.read(buffer){
-            Ok(n)=>return Ok(n),Err(11)=>self.wait(1u8)?,Err(e)=>return Err(err("Receive",e))
-        }}
-    }
-    fn exact(&mut self,n:usize)->Result<Vec<u8>,String>{
-        let mut bytes=vec![0u8;n];let mut offset=0usize;
-        while offset<n {
-            let count=self.receive(&mut bytes[offset..])?;
-            if count==0 {return Err("The server closed an incomplete message".to_string());}
-            offset+=count;
-        }
-        Ok(bytes)
-    }
 }
 fn numeric(host:&str)->bool {
     let mut count=0usize;
@@ -379,9 +341,9 @@ pub fn parse_headers(bytes:&[u8])->Result<Headers,String>{
     if headers.chunked && headers.length.is_some(){return Err("Ambiguous HTTP body framing (both length and transfer coding)".to_string());}
     Ok(headers)
 }
-struct ChunkDecoder { output:Vec<u8>,offset:usize,state:u8,remaining:usize }
+struct ChunkDecoder { output:Vec<u8>,offset:usize,state:u8,remaining:usize,limit:usize }
 impl ChunkDecoder{
-    fn new()->ChunkDecoder{ChunkDecoder{output:Vec::new(),offset:0usize,state:0u8,remaining:0usize}}
+    fn new()->ChunkDecoder{ChunkDecoder{output:Vec::new(),offset:0usize,state:0u8,remaining:0usize,limit:LIMIT}}
     fn feed(&mut self,bytes:&[u8])->Result<bool,String>{
         loop{
             if self.state==4u8{return Ok(true);}
@@ -402,7 +364,7 @@ impl ChunkDecoder{
                         n=n*16usize+v as usize;i+=1;digits+=1;
                     }
                     if digits==0{return Err("Missing HTTP chunk size".to_string());}
-                    if n>LIMIT || self.output.len()+n>LIMIT{return Err("HTTP document exceeds 16 MiB limit".to_string());}
+                    if n>self.limit || self.output.len()+n>self.limit{return Err("HTTP body exceeds its byte limit".to_string());}
                     self.offset=end+2usize;self.remaining=n;
                     self.state=if n==0usize{3u8}else{1u8};
                 }
@@ -430,10 +392,28 @@ fn header_end(bytes:&[u8])->Option<usize>{
     while i+3<bytes.len(){if bytes[i]==13u8 && bytes[i+1]==10u8 && bytes[i+2]==13u8 && bytes[i+3]==10u8{return Some(i+4);}i+=1;}
     None
 }
-fn request(world:&mut World,url:&Url,dns:&str)->Result<(Headers,Vec<u8>),String>{
+enum Transport{Plain(Stream),Secure(tls::Connection)}
+impl Transport{
+    fn send(&mut self,bytes:&[u8])->Result<(),String>{match self{Transport::Plain(s)=>s.send(bytes),Transport::Secure(s)=>s.send(bytes)}}
+    fn receive(&mut self,bytes:&mut [u8])->Result<usize,String>{match self{Transport::Plain(s)=>s.receive(bytes),Transport::Secure(s)=>s.receive(bytes)}}
+    fn close(&mut self){if let Transport::Secure(s)=self{let _=s.close();}}
+}
+fn request(world:&mut World,url:&Url,dns:&str,trust_file:&str,trace:bool,body_limit:usize)->Result<(Headers,Vec<u8>),String>{
     let address=lookup(world,url.host.as_str(),dns)?;
-    let mut stream=Stream::open(world,address.as_str(),url.port)?;
-    let host=if url.port==80u16{url.host.clone()}else{format!("{}:{}",url.host,url.port)};
+    let secure=url.scheme=="https";
+    let roots=if secure{x509::parse_pem(&read_path(world,trust_file)?)?}else{Vec::new()};
+    let stream=Stream::open(world,address.as_str(),url.port)?;
+    let mut stream=if secure{
+        let mut clock=world.clock();
+        let started=clock.nanoseconds().map_err(|_|->String{"The clock is unavailable for secure connections".to_string()})?;
+        let now=clock.unix_seconds().map_err(|_|->String{"The clock is unavailable for certificate validation".to_string()})?;
+        let mut entropy=world.entropy();
+        let connection=tls::Connection::connect(stream,&mut entropy,url.host.as_str(),&roots,now as u64)?;
+        let elapsed=clock.nanoseconds().unwrap()-started;
+        if trace{world.stdout().write(format!("TLS {} authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature={} handshake_us={}\n",url.host,connection.signature_scheme,elapsed/1000usize).as_bytes());}
+        Transport::Secure(connection)
+    }else{Transport::Plain(stream)};
+    let host=if (secure && url.port==443u16) || (!secure && url.port==80u16){url.host.clone()}else{format!("{}:{}",url.host,url.port)};
     let request=format!("GET {} HTTP/1.1\r\nHost: {}\r\nUser-Agent: lkjbrowser/0.1\r\nAccept: text/html,text/plain,*/*;q=0.5\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n",url.path,host);
     stream.send(request.as_bytes())?;
     let mut bytes=Vec::new();let mut buffer=[0u8;8192];
@@ -453,40 +433,55 @@ fn request(world:&mut World,url:&Url,dns:&str)->Result<(Headers,Vec<u8>),String>
         if n==0{return Err("The server closed before sending HTTP headers".to_string());}
         bytes.extend_from_slice(&buffer[..n]);
     };
+    if let Some(n)=headers.length{if n>body_limit{return Err("HTTP body exceeds its byte limit".to_string());}}
     let mut body={let view=&bytes[end..];view.to_vec()};
-    let mut decoder=ChunkDecoder::new();
+    let mut decoder=ChunkDecoder::new();decoder.limit=body_limit;
+    let wire_limit=if headers.chunked{body_limit+65536usize}else{body_limit};
     loop{
-        if headers.status==204u16 || headers.status==304u16{return Ok((headers,Vec::new()));}
+        if body.len()>wire_limit{return Err("HTTP body exceeds its byte limit".to_string());}
+        if headers.status==204u16 || headers.status==304u16{stream.close();return Ok((headers,Vec::new()));}
         if headers.chunked{
-            if decoder.feed(&body)?{return Ok((headers,decoder.output));}
+            if decoder.feed(&body)?{stream.close();return Ok((headers,decoder.output));}
         }else if let Some(n)=headers.length{
-            if body.len()>=n{body.truncate(n);return Ok((headers,body));}
+            if body.len()>=n{body.truncate(n);stream.close();return Ok((headers,body));}
         }
         let n=stream.receive(&mut buffer)?;
         if n==0{
             if headers.chunked || headers.length.is_some(){return Err("Incomplete HTTP response body".to_string());}
             return Ok((headers,body));
         }
-        if body.len()+n>LIMIT{return Err("HTTP document exceeds 16 MiB limit".to_string());}
+        if body.len()+n>wire_limit{return Err("HTTP body exceeds its byte limit".to_string());}
         body.extend_from_slice(&buffer[..n]);
     }
 }
 pub fn fetch(world:&mut World,address:&str,dns:&str)->Result<Response,String>{
     fetch_authorized(world,address,dns,true)
 }
-pub fn fetch_authorized(world:&mut World,address:&str,dns:&str,mut allow_file:bool)->Result<Response,String>{
-    let mut current=address.to_string();let mut redirects=0usize;
+pub fn fetch_authorized(world:&mut World,address:&str,dns:&str,allow_file:bool)->Result<Response,String>{
+    fetch_with_trust(world,address,dns,allow_file,SYSTEM_TRUST)
+}
+pub fn fetch_with_trust(world:&mut World,address:&str,dns:&str,allow_file:bool,trust_file:&str)->Result<Response,String>{
+    fetch_impl(world,address,dns,allow_file,trust_file,true,LIMIT)
+}
+// Same native HTTPS implementation for the bounded stylesheet worker. Stdout is its result channel.
+pub fn fetch_style(world:&mut World,address:&str,dns:&str,allow_file:bool,trust_file:&str)->Result<Response,String>{
+    fetch_impl(world,address,dns,allow_file,trust_file,false,1048576usize)
+}
+fn fetch_impl(world:&mut World,address:&str,dns:&str,mut allow_file:bool,trust_file:&str,trace:bool,body_limit:usize)->Result<Response,String>{
+    let mut current=entered_address(address);let mut redirects=0usize;let mut require_tls=false;
     loop{
         let u=parse(current.as_str())?;
+        if require_tls && u.scheme!="https"{return Err("This secure page redirected to an insecure address. The redirect was blocked.".to_string());}
+        if u.scheme=="https"{require_tls=true;}
         if u.scheme=="file"{
             if !allow_file{return Err("Web pages cannot open local files. To open a local file yourself, enter its address above.".to_string());}
             let path=decode_path(u.path.as_str())?;
-            let body=read_path(world,path.as_str())?;
+            let body=read_path_limit(world,path.as_str(),body_limit)?;
             return Ok(Response{url:current,status:200u16,content_type:"text/html; charset=utf-8".to_string(),body});
         }
         // Receiving any HTTP hop removes local-file authority for the rest of this redirect chain.
         allow_file=false;
-        let (headers,body)=request(world,&u,dns)?;
+        let (headers,body)=request(world,&u,dns,trust_file,trace,body_limit)?;
         if headers.status==301u16 || headers.status==302u16 || headers.status==303u16 || headers.status==307u16 || headers.status==308u16{
             if headers.location.is_empty(){return Err("HTTP redirect has no Location".to_string());}
             if redirects>=5{return Err("More than five HTTP redirects".to_string());}
@@ -501,7 +496,9 @@ fn urls(){
     assert_eq!(resolve("http://host/a/b","../next"),"http://host/next".to_string());
     assert_eq!(decode_path("/a%20b").unwrap(),"/a b".to_string());
     assert!(parse("http://host/\r\nx").is_err());
-    assert!(parse("https://example.com").is_err());
+    assert_eq!(parse("https://example.com").unwrap().port,443u16);
+    assert_eq!(resolve("https://host/a/b","../next"),"https://host/next".to_string());
+    assert_eq!(entered_address("example.com/path"),"https://example.com/path".to_string());
 }
 #[test]
 fn framing(){

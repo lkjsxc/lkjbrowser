@@ -1,0 +1,7 @@
+// A function declaration can be called, but this pin rejects it as map_err's value argument.
+fn io_error(code:i64)->String { format!("I/O {}",code) }
+fn main(){
+    let input:Result<u8,i64>=Err(5i64);
+    let mapped=input.map_err(io_error);
+    assert!(mapped.is_err());
+}

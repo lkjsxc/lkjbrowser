@@ -1,5 +1,7 @@
 //! lkjbrowser: native UI, navigation and rendering are lkjscript.
+mod crypto;
 mod net;
+mod resources;
 mod font;
 mod paint;
 mod html;
@@ -41,7 +43,23 @@ fn escape(value:&str)->String {
     value.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;").replace('"',"&quot;")
 }
 fn error_html(address:&str,problem:&str)->String{
-    let explanation=if problem.contains("ECONNREFUSED"){
+    let host=match net::parse(address){Ok(url)=>url.host,Err(_)=>address.to_string()};
+    let lower=problem.to_ascii_lowercase();
+    let explanation=if lower.contains("has expired"){
+        format!("The certificate for {} has expired.",host)
+    }else if lower.contains("not valid yet"){
+        format!("The certificate for {} is not valid yet.",host)
+    }else if lower.contains("different host name"){
+        format!("The certificate for {} does not match that host name.",host)
+    }else if lower.contains("self-signed"){
+        format!("The certificate for {} is self-signed and is not trusted.",host)
+    }else if lower.contains("trusted root"){
+        format!("The certificate issuer for {} is not trusted.",host)
+    }else if lower.contains("unsupported") && (lower.contains("constraint") || lower.contains("critical")){
+        format!("The certificate for {} uses a constraint this browser cannot check.",host)
+    }else if lower.contains("invalid signature") || lower.contains("signature did not verify"){
+        format!("The certificate or handshake signature from {} is wrong.",host)
+    }else if problem.contains("ECONNREFUSED"){
         "The server is not accepting connections at this address. Check the address or try again later.".to_string()
     }else if problem.contains("deadline") || problem.contains("ETIMEDOUT"){
         "The server took too long to respond. Try again later.".to_string()
@@ -50,10 +68,10 @@ fn error_html(address:&str,problem:&str)->String{
     }else if problem.contains("ENOENT"){
         "The file or folder could not be found. Check the path and try again.".to_string()
     }else{problem.to_string()};
-    format!("<!doctype html><html><head><title>Unable to open this page</title><style>body {{ background:#f5f7f8; color:#213d4a; font-size:18px; margin:48px; }} h1 {{ font-size:38px; color:#18343f; margin-bottom:20px; }} .tag {{ color:#a34132; font-size:14px; font-weight:bold; }} .panel {{ background:#ffffff; padding:24px; border:1px solid #d5e0e5; margin-top:24px; margin-bottom:24px; }} p {{ margin-bottom:14px; }} a {{color:#087b90;}}</style></head><body><p class=\"tag\">PAGE UNAVAILABLE</p><h1>We could not open this page.</h1><p>{}</p><div class=\"panel\"><p><strong>Address</strong></p><p>{}</p></div><p><a href=\"about:welcome\">Return to the start page</a></p></body></html>",escape(explanation.as_str()),escape(address))
+    format!("<!doctype html><html><head><title>Unable to open this page</title><style>body {{ background:#f5f7f8; color:#213d4a; font-size:18px; margin:48px; }} h1 {{ font-size:38px; color:#18343f; margin-bottom:20px; }} .tag {{ color:#a34132; font-size:14px; font-weight:bold; }} .panel {{ background:#ffffff; padding:24px; border:1px solid #d5e0e5; margin-top:24px; margin-bottom:24px; }} p {{ margin-bottom:14px; }} a {{color:#087b90;}}</style></head><body><p class=\"tag\">Page unavailable</p><h1>We could not open this page.</h1><p>{}</p><div class=\"panel\"><p><strong>Address</strong></p><p>{}</p></div><p><a href=\"about:welcome\">Return to the start page</a></p></body></html>",escape(explanation.as_str()),escape(address))
 }
 fn welcome()->String{
-    "<!doctype html><html><head><title>lkjbrowser</title><style>body {margin:60px;background:#f8fafb;color:#203d48;font-size:19px;} h1 {font-size:44px;color:#126d7e;} p {margin-bottom:24px;} a {color:#087b90;}</style></head><body><h1>A clear place to read.</h1><p>Open a local document or a web page, then follow the links at your own pace.</p><h2>Open a page</h2><p>Press <strong>Ctrl+L</strong>, enter a <strong>file://</strong> or <strong>http://</strong> address, and press Enter.</p><p><a href=\"http://example.com/\">Visit example.com</a></p><h2>Move around</h2><p>Scroll with the wheel, arrow keys, Page Up, Page Down, Home and End. Click a link to follow it. The back button returns to the previous address.</p><p>HTTPS pages and JavaScript are not supported.</p></body></html>".to_string()
+    "<!doctype html><html><head><title>lkjbrowser</title><style>body {margin:48px;background:#f8fafb;color:#203d48;font-size:19px;} h1 {font-size:44px;color:#126d7e;} p {margin-bottom:24px;} a {color:#087b90;}</style></head><body><h1>A clear place to read.</h1><p>HTTPS pages, links, scrolling and PNG images work here.</p><p>JavaScript, forms, cookies and logins are not supported.</p><h2>Open a page</h2><p>Press <strong>Ctrl+L</strong>, enter an address or host name, and press Enter. Local file:// and plain http:// addresses also work.</p><p><a href=\"https://example.com/\">Visit example.com</a></p><h2>Move around</h2><p>Use the wheel, arrow keys or Page Up and Page Down to scroll. Click a link to follow it, and use the back button to return.</p></body></html>".to_string()
 }
 fn fit(font:&Font,text:&str,size:i32,max_width:i32)->String{
     let mut total=0i32;for c in text.chars(){total+=font.advance(c as u32,size);}
@@ -94,15 +112,17 @@ struct Browser {
     fonts:Fonts,page:layout::Page,url:String,address:String,source:String,title:String,status:String,
     width:i32,height:i32,scroll:i32,editing:bool,select_all:bool,modifiers:Modifiers,
     history:Vec<HistoryEntry>,history_at:usize,hover:String,dns:String,images:Vec<LoadedImage>,file_authority:bool,
+    trust_file:String,paint_started:Option<usize>,styles:String,image_attempted:Vec<String>,
 }
 impl Browser {
     fn new(fonts:Fonts,width:i32,height:i32,dns:String)->Browser{
         let document=html::parse("<html><body></body></html>");
-        let page=layout::build(&document,width-12i32,&fonts.normal,&fonts.bold,&fonts.italic,&fonts.bolditalic);
+        let page=layout::build_in_viewport(&document,width-12i32,width,height-TOP-BOTTOM,&fonts.normal,&fonts.bold,&fonts.italic,&fonts.bolditalic);
         Browser {fonts,page,url:String::new(),address:String::new(),source:String::new(),
             title:String::new(),status:String::new(),width,height,scroll:0i32,editing:false,
             select_all:false,modifiers:Modifiers{shift:0u8,ctrl:0u8},history:Vec::new(),history_at:0usize,
-            hover:String::new(),dns,images:Vec::new(),file_authority:true}
+            hover:String::new(),dns,images:Vec::new(),file_authority:true,
+            trust_file:net::SYSTEM_TRUST.to_string(),paint_started:None,styles:String::new(),image_attempted:Vec::new()}
     }
     fn max_scroll(&self)->i32{
         let value=self.page.height-(self.height-TOP-BOTTOM);
@@ -113,9 +133,10 @@ impl Browser {
         self.scroll=(self.scroll+amount).max(0i32).min(max);
     }
     fn relayout(&mut self){
-        let document=html::parse(self.source.as_str());
+        let mut document=html::parse(self.source.as_str());
+        document.styles=self.styles.clone();
         self.title=document.title.clone();
-        self.page=layout::build(&document,self.width-12i32,&self.fonts.normal,&self.fonts.bold,&self.fonts.italic,&self.fonts.bolditalic);
+        self.page=layout::build_in_viewport(&document,self.width-12i32,self.width,self.height-TOP-BOTTOM,&self.fonts.normal,&self.fonts.bold,&self.fonts.italic,&self.fonts.bolditalic);
         self.scroll=self.scroll.min(self.max_scroll());
     }
     fn navigate(&mut self,world:&mut World,address:&str,remember:bool){
@@ -125,16 +146,19 @@ impl Browser {
         (self.url.starts_with("file://") && self.file_authority) || self.url=="about:welcome"
     }
     fn navigate_authorized(&mut self,world:&mut World,address:&str,remember:bool,allow_file:bool){
+        let mut clock=world.clock();self.paint_started=Some(clock.nanoseconds().unwrap());
+        let normalized=if address=="about:welcome"{address.to_string()}else{net::entered_address(address)};
+        let address=normalized.as_str();
         self.file_authority=allow_file;
         let mut final_address=address.to_string();
         let source=if address=="about:welcome"{
             self.status="Ready".to_string();welcome()
         }else{
-            match net::fetch_authorized(world,address,self.dns.as_str(),allow_file){
+            match net::fetch_with_trust(world,address,self.dns.as_str(),allow_file,self.trust_file.as_str()){
                 Ok(response)=>{
                     final_address=response.url;
-                    self.status=format!("HTTP {}  ·  {} bytes",response.status,response.body.len());
-                    if final_address.starts_with("file://"){self.status=format!("Local document  ·  {} bytes",response.body.len());}
+                    world.stdout().write(format!("HTTP_RESPONSE status={} bytes={} url={}\n",response.status,response.body.len(),final_address).as_bytes());
+                    self.status=if final_address.starts_with("https://"){"Verified HTTPS".to_string()}else{String::new()};
                     let text=net::text(&response.body);
                     if response.content_type.to_ascii_lowercase().starts_with("text/plain"){
                         format!("<html><head><title>Text document</title></head><body><pre>{}</pre></body></html>",escape(text.as_str()))
@@ -142,11 +166,14 @@ impl Browser {
                 }
                 Err(problem)=>{
                     self.status="Unable to load this address".to_string();
+                    world.stdout().write(format!("NAV_ERROR {}: {}\n",address,problem).as_bytes());
                     error_html(address,problem.as_str())
                 }
             }
         };
         self.source=source;self.url=final_address;self.address=self.url.clone();
+        self.images.clear();self.image_attempted.clear();
+        self.load_styles(world);
         self.scroll=0i32;self.editing=false;self.select_all=false;self.hover.clear();
         self.relayout();
         self.load_images(world);
@@ -158,18 +185,57 @@ impl Browser {
             self.history.push(HistoryEntry{url:self.url.clone(),allow_file});self.history_at=self.history.len()-1usize;
         }
     }
+    fn load_styles(&mut self,world:&mut World){
+        let doc=html::parse(self.source.as_str());
+        let mut styles=String::new();let mut fetched:Vec<(String,String)>=Vec::new();
+        let mut clock=world.clock();let deadline=clock.nanoseconds().unwrap()+3000000000usize;
+        let mut n=0usize;
+        while n<doc.nodes.len(){
+            let media=doc.attribute(n,"media").to_ascii_lowercase();
+            let applies=media.is_empty() || css::media_matches(media.as_str(),self.width);
+            if doc.nodes[n].tag=="style" && applies{
+                let text=doc.text_content(n);
+                if styles.len()+text.len()+1usize<=4194304usize{styles.push_str(text.as_str());styles.push('\n');}
+            }else if doc.nodes[n].tag=="link" && applies{
+                let rel=doc.attribute(n,"rel").to_ascii_lowercase();
+                let mut sheet=false;for word in css::words(rel.as_str()){if word=="stylesheet"{sheet=true;}}
+                if sheet{
+                    let href=doc.attribute(n,"href");
+                    let url=net::resolve(self.url.as_str(),href.as_str());
+                    if !href.is_empty() && (!self.url.starts_with("https://") || url.starts_with("https://")){
+                        let mut found=false;let mut content=String::new();
+                        for cached in &fetched{if cached.0==url{found=true;content=cached.1.clone();break;}}
+                        if !found && fetched.len()<4usize{
+                            match resources::stylesheet(world,url.as_str(),self.dns.as_str(),self.local_files_allowed(),self.trust_file.as_str(),deadline){
+                                Ok(text)=>{content=text;}
+                                Err(problem)=>{world.stdout().write(format!("STYLES {} url={}\n",problem,url).as_bytes());}
+                            }
+                            // Cache failures too, and replay successful bytes at every source occurrence.
+                            fetched.push((url,content.clone()));
+                        }
+                        if styles.len()+content.len()+1usize<=4194304usize{styles.push_str(content.as_str());styles.push('\n');}
+                    }
+                }
+            }n+=1usize;
+        }
+        self.styles=styles;
+    }
     fn load_images(&mut self,world:&mut World){
-        self.images.clear();
         let allowed=self.local_files_allowed();
         let mut sources:Vec<String>=Vec::new();
         for command in &self.page.commands{
             if let layout::Command::Image(img)=command{
-                if !img.src.is_empty() && !sources.contains(&img.src){sources.push(img.src.clone());}
+                if !img.src.is_empty() && !sources.contains(&img.src) && !self.image_attempted.contains(&img.src) &&
+                    img.y+img.height>self.scroll && img.y<self.scroll+self.height-TOP-BOTTOM{
+                    sources.push(img.src.clone());
+                }
             }
         }
         for source in sources{
+            self.image_attempted.push(source.clone());
             let url=net::resolve(self.url.as_str(),source.as_str());
-            if let Ok(response)=net::fetch_authorized(world,url.as_str(),self.dns.as_str(),allowed){
+            if self.url.starts_with("https://") && !url.starts_with("https://"){continue;}
+            if let Ok(response)=net::fetch_with_trust(world,url.as_str(),self.dns.as_str(),allowed,self.trust_file.as_str()){
                 if let Ok(image)=png::decode(&response.body){self.images.push(LoadedImage{src:source,image});}
             }
         }
@@ -292,11 +358,15 @@ impl Browser {
         canvas.rect(62i32,15i32,34i32,41i32,0x274b59u32);
         canvas.text(&mut self.fonts.normal,"<",24i32,72i32,43i32,if self.history_at>0usize{0xffffffu32}else{0x829da8u32});
         canvas.rect(104i32,14i32,self.width-124i32,43i32,if self.editing{0xe1f5f7u32}else{0xf7fafbu32});
-        if self.select_all{canvas.rect(115i32,22i32,self.width-150i32,25i32,0xb7dfe6u32);}
-        let address=if self.editing{fit_end(&self.fonts.normal,self.address.as_str(),16i32,self.width-160i32)}
-            else{fit(&self.fonts.normal,self.address.as_str(),16i32,self.width-160i32)};
-        let drawn=canvas.text(&mut self.fonts.normal,address.as_str(),16i32,117i32,41i32,0x234652u32);
-        if self.editing && !self.select_all{canvas.rect(118i32+drawn,24i32,1i32,20i32,0x15758au32);}
+        let insecure=self.url.starts_with("http://");
+        let address_x=if insecure{213i32}else{117i32};
+        if insecure{canvas.text(&mut self.fonts.normal,"Not secure",14i32,117i32,41i32,0xa34132u32);}
+        if self.select_all{canvas.rect(address_x-2i32,22i32,self.width-address_x-33i32,25i32,0xb7dfe6u32);}
+        let room=self.width-address_x-43i32;
+        let address=if self.editing{fit_end(&self.fonts.normal,self.address.as_str(),16i32,room)}
+            else{fit(&self.fonts.normal,self.address.as_str(),16i32,room)};
+        let drawn=canvas.text(&mut self.fonts.normal,address.as_str(),16i32,address_x,41i32,0x234652u32);
+        if self.editing && !self.select_all{canvas.rect(address_x+1i32+drawn,24i32,1i32,20i32,0x15758au32);}
         let view=self.height-TOP-BOTTOM;
         if self.max_scroll()>0i32{
             canvas.rect(self.width-10i32,TOP,10i32,view,0xe8eff1u32);
@@ -306,7 +376,9 @@ impl Browser {
         }
         canvas.rect(0i32,self.height-BOTTOM,self.width,BOTTOM,0xedf3f5u32);
         canvas.rect(0i32,self.height-BOTTOM,self.width,1i32,0xd5e2e7u32);
-        let message=if self.hover.is_empty(){format!("{}  ·  Ctrl+L address  ·  Ctrl+Q close",self.status)}else{self.hover.clone()};
+        let message=if !self.hover.is_empty(){self.hover.clone()}
+            else if self.status.is_empty(){"Ctrl+L address  ·  Ctrl+Q close".to_string()}
+            else{format!("{}  ·  Ctrl+L address  ·  Ctrl+Q close",self.status)};
         let label=fit(&self.fonts.normal,message.as_str(),12i32,self.width-30i32);
         canvas.text(&mut self.fonts.normal,label.as_str(),12i32,14i32,self.height-8i32,0x45636fu32);
         canvas
@@ -339,12 +411,12 @@ impl Browser {
     }
 }
 struct Options {
-    url:String,screenshot:String,dump:String,script:String,live_script:String,font_dir:String,dns:String,
+    url:String,screenshot:String,dump:String,script:String,live_script:String,font_dir:String,dns:String,trust_file:String,
     frame_file:String,port:u16,width:i32,height:i32,scroll:i32,max_ms:usize,help:bool,
 }
 fn options(args:Vec<Vec<u8>>)->Result<Options,String>{
     let mut opt=Options{url:"about:welcome".to_string(),screenshot:String::new(),dump:String::new(),
-        script:String::new(),live_script:String::new(),font_dir:String::new(),dns:String::new(),frame_file:String::new(),
+        script:String::new(),live_script:String::new(),font_dir:String::new(),dns:String::new(),frame_file:String::new(),trust_file:net::SYSTEM_TRUST.to_string(),
         port:0u16,width:1000i32,height:760i32,scroll:0i32,max_ms:0usize,help:false};
     let mut i=0usize;
     while i<args.len(){
@@ -360,6 +432,7 @@ fn options(args:Vec<Vec<u8>>)->Result<Options,String>{
             else if arg=="--live-script"{opt.live_script=value;}
             else if arg=="--font-dir"{opt.font_dir=value;}
             else if arg=="--dns"{opt.dns=value;}
+            else if arg=="--trust-file"{opt.trust_file=value;}
             else if arg=="--frame-file"{opt.frame_file=value;}
             else if arg=="--wayland"{opt.port=value.as_str().parse::<u16>().map_err(|_|->String{"Invalid bridge port".to_string()})?;}
             else if arg=="--width"{opt.width=value.as_str().parse::<i32>().map_err(|_|->String{"Invalid width".to_string()})?;}
@@ -373,6 +446,13 @@ fn options(args:Vec<Vec<u8>>)->Result<Options,String>{
         return Err("Viewport must be 320..4096 by 240..2160".to_string());
     }
     Ok(opt)
+}
+fn report_paint(world:&mut World,app:&mut Browser,kind:&str){
+    if let Some(start)=app.paint_started{
+        let mut clock=world.clock();let now=clock.nanoseconds().unwrap();
+        world.stdout().write(format!("PAINT {} elapsed_us={} url={}\n",kind,(now-start)/1000usize,app.url).as_bytes());
+        app.paint_started=None;
+    }
 }
 fn save(world:&mut World,app:&mut Browser,opt:&Options,canvas:&Canvas)->Result<(),String>{
     if !opt.screenshot.is_empty(){if opt.screenshot.ends_with(".png"){
@@ -400,18 +480,23 @@ fn schedule(source:&str)->Result<Vec<(usize,String)>,String>{
     Ok(result)
 }
 fn run(world:&mut World)->Result<(),String>{
-    let opt=options(world.args())?;
+    let args=world.args();
+    if !args.is_empty() && args[0]==b"--fetch-style"[..].to_vec(){return resources::style_worker(world,&args);}
+    let opt=options(args)?;
     if opt.help{
-        world.stdout().write(b"lkjbrowser [URL] [--headless] [--screenshot FILE.png] [--layout FILE] [--script FILE]\n  --wayland PORT --frame-file FILE  connect through the temporary descriptor bridge\n  --width N --height N --scroll N --max-ms N --font-dir DIR --dns IPV4\n  --live-script FILE  replay timestamped events while the Wayland window is open\nUse tools/wayland-run.sh URL on a real Wayland desktop.\n");
+        world.stdout().write(b"lkjbrowser [URL] [--headless] [--screenshot FILE.png] [--layout FILE] [--script FILE]\n  --wayland PORT --frame-file FILE  connect through the temporary descriptor bridge\n  --width N --height N --scroll N --max-ms N --font-dir DIR --dns IPV4\n  --trust-file FILE  use this explicit PEM trust bundle for all HTTPS origins\n  --live-script FILE  replay timestamped events while the Wayland window is open\nUse tools/wayland-run.sh URL on a real Wayland desktop.\n");
         return Ok(());
     }
     let faces=fonts(world,opt.font_dir.as_str())?;
     let mut app=Browser::new(faces,opt.width,opt.height,opt.dns.clone());
+    app.trust_file=opt.trust_file.clone();
     app.navigate(world,opt.url.as_str(),true);
     app.move_scroll(opt.scroll);
     if !opt.script.is_empty(){let bytes=net::read_path(world,opt.script.as_str())?;app.replay(world,net::text(&bytes).as_str())?;}
+    app.load_images(world);
     let mut canvas=app.paint();save(world,&mut app,&opt,&canvas)?;
     if opt.port==0u16 {
+        report_paint(world,&mut app,"headless");
         world.stdout().write(format!("Rendered {}: {}x{}, document height {}, scroll {}\n",app.url,opt.width,opt.height,app.page.height,app.scroll).as_bytes());
         return Ok(());
     }
@@ -426,6 +511,7 @@ fn run(world:&mut World)->Result<(),String>{
     frame.write_all(&wayland::cursor_bytes()).unwrap();
     let title=format!("{} — lkjbrowser",app.title);
     let mut window=wayland::Wayland::open(world,opt.port,opt.width,opt.height,title.as_str())?;
+    let mut window_title=app.title.clone();
     let timeline=if opt.live_script.is_empty(){Vec::new()}else{
         let bytes=net::read_path(world,opt.live_script.as_str())?;schedule(net::text(&bytes).as_str())?
     };
@@ -439,6 +525,7 @@ fn run(world:&mut World)->Result<(),String>{
                 frame.seek((slot as usize*slot_size) as i64,0u8).unwrap();
                 frame.write_all(&canvas.bgra()).unwrap();
                 window.present(slot)?;
+                report_paint(world,&mut app,"wayland-submit");
                 dirty=false;
             }
         }
@@ -456,6 +543,11 @@ fn run(world:&mut World)->Result<(),String>{
             changed=true;
         }
         if changed{
+            if window_title!=app.title{
+                window.set_title(format!("{} — lkjbrowser",app.title).as_str())?;
+                window_title=app.title.clone();
+            }
+            app.load_images(world);
             canvas=app.paint();save(world,&mut app,&opt,&canvas)?;dirty=true;
         }
     }

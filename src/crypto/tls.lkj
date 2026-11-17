@@ -1,0 +1,187 @@
+//! Authenticated TLS 1.3 connection. No application bytes are released until every authentication step passes.
+use super::transport::Stream;
+use super::record;
+use super::record::Traffic;
+use super::handshake;
+use super::handshake::Messages;
+use super::x25519;
+use super::x509;
+pub struct Connection{
+    stream:Stream,reader:Option<Traffic>,writer:Option<Traffic>,messages:Messages,
+    buffered:Vec<u8>,offset:usize,authenticated:bool,closed:bool,ccs:usize,
+    pub signature_scheme:u16,pub key_updates:usize,
+}
+impl Connection{
+    pub fn connect(stream:Stream,entropy:&mut Entropy,host:&str,roots:&[Vec<u8>],now:u64)->Result<Connection,String>{
+        let mut connection=Connection{stream,reader:None,writer:None,messages:Messages::new(),
+            buffered:Vec::new(),offset:0usize,authenticated:false,closed:false,ccs:0usize,
+            signature_scheme:0u16,key_updates:0usize};
+        match connection.handshake(entropy,host,roots,now){
+            Ok(())=>Ok(connection),
+            Err(problem)=>{connection.abort(problem.as_str());Err(problem)}
+        }
+    }
+    fn abort(&mut self,problem:&str){
+        if !self.closed{
+            let code=if problem.contains("integrity"){20u8}else if problem.contains("Finished") || problem.contains("signature"){51u8}
+                else if problem.contains("certificate") || problem.contains("Certificate"){42u8}else{47u8};
+            let _=self.send_record(21u8,&[2u8,code]);self.closed=true;
+        }
+    }
+    fn send_record(&mut self,kind:u8,bytes:&[u8])->Result<(),String>{
+        let wire=match &mut self.writer{
+            Some(keys)=>keys.seal(kind,bytes)?,None=>record::plaintext(kind,bytes)?
+        };self.stream.send(&wire)
+    }
+    fn receive_record(&mut self)->Result<(u8,Vec<u8>),String>{
+        loop{
+            let header=self.stream.exact(5usize)?;
+            let n=((header[3] as usize)<<8usize)|header[4] as usize;
+            if n>record::RECORD_LIMIT || n==0usize || header[1]!=3u8 ||
+                (header[2]!=3u8 && !(self.reader.is_none() && header[2]==1u8)){
+                return Err("The server sent an invalid TLS record header".to_string());
+            }
+            let bytes=self.stream.exact(n)?;
+            if header[0]==20u8{
+                if self.authenticated || bytes!=vec![1u8] || self.ccs>=8usize || header[2]!=3u8{
+                    return Err("The server sent an invalid TLS compatibility record".to_string());
+                }self.ccs+=1usize;continue;
+            }
+            return match &mut self.reader{
+                Some(keys)=>keys.open(&header,&bytes),
+                None=>{
+                    if n>16384usize || (header[0]!=22u8 && header[0]!=21u8){
+                        Err("Unexpected plaintext TLS record".to_string())
+                    }else{Ok((header[0],bytes))}
+                }
+            };
+        }
+    }
+    fn next_handshake(&mut self)->Result<Vec<u8>,String>{
+        loop{
+            if let Some(message)=self.messages.next()?{return Ok(message);}
+            let (kind,data)=self.receive_record()?;
+            if kind==21u8{
+                if data.len()==2usize && data[1]==90u8{continue;}
+                return Err(record::alert(&data));
+            }
+            if kind!=22u8{return Err("The server sent application data before TLS authentication completed".to_string());}
+            self.messages.feed(&data)?;
+        }
+    }
+    fn handshake(&mut self,entropy:&mut Entropy,host:&str,roots:&[Vec<u8>],now:u64)->Result<(),String>{
+        let mut scalar=[0u8;32];let mut random=[0u8;32];let mut session=[0u8;32];
+        entropy.fill(&mut scalar).map_err(|e:i64|->String{format!("Secure connection entropy failed ({})",e)})?;
+        entropy.fill(&mut random).map_err(|e:i64|->String{format!("Secure connection entropy failed ({})",e)})?;
+        entropy.fill(&mut session).map_err(|e:i64|->String{format!("Secure connection entropy failed ({})",e)})?;
+        let mut base=[0u8;32];base[0]=9u8;
+        let public=x25519::scalar_mult(&scalar,&base)?;
+        let hello=handshake::client_hello(host,&random,&session,&public,&[0u8;0])?;
+        self.send_record(22u8,&hello)?;
+        let mut transcript=hello.clone();let mut sent_ccs=false;
+        let mut server_message=self.next_handshake()?;
+        let mut server=handshake::server_hello(&server_message,&session)?;
+        if server.retry{
+            if !self.messages.is_empty(){return Err("TLS retry crossed a record key boundary".to_string());}
+            transcript=handshake::retry_transcript(&hello,&server_message)?;
+            let second=handshake::client_hello(host,&random,&session,&public,&server.cookie)?;
+            self.stream.send(&record::plaintext(20u8,&[1u8])?)?;sent_ccs=true;
+            self.send_record(22u8,&second)?;transcript.extend_from_slice(&second);
+            server_message=self.next_handshake()?;
+            server=handshake::server_hello(&server_message,&session)?;
+            if server.retry{return Err("The server requested a second TLS handshake retry".to_string());}
+        }
+        if !self.messages.is_empty(){return Err("TLS ServerHello crossed a record key boundary".to_string());}
+        transcript.extend_from_slice(&server_message);
+        let shared=x25519::scalar_mult(&scalar,&server.share)?;
+        let keys=handshake::schedule(&shared,&transcript)?;
+        self.reader=Some(Traffic::new(keys.server.clone())?);
+        self.writer=Some(Traffic::new(keys.client.clone())?);
+        let extensions=self.next_handshake()?;
+        handshake::encrypted_extensions(&extensions,!handshake::numeric(host))?;
+        transcript.extend_from_slice(&extensions);
+        let cert_message=self.next_handshake()?;
+        if cert_message[0]==13u8{return Err("This server requested client-certificate authentication, which is not supported".to_string());}
+        let chain=handshake::certificates(&cert_message)?;
+        let leaf=x509::validate(&chain,roots,host,now)?;
+        transcript.extend_from_slice(&cert_message);
+        let verify=self.next_handshake()?;
+        let (scheme,signature)=handshake::certificate_verify(&verify)?;
+        let signed=handshake::signature_input(&transcript);
+        x509::verify_handshake(&leaf,scheme,&signed,&signature)?;
+        self.signature_scheme=scheme;
+        transcript.extend_from_slice(&verify);
+        let finished=self.next_handshake()?;
+        handshake::verify_finished(&finished,&keys.server,&transcript)?;
+        transcript.extend_from_slice(&finished);
+        if !self.messages.is_empty(){return Err("TLS Finished crossed a record key boundary".to_string());}
+        let app_read=handshake::derive(&keys.master,"s ap traffic",&transcript)?;
+        let app_write=handshake::derive(&keys.master,"c ap traffic",&transcript)?;
+        if !sent_ccs{self.stream.send(&record::plaintext(20u8,&[1u8])?)?;}
+        let client_finished=handshake::finished(&keys.client,&transcript)?;
+        self.send_record(22u8,&client_finished)?;
+        self.reader=Some(Traffic::new(app_read)?);self.writer=Some(Traffic::new(app_write)?);
+        self.authenticated=true;Ok(())
+    }
+    fn application(&mut self)->Result<Vec<u8>,String>{
+        loop{
+            let (kind,data)=self.receive_record()?;
+            if kind==21u8{
+                if data.len()!=2usize{return Err("The server sent a malformed TLS alert".to_string());}
+                if data[1]==90u8{continue;}
+                if data[1]==0u8{
+                    if !self.messages.is_empty(){return Err("The server closed during a TLS handshake message".to_string());}
+                    let _=self.send_record(21u8,&[1u8,0u8]);self.closed=true;return Ok(Vec::new());
+                }return Err(record::alert(&data));
+            }
+            if kind==23u8{
+                if !self.messages.is_empty(){return Err("TLS application data interrupted a handshake message".to_string());}
+                if !data.is_empty(){return Ok(data);}continue;
+            }
+            if kind!=22u8{return Err("Unexpected TLS application record".to_string());}
+            self.messages.feed(&data)?;
+            loop{
+                let message=match self.messages.next()?{Some(m)=>m,None=>break};
+                if message[0]==4u8{
+                    // RFC 9846: a client not resuming silently ignores these messages.
+                    // Framing/memory limits and the absolute stream deadline still apply.
+                }else if message[0]==24u8{
+                    let update=handshake::body(&message,24u8)?;
+                    if update.len()!=1usize || update[0]>1u8 || !self.messages.is_empty(){
+                        return Err("The server sent an invalid TLS key update".to_string());
+                    }
+                    self.key_updates+=1usize;
+                    if self.key_updates>64usize{return Err("The server exceeded the connection's TLS key-update budget".to_string());}
+                    match &mut self.reader{Some(keys)=>keys.update()?,None=>return Err("TLS receiving key is missing".to_string())}
+                    if update[0]==1u8{
+                        self.send_record(22u8,&[24u8,0u8,0u8,1u8,0u8])?;
+                        match &mut self.writer{Some(keys)=>keys.update()?,None=>return Err("TLS sending key is missing".to_string())}
+                    }
+                }else{return Err("The server sent an unexpected post-handshake TLS message".to_string());}
+            }
+        }
+    }
+    pub fn send(&mut self,bytes:&[u8])->Result<(),String>{
+        if !self.authenticated || self.closed{return Err("The TLS connection is not open and authenticated".to_string());}
+        let mut at=0usize;while at<bytes.len(){
+            let end=(at+16384usize).min(bytes.len());
+            if let Err(problem)=self.send_record(23u8,&bytes[at..end]){self.abort(problem.as_str());return Err(problem);}
+            at=end;
+        }Ok(())
+    }
+    pub fn receive(&mut self,out:&mut [u8])->Result<usize,String>{
+        if !self.authenticated{return Err("The TLS connection is not authenticated".to_string());}
+        if out.is_empty(){return Ok(0usize);}
+        if self.offset==self.buffered.len(){
+            if self.closed{return Ok(0usize);}
+            self.buffered=match self.application(){Ok(bytes)=>bytes,Err(problem)=>{self.abort(problem.as_str());return Err(problem)}};
+            self.offset=0usize;
+        }
+        let n=out.len().min(self.buffered.len()-self.offset);
+        out[..n].copy_from_slice(&self.buffered[self.offset..self.offset+n]);self.offset+=n;Ok(n)
+    }
+    pub fn close(&mut self)->Result<(),String>{
+        if self.closed{return Ok(());}
+        let result=self.send_record(21u8,&[1u8,0u8]);self.closed=true;result
+    }
+}

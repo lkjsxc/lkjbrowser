@@ -1,0 +1,37 @@
+mod hkdf;
+mod x25519;
+mod aesgcm;
+mod handshake;
+mod record;
+#[test]
+fn fragmented_messages(){
+ let m=handshake::message(8u8,&[0u8,0u8]).unwrap();
+ let mut q=handshake::Messages::new();
+ for b in &m[..m.len()-1usize]{q.feed(&[*b]).unwrap();assert!(q.next().unwrap().is_none());}
+ q.feed(&m[m.len()-1usize..]).unwrap();assert_eq!(q.next().unwrap().unwrap(),m);assert!(q.is_empty());
+}
+#[test]
+fn protected_record_and_refusals(){
+ let secret=vec![7u8;32usize];let mut write=record::Traffic::new(secret.clone()).unwrap();
+ let wire=write.seal(23u8,b"authenticated").unwrap();
+ let mut read=record::Traffic::new(secret.clone()).unwrap();let (kind,body)=read.open(&wire[..5],&wire[5..]).unwrap();
+ assert_eq!(kind,23u8);assert_eq!(body,b"authenticated"[..].to_vec());
+ assert!(read.open(&wire[..5],&wire[5..]).is_err());
+ let mut bad=wire.clone();bad[6]^=1u8;let mut fresh=record::Traffic::new(secret).unwrap();
+ assert!(fresh.open(&bad[..5],&bad[5..]).is_err());
+}
+#[test]
+fn finished_refusals(){
+ let secret=vec![1u8;32usize];let transcript=b"fixed public transcript";
+ let mut msg=handshake::finished(&secret,transcript).unwrap();handshake::verify_finished(&msg,&secret,transcript).unwrap();
+ msg[10]^=1u8;assert!(handshake::verify_finished(&msg,&secret,transcript).is_err());
+ assert!(handshake::verify_finished(&msg,&secret,b"different").is_err());
+}
+#[test]
+fn malformed_messages(){
+ assert!(handshake::body(&[2u8,0u8,0u8,4u8,3u8],2u8).is_err());
+ let mut q=handshake::Messages::new();q.feed(&[1u8,255u8,255u8,255u8]).unwrap();assert!(q.next().is_err());
+ assert!(handshake::encrypted_extensions(&[8u8,0u8,0u8,2u8,0u8,0u8],true).is_ok());
+ assert!(handshake::certificate_verify(&[15u8,0u8,0u8,4u8,4u8,1u8,0u8,0u8]).is_err());
+}
+pub fn main(){}

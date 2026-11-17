@@ -1,0 +1,7 @@
+// Accepted callback form for the function-item-map-err.lkj negative probe.
+fn io_error(code:i64)->String { format!("I/O {}",code) }
+fn main(){
+    let input:Result<u8,i64>=Err(5i64);
+    let mapped=input.map_err(|code:i64|->String{io_error(code)});
+    assert!(mapped.is_err());
+}

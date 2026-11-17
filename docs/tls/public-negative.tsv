@@ -1,0 +1,5 @@
+expired-rsa	https://expired-rsa-dv.ssl.com/
+expired-ecc	https://expired-ecc-dv.ssl.com/
+badssl-expired	https://expired.badssl.com/
+badssl-wrong-host	https://wrong.host.badssl.com/
+badssl-self-signed	https://self-signed.badssl.com/

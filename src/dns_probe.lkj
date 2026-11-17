@@ -1,2 +1,3 @@
+mod crypto;
 mod net;
 pub fn main(mut world:World){let args=world.args();let host=if args.is_empty(){"example.com".to_string()}else{net::text(&args[0])};match net::lookup(&mut world,host.as_str(),""){Ok(address)=>world.stdout().write(format!("DNS A resolution succeeded for {}: {}\n",host,address).as_bytes()),Err(problem)=>{world.stderr().write(problem.as_bytes());world.set_exit_status(1u8);}}}
