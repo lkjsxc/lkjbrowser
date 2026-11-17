@@ -1,0 +1,7 @@
+.toolchain/
+.deps/
+target/
+*.elf
+*.samples.*
+*.lkjir
+shots/*.ppm
