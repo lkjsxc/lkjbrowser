@@ -1,0 +1,158 @@
+ok 72 tests
+ok program ./program.lkj: 1 case paths
+unix-socket: probes/unix-socket.lkj:1:47: E_UNSUPPORTED method unix_connect on World has 0 applicable implementations; help: use an implemented method or write an explicit loop
+send-descriptor: probes/send-descriptor.lkj:1:162: E_UNSUPPORTED method send_file on File has 0 applicable implementations; help: use an implemented method or write an explicit loop
+writable-mapping: probes/writable-mapping.lkj:1:95: E_UNSUPPORTED method map_writable on File has 0 applicable implementations; help: use an implemented method or write an explicit loop
+destination-authority: probes/destination-authority.lkj:1:54: E_UNSUPPORTED method for_destination on Connector has 0 applicable implementations; help: use an implemented method or write an explicit loop
+connect-deadline: probes/connect-deadline.lkj:1:113: E_UNSUPPORTED method connect_deadline on Connector has 0 applicable implementations; help: use an implemented method or write an explicit loop
+array-to-vec: probes/array-to-vec.lkj:1:29: E_UNSUPPORTED array.to_vec requires a slice receiver and Clone elements; help: write array[..].to_vec() (docs/language.md, Source library)
+empty-slice: probes/empty-slice.lkj:2:27: E_TYPE empty array literal [] needs an element type; help: write &[0u32; 0] for an empty &[u32] argument (docs/language.md, Scalars and evaluation)
+string-strip-prefix: probes/string-strip-prefix.lkj:1:60: E_UNSUPPORTED method strip_prefix on string::String has 0 applicable implementations; help: use an implemented method or write an explicit loop
+tls-library: probes/tls-library.lkj:1:1: E_IMPORT unresolved or cyclic import std::tls
+tls-split-ascii-whitespace: probes/tls-split-ascii-whitespace.lkj:1:28: E_UNSUPPORTED method split_ascii_whitespace on str has 0 applicable implementations; help: use an implemented method or write an explicit loop
+function-item-map-err: probes/function-item-map-err.lkj:5:30: E_TYPE unknown value io_error
+html-loop-view: probes/html-loop-view.lkj:9:45: E_BORROW loop backedge changes the reference holders or origins required at loop entry
+owner-replacement: probes/owner-replacement.lkj:3:2: E_BORROW bytes conflicts with shared borrow held by $ (created at 3:8); self-slice assignment keeps the source view alive while replacing its owner; help: create the owned to_vec copy in a separate lexical block before the assignment (docs/language.md, Ownership, storage and views)
+html-cfg-test: probes/html-cfg-test.lkj:7:16: E_NAME unresolved name helper; declaration helper at probes/html-cfg-test.lkj:3 is excluded by #[cfg(test)], including under lkjscript test; help: make the helper unconditional and keep the test entry separate (docs/language.md, Source graph and names)
+Accepted the two documented loop-view rewrites.
+input PASS motion=120,220 click=120,220 scroll=24 key=press+release resize=900x700 focus=clear+restore close=true
+peer PASS requests=31 shm_fd=true pong=true configure_ack=true cursor=true
+LiberationSans-Regular.ttf: OK
+LiberationSans-Bold.ttf: OK
+LiberationSans-Italic.ttf: OK
+LiberationSans-BoldItalic.ttf: OK
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+PAINT headless elapsed_us=21296 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 1000x760, document height 2294, scroll 0
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+PAINT headless elapsed_us=18858 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 1000x760, document height 2294, scroll 600
+HTTP_RESPONSE status=200 bytes=2021 url=file:///home/coder/workspace/lkjbrowser/fixtures/simple.html
+PAINT headless elapsed_us=28687 url=file:///home/coder/workspace/lkjbrowser/fixtures/simple.html
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/simple.html: 1000x760, document height 937, scroll 0
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+PAINT headless elapsed_us=17423 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 620x760, document height 2733, scroll 0
+HTTP_RESPONSE status=200 bytes=1189 url=file:///home/coder/workspace/lkjbrowser/fixtures/error.html
+PAINT headless elapsed_us=13538 url=file:///home/coder/workspace/lkjbrowser/fixtures/error.html
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/error.html: 1000x760, document height 535, scroll 0
+HTTP_RESPONSE status=200 bytes=5118 url=http://127.0.0.1:35031/article.html
+PAINT headless elapsed_us=21262 url=http://127.0.0.1:35031/article.html
+Rendered http://127.0.0.1:35031/article.html: 1000x760, document height 2294, scroll 0
+HTTP_RESPONSE status=200 bytes=5118 url=http://127.0.0.1:35031/chunked
+PAINT headless elapsed_us=27162 url=http://127.0.0.1:35031/chunked
+Rendered http://127.0.0.1:35031/chunked: 1000x760, document height 2294, scroll 0
+HTTP_RESPONSE status=200 bytes=5118 url=http://127.0.0.1:35031/article.html
+PAINT headless elapsed_us=21296 url=http://127.0.0.1:35031/article.html
+Rendered http://127.0.0.1:35031/article.html: 1000x760, document height 2294, scroll 0
+HTTP_RESPONSE status=200 bytes=2021 url=http://127.0.0.1:35031/simple.html
+PAINT headless elapsed_us=30010 url=http://127.0.0.1:35031/simple.html
+Rendered http://127.0.0.1:35031/simple.html: 1000x760, document height 937, scroll 0
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+PAINT headless elapsed_us=18872 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 1000x760, document height 2294, scroll 600
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+HTTP_RESPONSE status=200 bytes=2021 url=file:///home/coder/workspace/lkjbrowser/fixtures/simple.html
+PAINT headless elapsed_us=29112 url=file:///home/coder/workspace/lkjbrowser/fixtures/simple.html
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/simple.html: 1000x760, document height 937, scroll 0
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+HTTP_RESPONSE status=200 bytes=2021 url=file:///home/coder/workspace/lkjbrowser/fixtures/simple.html
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+PAINT headless elapsed_us=22658 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+Rendered file:///home/coder/workspace/lkjbrowser/fixtures/article.html: 1000x760, document height 2294, scroll 0
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser/fixtures/article.html
+PAINT headless elapsed_us=13697 url=about:welcome
+Rendered about:welcome: 1000x760, document height 647, scroll 0
+NAV_ERROR http://127.0.0.1:35031/truncated: Incomplete HTTP response body
+PAINT headless elapsed_us=11793 url=http://127.0.0.1:35031/truncated
+Rendered http://127.0.0.1:35031/truncated: 1000x760, document height 474, scroll 0
+NAV_ERROR http://127.0.0.1:35031/ambiguous: Ambiguous HTTP body framing (both length and transfer coding)
+PAINT headless elapsed_us=12600 url=http://127.0.0.1:35031/ambiguous
+Rendered http://127.0.0.1:35031/ambiguous: 1000x760, document height 474, scroll 0
+NAV_ERROR http://127.0.0.1:35031/invalid-status: Invalid HTTP status line
+PAINT headless elapsed_us=11744 url=http://127.0.0.1:35031/invalid-status
+Rendered http://127.0.0.1:35031/invalid-status: 1000x760, document height 474, scroll 0
+NAV_ERROR http://127.0.0.1:35031/large-header: HTTP headers exceed 64 KiB
+PAINT headless elapsed_us=13466 url=http://127.0.0.1:35031/large-header
+Rendered http://127.0.0.1:35031/large-header: 1000x760, document height 474, scroll 0
+NAV_ERROR http://127.0.0.1:41755/unreachable: Connect: ECONNREFUSED (111)
+PAINT headless elapsed_us=11820 url=http://127.0.0.1:41755/unreachable
+Rendered http://127.0.0.1:41755/unreachable: 1000x760, document height 474, scroll 0
+HTTP_RESPONSE status=200 bytes=67 url=http://127.0.0.1:35031/plain
+PAINT headless elapsed_us=8303 url=http://127.0.0.1:35031/plain
+Rendered http://127.0.0.1:35031/plain: 1000x760, document height 166, scroll 0
+HTTP_RESPONSE status=200 bytes=67 url=http://127.0.0.1:35031/plain-case
+PAINT headless elapsed_us=8152 url=http://127.0.0.1:35031/plain-case
+Rendered http://127.0.0.1:35031/plain-case: 1000x760, document height 166, scroll 0
+PASS: typed/local links, regular-file checks, remote file redirects/links/images, reload and history authority.
+PASS: native unit cases, capability probes, Wayland input peer, 5 layout/pixel goldens, HTTP framing, PNG, click, history, scroll and typed address.
+Evidence: /home/coder/workspace/lkjbrowser/target/browser-tests.iKDfaqAj
+ok 18 tests
+ok 11 tests
+ok 75 tests
+ok 11 tests
+PASS trusted-p256
+PASS certificate-rsa-pss
+PASS trusted-rsa
+PASS trusted-p384
+PASS intermediate-p384
+PASS numeric-ip
+PASS wildcard
+PASS case-fold
+PASS trailing-dot
+PASS expired
+PASS not-yet-valid
+PASS wrong-host
+PASS self-signed
+PASS unknown-root
+PASS tampered-certificate
+PASS wildcard-depth
+PASS wildcard-bare
+PASS incorrect-ip
+PASS server-eku
+PASS leaf-key-usage
+PASS leaf-ca
+PASS issuer-not-ca
+PASS no-common-name-fallback
+PASS path-length
+PASS unknown-critical
+PASS name-constraint
+PASS policy-constraint
+PARSER 671 truncations and trailing data refused
+ACCEPT key=2 curve=23 chain=1
+PASS before-validity
+ACCEPT key=2 curve=23 chain=1
+PASS after-validity
+PASS 31 certificate decisions plus every truncated leaf prefix
+ok 4 tests
+ok 16 tests
+same-image bytes=131076 success_ns=11776728 deadline_kill_reap_ns=100169832 drop_kill_reap_ns=283924
+PASS TLS page good
+PASS TLS page rsa
+PASS TLS page p384
+PASS TLS page chunked
+PASS TLS page redirect
+PASS HTTPS PNG subresource
+PASS TLS page styled
+PASS TLS page style-repeat
+PASS TLS page style-media
+PASS TLS page style-width
+PASS repeated stylesheet cache order, four-fetch cap and screen media at 1000px
+PASS TLS page slow-style
+PASS one stylesheet deadline; body painted in 3161783 us
+PASS stylesheet order, mixed-style refusal and visible-image loading
+PASS TLS page upgrade
+PASS TLS page bare-host
+PASS TLS error page downgrade
+PASS TLS error page expired
+PASS TLS error page wronghost
+PASS TLS error page selfsigned
+PASS TLS error page unknown-root
+PASS TLS error page tampered-record
+PASS TLS page peer-good
+PASS TLS page peer-fragmented
+PASS TLS page peer-key-update
+PASS TLS error page peer-bad-finished
+PASS TLS error page peer-bad-signature
+PASS native TLS local gate; evidence /home/coder/workspace/lkjbrowser/target/browser-tls-local.mra1Os6o
+PASS all offline browser and authenticated HTTPS gates

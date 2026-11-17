@@ -273,6 +273,8 @@ else
   --layout "$directory/final.layout" "$start_url" >"$directory/browser.log" 2>&1 &
  browser_pid=$!
  await_paint "$directory"
+ # Submission precedes compositor repaint; allow the first real window frame to become visible.
+ sleep 0.2
  capture_started_ns=$(date +%s%N)
  : >"$out/frames.tsv"
  for ((index=0;index<frames;index++)); do

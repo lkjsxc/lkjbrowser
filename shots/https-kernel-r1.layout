@@ -1,0 +1,487 @@
+URL https://www.kernel.org/
+VIEW 1000 760 SCROLL 0
+TITLE The Linux Kernel Archives
+IMAGES 0
+page width=988 height=2487 background=fff0ede3 title="The Linux Kernel Archives"
+box node=0 tag=#document x=0 y=0 w=988 h=2487
+box node=2 tag=html x=0 y=0 w=988 h=2487
+box node=25 tag=body x=40 y=28 w=908 h=2419
+box node=27 tag=header x=40 y=28 w=908 h=336
+box node=29 tag=div x=58 y=46 w=117 h=135
+box node=31 tag=h1 x=60 y=209 w=870 h=61
+box node=35 tag=nav x=58 y=317 w=872 h=29
+box node=36 tag=ul x=58 y=317 w=872 h=29
+box node=125 tag=aside x=40 y=391 w=908 h=987
+box node=127 tag=article x=58 y=424 w=872 h=921
+box node=129 tag=table x=94 y=447 w=450 h=164
+box node=131 tag=tr x=94 y=447 w=450 h=35
+box node=133 tag=th x=94 y=447 w=73 h=35
+box node=136 tag=th x=179 y=447 w=226 h=35
+box node=140 tag=tr x=94 y=488 w=450 h=35
+box node=142 tag=td x=94 y=488 w=73 h=35
+box node=146 tag=td x=179 y=488 w=226 h=35
+box node=151 tag=tr x=94 y=529 w=450 h=35
+box node=153 tag=td x=94 y=529 w=73 h=35
+box node=157 tag=td x=179 y=529 w=226 h=35
+box node=162 tag=tr x=94 y=570 w=450 h=35
+box node=164 tag=td x=94 y=570 w=73 h=35
+box node=168 tag=td x=179 y=570 w=226 h=35
+box node=173 tag=table x=58 y=701 w=833 h=158
+box node=175 tag=tr x=58 y=701 w=833 h=55
+box node=177 tag=td x=58 y=701 w=189 h=55
+box node=184 tag=tr x=58 y=762 w=833 h=91
+box node=186 tag=td x=58 y=762 w=145 h=91
+box node=188 tag=a x=82 y=779 w=109 h=74
+box node=192 tag=td x=215 y=762 w=32 h=49
+box node=194 tag=a x=215 y=762 w=32 h=36
+box node=201 tag=table x=58 y=931 w=872 h=410
+box node=203 tag=tr x=58 y=931 w=872 h=35
+box node=205 tag=td x=58 y=931 w=82 h=35
+box node=208 tag=td x=144 y=931 w=123 h=35
+box node=212 tag=td x=271 y=931 w=92 h=35
+box node=215 tag=td x=367 y=931 w=59 h=35
+box node=221 tag=td x=430 y=931 w=40 h=8
+box node=224 tag=td x=474 y=931 w=54 h=35
+box node=230 tag=td x=532 y=931 w=87 h=35
+box node=236 tag=td x=623 y=931 w=75 h=35
+box node=242 tag=td x=702 y=931 w=68 h=35
+box node=248 tag=td x=774 y=931 w=93 h=8
+box node=252 tag=tr x=58 y=972 w=872 h=35
+box node=254 tag=td x=58 y=972 w=82 h=35
+box node=257 tag=td x=144 y=972 w=123 h=35
+box node=261 tag=td x=271 y=972 w=92 h=35
+box node=264 tag=td x=367 y=972 w=59 h=35
+box node=270 tag=td x=430 y=972 w=40 h=35
+box node=276 tag=td x=474 y=972 w=54 h=35
+box node=282 tag=td x=532 y=972 w=87 h=35
+box node=288 tag=td x=623 y=972 w=75 h=35
+box node=294 tag=td x=702 y=972 w=68 h=35
+box node=300 tag=td x=774 y=972 w=93 h=35
+box node=307 tag=tr x=58 y=1013 w=872 h=35
+box node=309 tag=td x=58 y=1013 w=82 h=35
+box node=312 tag=td x=144 y=1013 w=123 h=35
+box node=318 tag=td x=271 y=1013 w=92 h=35
+box node=321 tag=td x=367 y=1013 w=59 h=35
+box node=327 tag=td x=430 y=1013 w=40 h=35
+box node=333 tag=td x=474 y=1013 w=54 h=35
+box node=339 tag=td x=532 y=1013 w=87 h=35
+box node=345 tag=td x=623 y=1013 w=75 h=35
+box node=351 tag=td x=702 y=1013 w=68 h=35
+box node=357 tag=td x=774 y=1013 w=93 h=35
+box node=364 tag=tr x=58 y=1054 w=872 h=35
+box node=366 tag=td x=58 y=1054 w=82 h=35
+box node=369 tag=td x=144 y=1054 w=123 h=35
+box node=373 tag=td x=271 y=1054 w=92 h=35
+box node=376 tag=td x=367 y=1054 w=59 h=35
+box node=382 tag=td x=430 y=1054 w=40 h=35
+box node=388 tag=td x=474 y=1054 w=54 h=35
+box node=394 tag=td x=532 y=1054 w=87 h=35
+box node=400 tag=td x=623 y=1054 w=75 h=35
+box node=406 tag=td x=702 y=1054 w=68 h=35
+box node=412 tag=td x=774 y=1054 w=93 h=35
+box node=419 tag=tr x=58 y=1095 w=872 h=35
+box node=421 tag=td x=58 y=1095 w=82 h=35
+box node=424 tag=td x=144 y=1095 w=123 h=35
+box node=428 tag=td x=271 y=1095 w=92 h=35
+box node=431 tag=td x=367 y=1095 w=59 h=35
+box node=437 tag=td x=430 y=1095 w=40 h=35
+box node=443 tag=td x=474 y=1095 w=54 h=35
+box node=449 tag=td x=532 y=1095 w=87 h=35
+box node=455 tag=td x=623 y=1095 w=75 h=35
+box node=461 tag=td x=702 y=1095 w=68 h=35
+box node=467 tag=td x=774 y=1095 w=93 h=35
+box node=474 tag=tr x=58 y=1136 w=872 h=35
+box node=476 tag=td x=58 y=1136 w=82 h=35
+box node=479 tag=td x=144 y=1136 w=123 h=35
+box node=483 tag=td x=271 y=1136 w=92 h=35
+box node=486 tag=td x=367 y=1136 w=59 h=35
+box node=492 tag=td x=430 y=1136 w=40 h=35
+box node=498 tag=td x=474 y=1136 w=54 h=35
+box node=504 tag=td x=532 y=1136 w=87 h=35
+box node=510 tag=td x=623 y=1136 w=75 h=35
+box node=516 tag=td x=702 y=1136 w=68 h=35
+box node=522 tag=td x=774 y=1136 w=93 h=35
+box node=529 tag=tr x=58 y=1177 w=872 h=35
+box node=531 tag=td x=58 y=1177 w=82 h=35
+box node=534 tag=td x=144 y=1177 w=123 h=35
+box node=538 tag=td x=271 y=1177 w=92 h=35
+box node=541 tag=td x=367 y=1177 w=59 h=35
+box node=547 tag=td x=430 y=1177 w=40 h=35
+box node=553 tag=td x=474 y=1177 w=54 h=35
+box node=559 tag=td x=532 y=1177 w=87 h=35
+box node=565 tag=td x=623 y=1177 w=75 h=35
+box node=571 tag=td x=702 y=1177 w=68 h=35
+box node=577 tag=td x=774 y=1177 w=93 h=35
+box node=584 tag=tr x=58 y=1218 w=872 h=35
+box node=586 tag=td x=58 y=1218 w=82 h=35
+box node=589 tag=td x=144 y=1218 w=123 h=35
+box node=593 tag=td x=271 y=1218 w=92 h=35
+box node=596 tag=td x=367 y=1218 w=59 h=35
+box node=602 tag=td x=430 y=1218 w=40 h=35
+box node=608 tag=td x=474 y=1218 w=54 h=35
+box node=614 tag=td x=532 y=1218 w=87 h=35
+box node=620 tag=td x=623 y=1218 w=75 h=35
+box node=626 tag=td x=702 y=1218 w=68 h=35
+box node=632 tag=td x=774 y=1218 w=93 h=35
+box node=639 tag=tr x=58 y=1259 w=872 h=35
+box node=641 tag=td x=58 y=1259 w=82 h=35
+box node=644 tag=td x=144 y=1259 w=123 h=35
+box node=648 tag=td x=271 y=1259 w=92 h=35
+box node=651 tag=td x=367 y=1259 w=59 h=35
+box node=657 tag=td x=430 y=1259 w=40 h=35
+box node=663 tag=td x=474 y=1259 w=54 h=35
+box node=669 tag=td x=532 y=1259 w=87 h=35
+box node=675 tag=td x=623 y=1259 w=75 h=35
+box node=681 tag=td x=702 y=1259 w=68 h=35
+box node=687 tag=td x=774 y=1259 w=93 h=35
+box node=694 tag=tr x=58 y=1300 w=872 h=35
+box node=696 tag=td x=58 y=1300 w=82 h=35
+box node=699 tag=td x=144 y=1300 w=123 h=35
+box node=703 tag=td x=271 y=1300 w=92 h=35
+box node=706 tag=td x=367 y=1300 w=59 h=8
+box node=709 tag=td x=430 y=1300 w=40 h=8
+box node=712 tag=td x=474 y=1300 w=54 h=8
+box node=715 tag=td x=532 y=1300 w=87 h=8
+box node=718 tag=td x=623 y=1300 w=75 h=8
+box node=721 tag=td x=702 y=1300 w=68 h=35
+box node=727 tag=td x=774 y=1300 w=93 h=8
+box node=734 tag=section x=40 y=1432 w=908 h=624
+box node=736 tag=div x=40 y=1432 w=648 h=417
+box node=738 tag=h2 x=58 y=1454 w=612 h=35
+box node=741 tag=ul x=58 y=1516 w=612 h=315
+box node=743 tag=li x=58 y=1516 w=612 h=27
+box node=747 tag=li x=58 y=1551 w=612 h=27
+box node=751 tag=li x=58 y=1586 w=612 h=27
+box node=755 tag=li x=58 y=1621 w=612 h=27
+box node=759 tag=li x=58 y=1656 w=612 h=27
+box node=763 tag=li x=58 y=1691 w=612 h=27
+box node=767 tag=li x=58 y=1726 w=612 h=27
+box node=771 tag=li x=58 y=1761 w=612 h=27
+box node=775 tag=li x=58 y=1796 w=612 h=27
+box node=781 tag=div x=40 y=1849 w=252 h=207
+box node=783 tag=h2 x=58 y=1871 w=216 h=35
+box node=786 tag=ul x=58 y=1933 w=216 h=105
+box node=788 tag=li x=58 y=1933 w=216 h=27
+box node=792 tag=li x=58 y=1968 w=216 h=27
+box node=796 tag=li x=58 y=2003 w=216 h=27
+box node=803 tag=footer x=40 y=2119 w=908 h=292
+box node=805 tag=address x=40 y=2182 w=908 h=21
+box node=811 tag=address x=40 y=2230 w=908 h=181
+rect x=40 y=28 w=908 h=2419 color=fff0ede3
+rect x=40 y=28 w=908 h=336 color=ffffffff
+text node=33 x=154 baseline=258 top=209 w=96 h=61 size=54 bold=true italic=false color=ff2c1d00 href="https://www.kernel.org/" value="The"
+text node=33 x=265 baseline=258 top=209 w=144 h=61 size=54 bold=true italic=false color=ff2c1d00 href="https://www.kernel.org/" value="Linux"
+text node=33 x=424 baseline=258 top=209 w=168 h=61 size=54 bold=true italic=false color=ff2c1d00 href="https://www.kernel.org/" value="Kernel"
+text node=33 x=607 baseline=258 top=209 w=228 h=61 size=54 bold=true italic=false color=ff2c1d00 href="https://www.kernel.org/" value="Archives"
+text node=40 x=280 baseline=338 top=322 w=48 h=20 size=17 bold=true italic=false color=ffb39223 href="https://www.kernel.org/category/about.html" value="About"
+text node=44 x=333 baseline=338 top=322 w=62 h=20 size=17 bold=true italic=false color=ffb39223 href="https://www.kernel.org/category/contact-us.html" value="Contact"
+text node=44 x=400 baseline=338 top=322 w=19 h=20 size=17 bold=true italic=false color=ffb39223 href="https://www.kernel.org/category/contact-us.html" value="us"
+text node=48 x=424 baseline=338 top=322 w=35 h=20 size=17 bold=true italic=false color=ffb39223 href="https://www.kernel.org/category/faq.html" value="FAQ"
+text node=52 x=464 baseline=338 top=322 w=71 h=20 size=17 bold=true italic=false color=ffb39223 href="https://www.kernel.org/category/releases.html" value="Releases"
+text node=56 x=540 baseline=338 top=322 w=86 h=20 size=17 bold=true italic=false color=ffb39223 href="https://www.kernel.org/category/signatures.html" value="Signatures"
+text node=60 x=631 baseline=338 top=322 w=31 h=20 size=17 bold=true italic=false color=ffb39223 href="https://www.kernel.org/category/site-news.html" value="Site"
+text node=60 x=667 baseline=338 top=322 w=41 h=20 size=17 bold=true italic=false color=ffb39223 href="https://www.kernel.org/category/site-news.html" value="news"
+rect x=40 y=391 w=908 h=987 color=ffffffff
+text node=134 x=94 baseline=471 top=454 w=73 h=21 size=18 bold=true italic=false color=ff33290a href="" value="Protocol"
+text node=137 x=179 baseline=471 top=454 w=75 h=21 size=18 bold=true italic=false color=ff33290a href="" value="Location"
+text node=144 x=94 baseline=512 top=495 w=47 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.ietf.org/rfc/rfc2616.txt" value="HTTP"
+text node=148 x=179 baseline=512 top=495 w=218 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/pub/" value="https://www.kernel.org/pub/"
+text node=155 x=94 baseline=553 top=536 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git-scm.com/" value="GIT"
+text node=159 x=179 baseline=553 top=536 w=163 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/" value="https://git.kernel.org/"
+text node=166 x=94 baseline=594 top=577 w=63 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://rsync.samba.org/" value="RSYNC"
+text node=169 x=179 baseline=594 top=577 w=226 h=21 size=18 bold=false italic=false color=ff33290a href="" value="rsync://rsync.kernel.org/pub/"
+rect x=58 y=701 w=833 h=158 color=ffffd133
+text node=180 x=69 baseline=741 top=721 w=63 h=25 size=22 bold=true italic=false color=ff4c3d00 href="" value="Latest"
+text node=180 x=138 baseline=741 top=721 w=82 h=25 size=22 bold=true italic=false color=ff4c3d00 href="" value="Release"
+text node=189 x=82 baseline=833 top=788 w=109 h=56 size=49 bold=true italic=false color=ff4c3d00 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.5.tar.xz" value="7.3.5"
+image node=195 x=215 y=762 w=32 h=32 src="https://www.kernel.org/theme/images/icons/downloadarrow_small.png" alt="Download" href="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.5.tar.xz"
+text node=206 x=58 baseline=955 top=938 w=72 h=21 size=18 bold=false italic=false color=ff33290a href="" value="mainline:"
+text node=210 x=144 baseline=955 top=938 w=58 h=21 size=18 bold=true italic=false color=ff33290a href="" value="7.4-rc3"
+text node=213 x=271 baseline=955 top=938 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-15"
+text node=216 x=367 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=218 x=372 baseline=955 top=938 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/torvalds/t/linux-7.4-rc3.tar.gz" value="tarball"
+text node=219 x=421 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=225 x=474 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=227 x=479 baseline=955 top=938 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/torvalds/p/v7.4-rc3/v7.3" value="patch"
+text node=228 x=523 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=231 x=532 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=233 x=537 baseline=955 top=938 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/torvalds/p/v7.4-rc3/v7.4-rc2" value="inc. patch"
+text node=234 x=614 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=237 x=623 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=239 x=628 baseline=955 top=938 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/torvalds/ds/v7.4-rc3/v7.4-rc2" value="view diff"
+text node=240 x=693 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=243 x=702 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=245 x=707 baseline=955 top=938 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/torvalds/h/v7.4-rc3" value="browse"
+text node=246 x=765 baseline=955 top=938 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=255 x=58 baseline=996 top=979 w=53 h=21 size=18 bold=false italic=false color=ff33290a href="" value="stable:"
+text node=259 x=144 baseline=996 top=979 w=40 h=21 size=18 bold=true italic=false color=ff33290a href="" value="7.3.5"
+text node=262 x=271 baseline=996 top=979 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-17"
+text node=265 x=367 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=267 x=372 baseline=996 top=979 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.5.tar.xz" value="tarball"
+text node=268 x=421 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=271 x=430 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=273 x=435 baseline=996 top=979 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.5.tar.sign" value="pgp"
+text node=274 x=465 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=277 x=474 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=279 x=479 baseline=996 top=979 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/patch-7.3.5.xz" value="patch"
+text node=280 x=523 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=283 x=532 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=285 x=537 baseline=996 top=979 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/incr/patch-7.3.4-5.xz" value="inc. patch"
+text node=286 x=614 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=289 x=623 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=291 x=628 baseline=996 top=979 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/ds/v7.3.5/v7.3.4" value="view diff"
+text node=292 x=693 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=295 x=702 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=297 x=707 baseline=996 top=979 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/h/v7.3.5" value="browse"
+text node=298 x=765 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=301 x=774 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=303 x=779 baseline=996 top=979 w=83 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/ChangeLog-7.3.5" value="changelog"
+text node=304 x=862 baseline=996 top=979 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=310 x=58 baseline=1037 top=1020 w=53 h=21 size=18 bold=false italic=false color=ff33290a href="" value="stable:"
+text node=314 x=144 baseline=1037 top=1020 w=50 h=21 size=18 bold=true italic=false color=ff33290a href="" value="7.2.15"
+text node=316 x=199 baseline=1037 top=1020 w=49 h=21 size=18 bold=true italic=false color=ff33290a href="" value="[EOL]"
+text node=319 x=271 baseline=1037 top=1020 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-01"
+text node=322 x=367 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=324 x=372 baseline=1037 top=1020 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.2.15.tar.xz" value="tarball"
+text node=325 x=421 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=328 x=430 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=330 x=435 baseline=1037 top=1020 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.2.15.tar.sign" value="pgp"
+text node=331 x=465 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=334 x=474 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=336 x=479 baseline=1037 top=1020 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/patch-7.2.15.xz" value="patch"
+text node=337 x=523 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=340 x=532 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=342 x=537 baseline=1037 top=1020 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/incr/patch-7.2.14-15.xz" value="inc. patch"
+text node=343 x=614 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=346 x=623 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=348 x=628 baseline=1037 top=1020 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/ds/v7.2.15/v7.2.14" value="view diff"
+text node=349 x=693 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=352 x=702 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=354 x=707 baseline=1037 top=1020 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/h/v7.2.15" value="browse"
+text node=355 x=765 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=358 x=774 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=360 x=779 baseline=1037 top=1020 w=83 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v7.x/ChangeLog-7.2.15" value="changelog"
+text node=361 x=862 baseline=1037 top=1020 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=367 x=58 baseline=1078 top=1061 w=75 h=21 size=18 bold=false italic=false color=ff33290a href="" value="longterm:"
+text node=371 x=144 baseline=1078 top=1061 w=60 h=21 size=18 bold=true italic=false color=ff33290a href="" value="6.18.64"
+text node=374 x=271 baseline=1078 top=1061 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-17"
+text node=377 x=367 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=379 x=372 baseline=1078 top=1061 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.64.tar.xz" value="tarball"
+text node=380 x=421 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=383 x=430 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=385 x=435 baseline=1078 top=1061 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.64.tar.sign" value="pgp"
+text node=386 x=465 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=389 x=474 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=391 x=479 baseline=1078 top=1061 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/patch-6.18.64.xz" value="patch"
+text node=392 x=523 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=395 x=532 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=397 x=537 baseline=1078 top=1061 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.18.63-64.xz" value="inc. patch"
+text node=398 x=614 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=401 x=623 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=403 x=628 baseline=1078 top=1061 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/ds/v6.18.64/v6.18.63" value="view diff"
+text node=404 x=693 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=407 x=702 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=409 x=707 baseline=1078 top=1061 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/h/v6.18.64" value="browse"
+text node=410 x=765 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=413 x=774 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=415 x=779 baseline=1078 top=1061 w=83 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/ChangeLog-6.18.64" value="changelog"
+text node=416 x=862 baseline=1078 top=1061 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=422 x=58 baseline=1119 top=1102 w=75 h=21 size=18 bold=false italic=false color=ff33290a href="" value="longterm:"
+text node=426 x=144 baseline=1119 top=1102 w=70 h=21 size=18 bold=true italic=false color=ff33290a href="" value="6.12.118"
+text node=429 x=271 baseline=1119 top=1102 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-17"
+text node=432 x=367 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=434 x=372 baseline=1119 top=1102 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.12.118.tar.xz" value="tarball"
+text node=435 x=421 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=438 x=430 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=440 x=435 baseline=1119 top=1102 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.12.118.tar.sign" value="pgp"
+text node=441 x=465 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=444 x=474 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=446 x=479 baseline=1119 top=1102 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/patch-6.12.118.xz" value="patch"
+text node=447 x=523 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=450 x=532 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=452 x=537 baseline=1119 top=1102 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.12.117-118.xz" value="inc. patch"
+text node=453 x=614 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=456 x=623 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=458 x=628 baseline=1119 top=1102 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/ds/v6.12.118/v6.12.117" value="view diff"
+text node=459 x=693 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=462 x=702 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=464 x=707 baseline=1119 top=1102 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/h/v6.12.118" value="browse"
+text node=465 x=765 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=468 x=774 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=470 x=779 baseline=1119 top=1102 w=83 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/ChangeLog-6.12.118" value="changelog"
+text node=471 x=862 baseline=1119 top=1102 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=477 x=58 baseline=1160 top=1143 w=75 h=21 size=18 bold=false italic=false color=ff33290a href="" value="longterm:"
+text node=481 x=144 baseline=1160 top=1143 w=60 h=21 size=18 bold=true italic=false color=ff33290a href="" value="6.6.162"
+text node=484 x=271 baseline=1160 top=1143 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-06"
+text node=487 x=367 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=489 x=372 baseline=1160 top=1143 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.162.tar.xz" value="tarball"
+text node=490 x=421 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=493 x=430 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=495 x=435 baseline=1160 top=1143 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.6.162.tar.sign" value="pgp"
+text node=496 x=465 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=499 x=474 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=501 x=479 baseline=1160 top=1143 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/patch-6.6.162.xz" value="patch"
+text node=502 x=523 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=505 x=532 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=507 x=537 baseline=1160 top=1143 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.6.161-162.xz" value="inc. patch"
+text node=508 x=614 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=511 x=623 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=513 x=628 baseline=1160 top=1143 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/ds/v6.6.162/v6.6.161" value="view diff"
+text node=514 x=693 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=517 x=702 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=519 x=707 baseline=1160 top=1143 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/h/v6.6.162" value="browse"
+text node=520 x=765 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=523 x=774 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=525 x=779 baseline=1160 top=1143 w=83 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/ChangeLog-6.6.162" value="changelog"
+text node=526 x=862 baseline=1160 top=1143 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=532 x=58 baseline=1201 top=1184 w=75 h=21 size=18 bold=false italic=false color=ff33290a href="" value="longterm:"
+text node=536 x=144 baseline=1201 top=1184 w=60 h=21 size=18 bold=true italic=false color=ff33290a href="" value="6.1.192"
+text node=539 x=271 baseline=1201 top=1184 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-06"
+text node=542 x=367 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=544 x=372 baseline=1201 top=1184 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.192.tar.xz" value="tarball"
+text node=545 x=421 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=548 x=430 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=550 x=435 baseline=1201 top=1184 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.192.tar.sign" value="pgp"
+text node=551 x=465 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=554 x=474 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=556 x=479 baseline=1201 top=1184 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/patch-6.1.192.xz" value="patch"
+text node=557 x=523 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=560 x=532 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=562 x=537 baseline=1201 top=1184 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/incr/patch-6.1.191-192.xz" value="inc. patch"
+text node=563 x=614 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=566 x=623 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=568 x=628 baseline=1201 top=1184 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/ds/v6.1.192/v6.1.191" value="view diff"
+text node=569 x=693 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=572 x=702 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=574 x=707 baseline=1201 top=1184 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/h/v6.1.192" value="browse"
+text node=575 x=765 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=578 x=774 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=580 x=779 baseline=1201 top=1184 w=83 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v6.x/ChangeLog-6.1.192" value="changelog"
+text node=581 x=862 baseline=1201 top=1184 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=587 x=58 baseline=1242 top=1225 w=75 h=21 size=18 bold=false italic=false color=ff33290a href="" value="longterm:"
+text node=591 x=144 baseline=1242 top=1225 w=70 h=21 size=18 bold=true italic=false color=ff33290a href="" value="5.15.225"
+text node=594 x=271 baseline=1242 top=1225 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-06"
+text node=597 x=367 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=599 x=372 baseline=1242 top=1225 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.15.225.tar.xz" value="tarball"
+text node=600 x=421 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=603 x=430 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=605 x=435 baseline=1242 top=1225 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.15.225.tar.sign" value="pgp"
+text node=606 x=465 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=609 x=474 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=611 x=479 baseline=1242 top=1225 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/patch-5.15.225.xz" value="patch"
+text node=612 x=523 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=615 x=532 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=617 x=537 baseline=1242 top=1225 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/incr/patch-5.15.224-225.xz" value="inc. patch"
+text node=618 x=614 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=621 x=623 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=623 x=628 baseline=1242 top=1225 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/ds/v5.15.225/v5.15.224" value="view diff"
+text node=624 x=693 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=627 x=702 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=629 x=707 baseline=1242 top=1225 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/h/v5.15.225" value="browse"
+text node=630 x=765 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=633 x=774 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=635 x=779 baseline=1242 top=1225 w=83 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/ChangeLog-5.15.225" value="changelog"
+text node=636 x=862 baseline=1242 top=1225 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=642 x=58 baseline=1283 top=1266 w=75 h=21 size=18 bold=false italic=false color=ff33290a href="" value="longterm:"
+text node=646 x=144 baseline=1283 top=1266 w=70 h=21 size=18 bold=true italic=false color=ff33290a href="" value="5.10.274"
+text node=649 x=271 baseline=1283 top=1266 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-06"
+text node=652 x=367 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=654 x=372 baseline=1283 top=1266 w=49 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.10.274.tar.xz" value="tarball"
+text node=655 x=421 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=658 x=430 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=660 x=435 baseline=1283 top=1266 w=30 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.10.274.tar.sign" value="pgp"
+text node=661 x=465 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=664 x=474 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=666 x=479 baseline=1283 top=1266 w=44 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/patch-5.10.274.xz" value="patch"
+text node=667 x=523 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=670 x=532 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=672 x=537 baseline=1283 top=1266 w=77 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/incr/patch-5.10.273-274.xz" value="inc. patch"
+text node=673 x=614 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=676 x=623 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=678 x=628 baseline=1283 top=1266 w=65 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/ds/v5.10.274/v5.10.273" value="view diff"
+text node=679 x=693 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=682 x=702 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=684 x=707 baseline=1283 top=1266 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/stable/h/v5.10.274" value="browse"
+text node=685 x=765 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=688 x=774 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=690 x=779 baseline=1283 top=1266 w=83 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://cdn.kernel.org/pub/linux/kernel/v5.x/ChangeLog-5.10.274" value="changelog"
+text node=691 x=862 baseline=1283 top=1266 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+text node=697 x=58 baseline=1324 top=1307 w=82 h=21 size=18 bold=false italic=false color=ff33290a href="" value="linux-next:"
+text node=701 x=144 baseline=1324 top=1307 w=123 h=21 size=18 bold=true italic=false color=ff33290a href="" value="next-20261116"
+text node=704 x=271 baseline=1324 top=1307 w=92 h=21 size=18 bold=false italic=false color=ff33290a href="" value="2026-11-16"
+text node=722 x=702 baseline=1324 top=1307 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="["
+text node=724 x=707 baseline=1324 top=1307 w=58 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/next/linux-next/h/next-20261116" value="browse"
+text node=725 x=765 baseline=1324 top=1307 w=5 h=21 size=18 bold=false italic=false color=ff33290a href="" value="]"
+rect x=40 y=1432 w=648 h=417 color=ffffffff
+text node=739 x=58 baseline=1481 top=1456 w=72 h=31 size=27 bold=true italic=false color=ff33290a href="" value="Other"
+text node=739 x=138 baseline=1481 top=1456 w=129 h=31 size=27 bold=true italic=false color=ff33290a href="" value="resources"
+text node=745 x=58 baseline=1536 top=1519 w=23 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/" value="Git"
+text node=745 x=86 baseline=1536 top=1519 w=46 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://git.kernel.org/" value="Trees"
+text node=743 x=42 baseline=1536 top=1519 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=749 x=58 baseline=1571 top=1554 w=121 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://docs.kernel.org/" value="Documentation"
+text node=747 x=42 baseline=1571 top=1554 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=753 x=58 baseline=1606 top=1589 w=52 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://lore.kernel.org/" value="Kernel"
+text node=753 x=115 baseline=1606 top=1589 w=57 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://lore.kernel.org/" value="Mailing"
+text node=753 x=177 baseline=1606 top=1589 w=37 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://lore.kernel.org/" value="Lists"
+text node=751 x=42 baseline=1606 top=1589 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=757 x=58 baseline=1641 top=1624 w=84 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://patchwork.kernel.org/" value="Patchwork"
+text node=755 x=42 baseline=1641 top=1624 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=761 x=58 baseline=1676 top=1659 w=43 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/code-of-conduct.html" value="Code"
+text node=761 x=106 baseline=1676 top=1659 w=15 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/code-of-conduct.html" value="of"
+text node=761 x=126 baseline=1676 top=1659 w=67 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/code-of-conduct.html" value="Conduct"
+text node=759 x=42 baseline=1676 top=1659 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=765 x=58 baseline=1711 top=1694 w=78 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/doc/html/latest/admin-guide/reporting-issues.html" value="Reporting"
+text node=765 x=141 baseline=1711 top=1694 w=52 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/doc/html/latest/admin-guide/reporting-issues.html" value="Issues"
+text node=763 x=42 baseline=1711 top=1694 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=769 x=58 baseline=1746 top=1729 w=56 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://mirrors.kernel.org/" value="Mirrors"
+text node=767 x=42 baseline=1746 top=1729 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=773 x=58 baseline=1781 top=1764 w=82 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.linux.com/" value="Linux.com"
+text node=771 x=42 baseline=1781 top=1764 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=777 x=58 baseline=1816 top=1799 w=43 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.linuxfoundation.org/" value="Linux"
+text node=777 x=106 baseline=1816 top=1799 w=90 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.linuxfoundation.org/" value="Foundation"
+text node=775 x=42 baseline=1816 top=1799 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+rect x=40 y=1849 w=252 h=207 color=ffffffff
+text node=784 x=58 baseline=1898 top=1873 w=80 h=31 size=27 bold=true italic=false color=ff33290a href="" value="Social"
+text node=790 x=58 baseline=1953 top=1936 w=31 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/feeds/all.atom.xml" value="Site"
+text node=790 x=94 baseline=1953 top=1936 w=42 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/feeds/all.atom.xml" value="Atom"
+text node=790 x=141 baseline=1953 top=1936 w=35 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/feeds/all.atom.xml" value="feed"
+text node=788 x=42 baseline=1953 top=1936 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=794 x=58 baseline=1988 top=1971 w=75 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/feeds/kdist.xml" value="Releases"
+text node=794 x=138 baseline=1988 top=1971 w=42 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/feeds/kdist.xml" value="Atom"
+text node=794 x=185 baseline=1988 top=1971 w=41 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/feeds/kdist.xml" value="Feed"
+text node=792 x=42 baseline=1988 top=1971 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=798 x=58 baseline=2023 top=2006 w=52 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://planet.kernel.org/" value="Kernel"
+text node=798 x=115 baseline=2023 top=2006 w=51 h=21 size=18 bold=false italic=false color=ff3357d6 href="https://planet.kernel.org/" value="Planet"
+text node=796 x=42 baseline=2023 top=2006 w=6 h=21 size=18 bold=false italic=false color=ff33290a href="" value="•"
+text node=806 x=88 baseline=2197 top=2184 w=27 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="This"
+text node=806 x=119 baseline=2197 top=2184 w=22 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="site"
+text node=806 x=145 baseline=2197 top=2184 w=10 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="is"
+text node=806 x=159 baseline=2197 top=2184 w=57 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="operated"
+text node=806 x=220 baseline=2197 top=2184 w=15 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="by"
+text node=806 x=239 baseline=2197 top=2184 w=20 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="the"
+text node=806 x=263 baseline=2197 top=2184 w=34 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="Linux"
+text node=806 x=301 baseline=2197 top=2184 w=41 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="Kernel"
+text node=806 x=346 baseline=2197 top=2184 w=85 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="Organization,"
+text node=806 x=435 baseline=2197 top=2184 w=8 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="a"
+text node=808 x=447 baseline=2197 top=2184 w=49 h=16 size=14 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/nonprofit.html" value="501(c)3"
+text node=808 x=500 baseline=2197 top=2184 w=56 h=16 size=14 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/nonprofit.html" value="nonprofit"
+text node=808 x=560 baseline=2197 top=2184 w=72 h=16 size=14 bold=false italic=false color=ff3357d6 href="https://www.kernel.org/nonprofit.html" value="corporation"
+text node=809 x=632 baseline=2197 top=2184 w=4 h=16 size=14 bold=false italic=false color=ff827a5e href="" value=","
+text node=809 x=640 baseline=2197 top=2184 w=25 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="with"
+text node=809 x=669 baseline=2197 top=2184 w=48 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="support"
+text node=809 x=721 baseline=2197 top=2184 w=29 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="from"
+text node=809 x=754 baseline=2197 top=2184 w=20 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="the"
+text node=809 x=778 baseline=2197 top=2184 w=55 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="following"
+text node=809 x=837 baseline=2197 top=2184 w=62 h=16 size=14 bold=false italic=false color=ff827a5e href="" value="sponsors."
+image node=814 x=172 y=2230 w=135 h=55 src="https://www.kernel.org/theme/images/logos/akamai.png" alt="Akamai" href="https://www.akamai.com/"
+text node=815 x=312 baseline=2285 top=2268 w=5 h=21 size=18 bold=false italic=false color=ff827a5e href="" value=" "
+image node=817 x=317 y=2264 w=193 h=21 src="https://www.kernel.org/theme/images/logos/constellix-green-logo.png" alt="Constellix" href="https://www.constellix.com/"
+text node=818 x=515 baseline=2285 top=2268 w=5 h=21 size=18 bold=false italic=false color=ff827a5e href="" value=" "
+image node=820 x=520 y=2250 w=91 h=35 src="https://www.kernel.org/theme/images/logos/fastly-logo.png" alt="Fastly" href="https://www.fastly.com/"
+text node=821 x=616 baseline=2285 top=2268 w=5 h=21 size=18 bold=false italic=false color=ff827a5e href="" value=" "
+image node=823 x=621 y=2245 w=195 h=40 src="https://www.kernel.org/theme/images/logos/serverscom.svg" alt="servers.com" href="https://servers.com/"
+image node=828 x=350 y=2289 w=128 h=42 src="https://www.kernel.org/theme/images/logos/google.png" alt="Google" href="https://www.google.com/"
+text node=829 x=483 baseline=2331 top=2314 w=5 h=21 size=18 bold=false italic=false color=ff827a5e href="" value=" "
+image node=831 x=488 y=2295 w=150 h=36 src="https://www.kernel.org/theme/images/logos/redhat-community.png" alt="Red Hat" href="https://www.redhat.com/"
+text node=834 x=491 baseline=2355 top=2338 w=5 h=21 size=18 bold=false italic=false color=ff827a5e href="" value=" "
+image node=838 x=425 y=2362 w=137 h=45 src="https://www.kernel.org/theme/images/logos/thelinuxfoundation.png" alt="The Linux Foundation" href="https://www.linuxfoundation.org/"

@@ -1,0 +1,43 @@
+PAINT wayland-submit elapsed_us=129004 url=about:welcome
+Script 400ms: down 29
+Script 420ms: key 38
+Script 440ms: up 29
+Script 600ms: key 35
+Script 670ms: key 20
+Script 740ms: key 20
+Script 810ms: key 25
+Script 880ms: key 31
+Script 940ms: down 42
+Script 950ms: key 39
+Script 970ms: up 42
+Script 1020ms: key 53
+Script 1090ms: key 53
+Script 1160ms: key 17
+Script 1230ms: key 17
+Script 1300ms: key 17
+Script 1370ms: key 52
+Script 1440ms: key 37
+Script 1510ms: key 18
+Script 1580ms: key 19
+Script 1650ms: key 49
+Script 1720ms: key 18
+Script 1790ms: key 38
+Script 1860ms: key 52
+Script 1930ms: key 24
+Script 2000ms: key 19
+Script 2070ms: key 34
+Script 2140ms: key 53
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=48653
+HTTP_RESPONSE status=200 bytes=20436 url=https://www.kernel.org/
+Script 2500ms: key 28
+PAINT wayland-submit elapsed_us=331042 url=https://www.kernel.org/
+Script 4500ms: scroll 480
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=49747
+Script 5400ms: scroll 480
+Script 7000ms: key 102
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=54570
+HTTP_RESPONSE status=200 bytes=15073 url=https://www.kernel.org/category/about.html
+Script 8000ms: click 300 406
+PAINT wayland-submit elapsed_us=354354 url=https://www.kernel.org/category/about.html
+Script 10000ms: scroll 420
+Wayland: sent 90 messages, received 55, presented 22 frames

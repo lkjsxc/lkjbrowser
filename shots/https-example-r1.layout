@@ -1,0 +1,34 @@
+URL https://example.com/
+VIEW 1000 760 SCROLL 0
+TITLE Example Domain
+IMAGES 0
+page width=988 height=293 background=ffffffff title="Example Domain"
+box node=0 tag=#document x=0 y=0 w=988 h=293
+box node=1 tag=html x=0 y=0 w=988 h=293
+box node=10 tag=body x=254 y=0 w=480 h=293
+box node=11 tag=p x=286 y=165 w=416 h=78
+text node=12 x=289 baseline=183 top=168 w=31 h=19 size=16 bold=false italic=false color=ff263342 href="" value="This"
+text node=12 x=324 baseline=183 top=168 w=53 h=19 size=16 bold=false italic=false color=ff263342 href="" value="domain"
+text node=12 x=381 baseline=183 top=168 w=12 h=19 size=16 bold=false italic=false color=ff263342 href="" value="is"
+text node=12 x=397 baseline=183 top=168 w=18 h=19 size=16 bold=false italic=false color=ff263342 href="" value="for"
+text node=12 x=419 baseline=183 top=168 w=26 h=19 size=16 bold=false italic=false color=ff263342 href="" value="use"
+text node=12 x=449 baseline=183 top=168 w=13 h=19 size=16 bold=false italic=false color=ff263342 href="" value="in"
+text node=12 x=466 baseline=183 top=168 w=105 h=19 size=16 bold=false italic=false color=ff263342 href="" value="documentation"
+text node=12 x=575 baseline=183 top=168 w=69 h=19 size=16 bold=false italic=false color=ff263342 href="" value="examples"
+text node=12 x=648 baseline=183 top=168 w=51 h=19 size=16 bold=false italic=false color=ff263342 href="" value="without"
+text node=12 x=289 baseline=209 top=194 w=58 h=19 size=16 bold=false italic=false color=ff263342 href="" value="needing"
+text node=12 x=351 baseline=209 top=194 w=82 h=19 size=16 bold=false italic=false color=ff263342 href="" value="permission."
+text node=12 x=437 baseline=209 top=194 w=31 h=19 size=16 bold=false italic=false color=ff263342 href="" value="This"
+text node=12 x=472 baseline=209 top=194 w=12 h=19 size=16 bold=false italic=false color=ff263342 href="" value="is"
+text node=12 x=488 baseline=209 top=194 w=22 h=19 size=16 bold=false italic=false color=ff263342 href="" value="not"
+text node=12 x=514 baseline=209 top=194 w=9 h=19 size=16 bold=false italic=false color=ff263342 href="" value="a"
+text node=12 x=527 baseline=209 top=194 w=55 h=19 size=16 bold=false italic=false color=ff263342 href="" value="service;"
+text node=12 x=586 baseline=209 top=194 w=39 h=19 size=16 bold=false italic=false color=ff263342 href="" value="avoid"
+text node=12 x=629 baseline=209 top=194 w=48 h=19 size=16 bold=false italic=false color=ff263342 href="" value="relying"
+text node=12 x=681 baseline=209 top=194 w=18 h=19 size=16 bold=false italic=false color=ff263342 href="" value="on"
+text node=12 x=361 baseline=235 top=220 w=8 h=19 size=16 bold=false italic=false color=ff263342 href="" value="it"
+text node=12 x=373 baseline=235 top=220 w=18 h=19 size=16 bold=false italic=false color=ff263342 href="" value="for"
+text node=12 x=395 baseline=235 top=220 w=47 h=19 size=16 bold=false italic=false color=ff263342 href="" value="testing"
+text node=12 x=446 baseline=235 top=220 w=27 h=19 size=16 bold=false italic=false color=ff263342 href="" value="and"
+text node=12 x=477 baseline=235 top=220 w=75 h=19 size=16 bold=false italic=false color=ff263342 href="" value="monitoring"
+text node=12 x=556 baseline=235 top=220 w=70 h=19 size=16 bold=false italic=false color=ff263342 href="" value="purposes."

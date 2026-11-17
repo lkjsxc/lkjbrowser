@@ -5,10 +5,12 @@ parser, CSS library, text layout engine, browser, or drawing library.
 
 - html::parse(&str) builds an owned indexed tree, with attributes and decoded
   text, plus the first title and embedded style text.
-- css::compute(&Document) applies the supported cascade and inherits text
-  properties. Parents precede children, so this pass is iterative.
-- layout::build(&Document, width, &regular, &bold, &italic, &bolditalic) creates
-  document-relative boxes, rectangles, text fragments, image boxes and anchors.
+- css::compute_viewport(&Document, width, height) applies the supported cascade,
+  width media conditions and viewport lengths. Parents precede children, so
+  inheritance is iterative; css::compute remains a compatibility wrapper.
+- layout::build_in_viewport accepts separate layout width and full viewport
+  dimensions, then creates document-relative boxes, text/image fragments and
+  anchors. The older layout::build entry remains a compatibility wrapper.
 - Painting uses each fragment's real font, size, x coordinate and baseline.
   Layout and painting share Font::advance. Scrolling and chrome belong to main.
 
@@ -37,8 +39,13 @@ CSS supports:
   opaque backgrounds.
 - Font sizes in px, em, rem (the initial 18 px root size) and percentages.
   Relative font sizes use the parent's font size.
-- Pixel and em/rem box lengths. Percentage box lengths are ignored rather than
-  incorrectly interpreted relative to the font.
+- Pixel, em/rem and viewport vh/vw box lengths. Percentage box lengths are ignored
+  rather than incorrectly interpreted relative to the font.
+- The supported font shorthand fields: style, weight, size and line height, with
+  declaration order and importance retained. Font-family selection is absent.
+- Screen/all width media conditions, optional only, min/max-width in px/em/rem,
+  comma alternatives and nesting to eight levels. Unsupported conditions and
+  print media are skipped; media width is the actual window width.
 - Unitless and pixel line height. Unitless line height inherits as a ratio, so
   changing a descendant's font size also changes its line spacing.
 - Opaque #rgb, #rrggbb, decimal rgb(r,g,b), and a small set of color names.
@@ -51,20 +58,35 @@ Lists have hanging bullet or numeric markers on the first text baseline.
 Text and image fragments retain their link destination for hit testing.
 
 Images use explicit HTML/CSS dimensions and scale down while preserving that
-ratio. The root browser fetches and decodes PNG data into their boxes.
+ratio. The browser fetches PNG data as boxes enter the visible viewport. Loading
+an image does not rebuild layout, so reserved dimensions and the reading position
+remain stable even when no explicit dimensions were supplied.
+
+Tables have a bounded readable fallback: rows share intrinsic column widths,
+headers are bold, links/anchors survive, and colspan spans up to 64 columns.
+Crowded tables reduce inter-column gaps before shrinking columns; insufficient
+width selects a stacked fallback. This is not the full CSS table algorithm.
+
+Inline style elements and up to four distinct linked stylesheet URLs are applied
+in DOM order, including cached repeated links. Both HTML media attributes and CSS
+media blocks filter rules. Linked bodies have a one-MiB cap, the assembled CSS
+has a four-MiB cap, and one shared three-second owned-child deadline limits the
+whole external-sheet batch. HTTPS and local-file origin rules remain enforced.
+CSS imports and font downloads are not followed.
 
 ## Deliberate boundaries
 
-There is no complete HTML error recovery, table/SVG layout, form-control
+There is no complete HTML error recovery, full CSS table/SVG layout, form-control
 implementation, JavaScript, generated content, CSS flex/grid, positioning,
-floats, media queries, external stylesheet loading, or CSS font selection.
+floats, or CSS font selection. Rowspan, collapsed borders and column styles are
+outside the table fallback. General media features and negation are unsupported.
 
 Vertical margins are additive, not collapsed. Inline margin/padding boxes and
 full inline-background geometry are absent. Line heights never overlap the
 font's ascent/descent. Widths stay within the reading column. Height is a
 minimum for ordinary blocks; images use their specified height.
 
-Percentage box geometry, viewport units, general alpha colors and the full CSS
+Percentage box geometry, general alpha colors and the full CSS
 length/cascade model remain absent. Font sizes are constrained to 6..160 px,
 absolute box lengths to -8192..8192 px, padding to nonnegative values, and
 borders to 0..16 px. These are application policies, not language limits.
@@ -74,6 +96,14 @@ line-breaking yet. Four runtime font files supply regular, bold, italic and
 bold italic faces for the Latin-focused fixtures.
 
 ## Tests and evidence
+
+The HTTPS public-page follow-up passed 55 focused native tests through
+src/layout_public_probe.lkj. Nine new regressions cover viewport/shorthand/media
+semantics and table alignment, bounds, links and styled intrinsic widths.
+[The public-page review](../tests/layout-public-review.md) records two inspect/fix
+cycles using cached actual HTML/CSS; the final real Weston screenshots and timing
+logs are separate from those offline renders. The original fixture evidence below
+is retained as historical evidence from the first browser slice.
 
 The ordinary test functions cover DOM structure and malformed input; raw style
 text and entity decoding; specificity, important declarations and inheritance;

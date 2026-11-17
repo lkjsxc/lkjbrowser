@@ -1,0 +1,53 @@
+Native public negative-page evidence.
+These requests are separate from the deterministic offline gate.
+SSL.com endpoints reached certificate-expiry checks; badssl refused TLS1.3 before certificates.
+
+PAGE expired-rsa https://expired-rsa-dv.ssl.com/
+NAV_ERROR https://expired-rsa-dv.ssl.com/: The server certificate has expired. Check the computer clock.
+PAINT headless elapsed_us=557079 url=https://expired-rsa-dv.ssl.com/
+Rendered https://expired-rsa-dv.ssl.com/: 1000x760, document height 474, scroll 0
+URL https://expired-rsa-dv.ssl.com/
+VIEW 1000 760 SCROLL 0
+TITLE Unable to open this page
+IMAGES 0
+dc131255002ab3fab7f2d03bf844053bb7c7769b9ece4b00a5e3d3ff1faa753e  shots/https-error-expired-rsa.png
+
+PAGE expired-ecc https://expired-ecc-dv.ssl.com/
+NAV_ERROR https://expired-ecc-dv.ssl.com/: The server certificate has expired. Check the computer clock.
+PAINT headless elapsed_us=464424 url=https://expired-ecc-dv.ssl.com/
+Rendered https://expired-ecc-dv.ssl.com/: 1000x760, document height 474, scroll 0
+URL https://expired-ecc-dv.ssl.com/
+VIEW 1000 760 SCROLL 0
+TITLE Unable to open this page
+IMAGES 0
+8ab79c55d5a7cf7246271f791f71380368814f0a64ab8a44a4e28b16b0f710c6  shots/https-error-expired-ecc.png
+
+PAGE badssl-expired https://expired.badssl.com/
+NAV_ERROR https://expired.badssl.com/: The server could not negotiate this browser's TLS algorithms
+PAINT headless elapsed_us=472813 url=https://expired.badssl.com/
+Rendered https://expired.badssl.com/: 1000x760, document height 474, scroll 0
+URL https://expired.badssl.com/
+VIEW 1000 760 SCROLL 0
+TITLE Unable to open this page
+IMAGES 0
+e4f5cb5a6f115d789c60656d984768181ed3275ae68e34922777f43f99c1bb75  shots/https-error-badssl-expired.png
+
+PAGE badssl-wrong-host https://wrong.host.badssl.com/
+NAV_ERROR https://wrong.host.badssl.com/: The server could not negotiate this browser's TLS algorithms
+PAINT headless elapsed_us=416408 url=https://wrong.host.badssl.com/
+Rendered https://wrong.host.badssl.com/: 1000x760, document height 474, scroll 0
+URL https://wrong.host.badssl.com/
+VIEW 1000 760 SCROLL 0
+TITLE Unable to open this page
+IMAGES 0
+b838a2f24bfedb1c801cf2887f08b7f2bd5d38c73f76f12584623671df7c2d73  shots/https-error-badssl-wrong-host.png
+
+PAGE badssl-self-signed https://self-signed.badssl.com/
+NAV_ERROR https://self-signed.badssl.com/: The server could not negotiate this browser's TLS algorithms
+PAINT headless elapsed_us=428552 url=https://self-signed.badssl.com/
+Rendered https://self-signed.badssl.com/: 1000x760, document height 474, scroll 0
+URL https://self-signed.badssl.com/
+VIEW 1000 760 SCROLL 0
+TITLE Unable to open this page
+IMAGES 0
+0a1f69bd96b63655abc6d82d65250361ba4a44ad84b256afa14e650ab5e380e1  shots/https-error-badssl-self-signed.png

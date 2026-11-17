@@ -1,0 +1,379 @@
+URL https://text.npr.org/
+VIEW 1000 760 SCROLL 0
+TITLE NPR : National Public Radio
+IMAGES 0
+page width=988 height=1759 background=ffffffff title="NPR : National Public Radio"
+box node=0 tag=#document x=0 y=0 w=988 h=1759
+box node=2 tag=html x=0 y=0 w=988 h=1759
+box node=19 tag=body x=199 y=0 w=590 h=1759
+box node=21 tag=header x=219 y=0 w=550 h=45
+box node=23 tag=p x=219 y=0 w=550 h=27
+box node=29 tag=main x=219 y=45 w=550 h=1430
+box node=31 tag=p x=219 y=45 w=550 h=0
+box node=34 tag=div x=219 y=83 w=550 h=1392
+box node=36 tag=h1 x=219 y=97 w=550 h=36
+box node=39 tag=div x=219 y=151 w=550 h=4
+box node=41 tag=p x=219 y=175 w=550 h=27
+box node=44 tag=ul x=219 y=222 w=550 h=1235
+box node=46 tag=li x=219 y=222 w=550 h=65
+box node=50 tag=li x=219 y=295 w=550 h=40
+box node=54 tag=li x=219 y=343 w=550 h=65
+box node=58 tag=li x=219 y=416 w=550 h=65
+box node=62 tag=li x=219 y=489 w=550 h=40
+box node=66 tag=li x=219 y=537 w=550 h=65
+box node=70 tag=li x=219 y=610 w=550 h=65
+box node=74 tag=li x=219 y=683 w=550 h=40
+box node=78 tag=li x=219 y=731 w=550 h=40
+box node=82 tag=li x=219 y=779 w=550 h=65
+box node=86 tag=li x=219 y=852 w=550 h=40
+box node=90 tag=li x=219 y=900 w=550 h=40
+box node=94 tag=li x=219 y=948 w=550 h=40
+box node=98 tag=li x=219 y=996 w=550 h=65
+box node=102 tag=li x=219 y=1069 w=550 h=65
+box node=106 tag=li x=219 y=1142 w=550 h=65
+box node=110 tag=li x=219 y=1215 w=550 h=65
+box node=114 tag=li x=219 y=1288 w=550 h=40
+box node=118 tag=li x=219 y=1336 w=550 h=40
+box node=122 tag=li x=219 y=1384 w=550 h=65
+box node=129 tag=div x=219 y=1475 w=550 h=4
+box node=131 tag=nav x=219 y=1479 w=550 h=168
+box node=133 tag=p x=219 y=1479 w=550 h=27
+box node=136 tag=ul x=219 y=1524 w=550 h=105
+box node=138 tag=li x=245 y=1524 w=524 h=27
+box node=142 tag=li x=245 y=1559 w=524 h=27
+box node=146 tag=li x=245 y=1594 w=524 h=27
+box node=152 tag=footer x=219 y=1647 w=550 h=112
+box node=154 tag=nav x=219 y=1687 w=550 h=27
+box node=173 tag=p x=219 y=1714 w=550 h=27
+text node=24 x=219 baseline=20 top=3 w=78 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Text-Only"
+text node=24 x=302 baseline=20 top=3 w=61 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Version"
+text node=26 x=368 baseline=20 top=3 w=24 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://www.npr.org/" value="Go"
+text node=26 x=397 baseline=20 top=3 w=21 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://www.npr.org/" value="To"
+text node=26 x=423 baseline=20 top=3 w=29 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://www.npr.org/" value="Full"
+text node=26 x=457 baseline=20 top=3 w=31 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://www.npr.org/" value="Site"
+rect x=368 y=22 w=120 h=1 color=ff1769a4
+text node=37 x=219 baseline=124 top=99 w=56 h=31 size=27 bold=true italic=false color=ff263342 href="" value="NPR"
+text node=37 x=283 baseline=124 top=99 w=9 h=31 size=27 bold=true italic=false color=ff263342 href="" value=":"
+text node=37 x=300 baseline=124 top=99 w=106 h=31 size=27 bold=true italic=false color=ff263342 href="" value="National"
+text node=37 x=414 baseline=124 top=99 w=81 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Public"
+text node=37 x=503 baseline=124 top=99 w=74 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Radio"
+text node=42 x=219 baseline=195 top=178 w=74 h=21 size=18 bold=false italic=true color=ff263342 href="" value="Tuesday,"
+text node=42 x=298 baseline=195 top=178 w=83 h=21 size=18 bold=false italic=true color=ff263342 href="" value="November"
+text node=42 x=386 baseline=195 top=178 w=25 h=21 size=18 bold=false italic=true color=ff263342 href="" value="17,"
+text node=42 x=416 baseline=195 top=178 w=40 h=21 size=18 bold=false italic=true color=ff263342 href="" value="2026"
+text node=48 x=219 baseline=241 top=224 w=42 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="Does"
+text node=48 x=266 baseline=241 top=224 w=56 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="locking"
+text node=48 x=327 baseline=241 top=224 w=20 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="up"
+text node=48 x=352 baseline=241 top=224 w=10 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="a"
+text node=48 x=367 baseline=241 top=224 w=71 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="student's"
+text node=48 x=443 baseline=241 top=224 w=27 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="cell"
+text node=48 x=475 baseline=241 top=224 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="phone"
+text node=48 x=530 baseline=241 top=224 w=64 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="improve"
+text node=48 x=599 baseline=241 top=224 w=29 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="test"
+text node=48 x=633 baseline=241 top=224 w=63 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="scores?"
+text node=48 x=701 baseline=241 top=224 w=12 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="A"
+text node=48 x=718 baseline=241 top=224 w=33 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="new"
+rect x=219 y=243 w=532 h=1 color=ff1769a4
+text node=48 x=219 baseline=266 top=249 w=43 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="study"
+text node=48 x=267 baseline=266 top=249 w=72 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="suggests"
+text node=48 x=344 baseline=266 top=249 w=19 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6035684" value="so"
+rect x=219 y=268 w=144 h=1 color=ff1769a4
+text node=46 x=203 baseline=241 top=224 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=52 x=219 baseline=314 top=297 w=52 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="Trump"
+text node=52 x=276 baseline=314 top=297 w=54 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="arrives"
+text node=52 x=335 baseline=314 top=297 w=14 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="in"
+text node=52 x=354 baseline=314 top=297 w=87 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="Philippines"
+text node=52 x=446 baseline=314 top=297 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="to"
+text node=52 x=466 baseline=314 top=297 w=31 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="kick"
+text node=52 x=502 baseline=314 top=297 w=20 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="off"
+text node=52 x=527 baseline=314 top=297 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="Asia"
+text node=52 x=567 baseline=314 top=297 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043702" value="trip"
+rect x=219 y=316 w=373 h=1 color=ff1769a4
+text node=50 x=203 baseline=314 top=297 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=56 x=219 baseline=362 top=345 w=64 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="Trump's"
+text node=56 x=288 baseline=362 top=345 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="Asia"
+text node=56 x=328 baseline=362 top=345 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="trip"
+text node=56 x=358 baseline=362 top=345 w=53 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="comes"
+text node=56 x=416 baseline=362 top=345 w=39 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="amid"
+text node=56 x=460 baseline=362 top=345 w=48 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="fallout"
+text node=56 x=513 baseline=362 top=345 w=36 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="from"
+text node=56 x=554 baseline=362 top=345 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="the"
+text node=56 x=584 baseline=362 top=345 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="Nvidia"
+text node=56 x=639 baseline=362 top=345 w=62 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="scandal"
+text node=56 x=706 baseline=362 top=345 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="and"
+rect x=219 y=364 w=517 h=1 color=ff1769a4
+text node=56 x=219 baseline=387 top=370 w=65 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="midterm"
+text node=56 x=289 baseline=387 top=370 w=51 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041738" value="losses"
+rect x=219 y=389 w=121 h=1 color=ff1769a4
+text node=54 x=203 baseline=362 top=345 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=60 x=219 baseline=435 top=418 w=53 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="Huang"
+text node=60 x=277 baseline=435 top=418 w=37 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="says"
+text node=60 x=319 baseline=435 top=418 w=33 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="he'd"
+text node=60 x=357 baseline=435 top=418 w=20 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="be"
+text node=60 x=382 baseline=435 top=418 w=78 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="\"honored\""
+text node=60 x=465 baseline=435 top=418 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="to"
+text node=60 x=485 baseline=435 top=418 w=47 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="return"
+text node=60 x=537 baseline=435 top=418 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="to"
+text node=60 x=557 baseline=435 top=418 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="Nvidia"
+text node=60 x=612 baseline=435 top=418 w=19 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="as"
+text node=60 x=636 baseline=435 top=418 w=20 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="he"
+text node=60 x=661 baseline=435 top=418 w=55 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="agrees"
+text node=60 x=721 baseline=435 top=418 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="to"
+rect x=219 y=437 w=517 h=1 color=ff1769a4
+text node=60 x=219 baseline=460 top=443 w=47 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="testify"
+text node=60 x=271 baseline=460 top=443 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="to"
+text node=60 x=291 baseline=460 top=443 w=77 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6044213" value="Congress"
+rect x=219 y=462 w=149 h=1 color=ff1769a4
+text node=58 x=203 baseline=435 top=418 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=64 x=219 baseline=508 top=491 w=76 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042920" value="California"
+text node=64 x=300 baseline=508 top=491 w=38 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042920" value="sues"
+text node=64 x=343 baseline=508 top=491 w=61 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042920" value="OpenAI"
+text node=64 x=409 baseline=508 top=491 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042920" value="over"
+text node=64 x=449 baseline=508 top=491 w=62 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042920" value="hacking"
+text node=64 x=516 baseline=508 top=491 w=37 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042920" value="risks"
+rect x=219 y=510 w=334 h=1 color=ff1769a4
+text node=62 x=203 baseline=508 top=491 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=68 x=219 baseline=556 top=539 w=32 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="She"
+text node=68 x=256 baseline=556 top=539 w=38 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="went"
+text node=68 x=299 baseline=556 top=539 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="to"
+text node=68 x=319 baseline=556 top=539 w=57 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="college"
+text node=68 x=381 baseline=556 top=539 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="to"
+text node=68 x=401 baseline=556 top=539 w=64 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="become"
+text node=68 x=470 baseline=556 top=539 w=10 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="a"
+text node=68 x=485 baseline=556 top=539 w=46 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="social"
+text node=68 x=536 baseline=556 top=539 w=59 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="worker."
+text node=68 x=600 baseline=556 top=539 w=36 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="Now"
+text node=68 x=641 baseline=556 top=539 w=41 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="she's"
+text node=68 x=687 baseline=556 top=539 w=48 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="joined"
+text node=68 x=740 baseline=556 top=539 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="the"
+rect x=219 y=558 w=546 h=1 color=ff1769a4
+text node=68 x=219 baseline=581 top=564 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="skilled"
+text node=68 x=274 baseline=581 top=564 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6012818" value="trades"
+rect x=219 y=583 w=105 h=1 color=ff1769a4
+text node=66 x=203 baseline=556 top=539 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=72 x=219 baseline=629 top=612 w=41 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="More"
+text node=72 x=265 baseline=629 top=612 w=54 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="people"
+text node=72 x=324 baseline=629 top=612 w=26 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="are"
+text node=72 x=355 baseline=629 top=612 w=54 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="getting"
+text node=72 x=414 baseline=629 top=612 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="the"
+text node=72 x=444 baseline=629 top=612 w=24 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="flu."
+text node=72 x=473 baseline=629 top=612 w=56 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="Should"
+text node=72 x=534 baseline=629 top=612 w=29 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="you"
+text node=72 x=568 baseline=629 top=612 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="get"
+text node=72 x=598 baseline=629 top=612 w=10 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="a"
+text node=72 x=613 baseline=629 top=612 w=19 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="flu"
+text node=72 x=637 baseline=629 top=612 w=34 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="shot"
+text node=72 x=676 baseline=629 top=612 w=51 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="before"
+text node=72 x=732 baseline=629 top=612 w=29 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="you"
+rect x=219 y=631 w=542 h=1 color=ff1769a4
+text node=72 x=219 baseline=654 top=637 w=54 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6043086" value="travel?"
+rect x=219 y=656 w=54 h=1 color=ff1769a4
+text node=70 x=203 baseline=629 top=612 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=76 x=219 baseline=702 top=685 w=54 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042420" value="Robert"
+text node=76 x=278 baseline=702 top=685 w=75 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042420" value="Pattinson"
+text node=76 x=358 baseline=702 top=685 w=13 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042420" value="is"
+text node=76 x=376 baseline=702 top=685 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042420" value="the"
+text node=76 x=406 baseline=702 top=685 w=34 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042420" value="next"
+text node=76 x=445 baseline=702 top=685 w=53 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042420" value="James"
+text node=76 x=503 baseline=702 top=685 w=42 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042420" value="Bond"
+rect x=219 y=704 w=326 h=1 color=ff1769a4
+text node=74 x=203 baseline=702 top=685 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=80 x=219 baseline=750 top=733 w=37 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="Sen."
+text node=80 x=261 baseline=750 top=733 w=37 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="Jack"
+text node=80 x=303 baseline=750 top=733 w=43 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="Reed"
+text node=80 x=351 baseline=750 top=733 w=37 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="says"
+text node=80 x=393 baseline=750 top=733 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="FAA"
+text node=80 x=433 baseline=750 top=733 w=49 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="needs"
+text node=80 x=487 baseline=750 top=733 w=10 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="a"
+text node=80 x=502 baseline=750 top=733 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="real"
+text node=80 x=537 baseline=750 top=733 w=39 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="plan,"
+text node=80 x=581 baseline=750 top=733 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="not"
+text node=80 x=611 baseline=750 top=733 w=28 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="just"
+text node=80 x=644 baseline=750 top=733 w=41 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="more"
+text node=80 x=690 baseline=750 top=733 w=54 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042514" value="money"
+rect x=219 y=752 w=525 h=1 color=ff1769a4
+text node=78 x=203 baseline=750 top=733 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=84 x=219 baseline=798 top=781 w=23 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="I'm"
+text node=84 x=247 baseline=798 top=781 w=10 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="a"
+text node=84 x=262 baseline=798 top=781 w=55 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="human"
+text node=84 x=322 baseline=798 top=781 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="doctor"
+text node=84 x=377 baseline=798 top=781 w=32 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="with"
+text node=84 x=414 baseline=798 top=781 w=55 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="human"
+text node=84 x=474 baseline=798 top=781 w=95 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="intelligence."
+text node=84 x=574 baseline=798 top=781 w=27 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="But"
+text node=84 x=606 baseline=798 top=781 w=5 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="I"
+text node=84 x=616 baseline=798 top=781 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="sure"
+text node=84 x=656 baseline=798 top=781 w=20 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="do"
+text node=84 x=681 baseline=798 top=781 w=27 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="like"
+text node=84 x=713 baseline=798 top=781 w=24 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="my"
+text node=84 x=742 baseline=798 top=781 w=17 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="AI"
+rect x=219 y=800 w=540 h=1 color=ff1769a4
+text node=84 x=219 baseline=823 top=806 w=75 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037556" value="notetaker"
+rect x=219 y=825 w=75 h=1 color=ff1769a4
+text node=82 x=203 baseline=798 top=781 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=88 x=219 baseline=871 top=854 w=49 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037518" value="RAYE"
+text node=88 x=273 baseline=871 top=854 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037518" value="and"
+text node=88 x=308 baseline=871 top=854 w=61 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037518" value="Rosalía"
+text node=88 x=374 baseline=871 top=854 w=34 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037518" value="lead"
+text node=88 x=413 baseline=871 top=854 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037518" value="the"
+text node=88 x=443 baseline=871 top=854 w=40 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037518" value="2027"
+text node=88 x=488 baseline=871 top=854 w=69 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037518" value="Grammy"
+text node=88 x=562 baseline=871 top=854 w=97 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037518" value="nominations"
+rect x=219 y=873 w=440 h=1 color=ff1769a4
+text node=86 x=203 baseline=871 top=854 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=92 x=219 baseline=919 top=902 w=36 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="U.N."
+text node=92 x=260 baseline=919 top=902 w=37 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="talks"
+text node=92 x=302 baseline=919 top=902 w=38 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="seek"
+text node=92 x=345 baseline=919 top=902 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="to"
+text node=92 x=365 baseline=919 top=902 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="rein"
+text node=92 x=400 baseline=919 top=902 w=14 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="in"
+text node=92 x=419 baseline=919 top=902 w=40 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="'killer"
+text node=92 x=464 baseline=919 top=902 w=53 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="robots'"
+text node=92 x=522 baseline=919 top=902 w=19 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="as"
+text node=92 x=546 baseline=919 top=902 w=40 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="fears"
+text node=92 x=591 baseline=919 top=902 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="over"
+text node=92 x=631 baseline=919 top=902 w=17 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="AI"
+text node=92 x=653 baseline=919 top=902 w=72 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="weapons"
+text node=92 x=730 baseline=919 top=902 w=39 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042548" value="grow"
+rect x=219 y=921 w=550 h=1 color=ff1769a4
+text node=90 x=203 baseline=919 top=902 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=96 x=219 baseline=967 top=950 w=36 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="Why"
+text node=96 x=260 baseline=967 top=950 w=43 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="sleep"
+text node=96 x=308 baseline=967 top=950 w=60 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="matters"
+text node=96 x=373 baseline=967 top=950 w=43 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="when"
+text node=96 x=421 baseline=967 top=950 w=9 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="it"
+text node=96 x=435 baseline=967 top=950 w=53 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="comes"
+text node=96 x=493 baseline=967 top=950 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="to"
+text node=96 x=513 baseline=967 top=950 w=52 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="weight"
+text node=96 x=570 baseline=967 top=950 w=34 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="gain"
+text node=96 x=609 baseline=967 top=950 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="and"
+text node=96 x=644 baseline=967 top=950 w=32 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6037761" value="loss"
+rect x=219 y=969 w=457 h=1 color=ff1769a4
+text node=94 x=203 baseline=967 top=950 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=100 x=219 baseline=1015 top=998 w=27 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="Far"
+text node=100 x=251 baseline=1015 top=998 w=36 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="from"
+text node=100 x=292 baseline=1015 top=998 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="home."
+text node=100 x=347 baseline=1015 top=998 w=67 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="Voyager"
+text node=100 x=419 baseline=1015 top=998 w=10 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="1"
+text node=100 x=434 baseline=1015 top=998 w=13 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="is"
+text node=100 x=452 baseline=1015 top=998 w=33 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="now"
+text node=100 x=490 baseline=1015 top=998 w=52 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="farther"
+text node=100 x=547 baseline=1015 top=998 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="than"
+text node=100 x=587 baseline=1015 top=998 w=68 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="anything"
+text node=100 x=660 baseline=1015 top=998 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="man"
+text node=100 x=700 baseline=1015 top=998 w=29 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="has"
+text node=100 x=734 baseline=1015 top=998 w=34 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="sent"
+rect x=219 y=1017 w=549 h=1 color=ff1769a4
+text node=100 x=219 baseline=1040 top=1023 w=29 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="into"
+text node=100 x=253 baseline=1040 top=1023 w=48 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6041716" value="space"
+rect x=219 y=1042 w=82 h=1 color=ff1769a4
+text node=98 x=203 baseline=1015 top=998 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=104 x=219 baseline=1088 top=1071 w=62 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="Ukraine"
+text node=104 x=286 baseline=1088 top=1071 w=52 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="strikes"
+text node=104 x=343 baseline=1088 top=1071 w=45 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="major"
+text node=104 x=393 baseline=1088 top=1071 w=65 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="Russian"
+text node=104 x=463 baseline=1088 top=1071 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="bridge"
+text node=104 x=518 baseline=1088 top=1071 w=32 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="with"
+text node=104 x=555 baseline=1088 top=1071 w=55 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="drones"
+text node=104 x=615 baseline=1088 top=1071 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="and"
+text node=104 x=650 baseline=1088 top=1071 w=64 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="missiles"
+text node=104 x=719 baseline=1088 top=1071 w=19 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="as"
+rect x=219 y=1090 w=519 h=1 color=ff1769a4
+text node=104 x=219 baseline=1113 top=1096 w=44 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="aerial"
+text node=104 x=268 baseline=1113 top=1096 w=57 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="attacks"
+text node=104 x=330 baseline=1113 top=1096 w=67 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153946" value="escalate"
+rect x=219 y=1115 w=178 h=1 color=ff1769a4
+text node=102 x=203 baseline=1088 top=1071 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=108 x=219 baseline=1161 top=1144 w=40 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="They"
+text node=108 x=264 baseline=1161 top=1144 w=32 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="saw"
+text node=108 x=301 baseline=1161 top=1144 w=54 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="people"
+text node=108 x=360 baseline=1161 top=1144 w=47 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="losing"
+text node=108 x=412 baseline=1161 top=1144 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="food"
+text node=108 x=452 baseline=1161 top=1144 w=68 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="benefits."
+text node=108 x=525 baseline=1161 top=1144 w=22 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="So"
+text node=108 x=552 baseline=1161 top=1144 w=34 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="they"
+text node=108 x=591 baseline=1161 top=1144 w=55 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="started"
+text node=108 x=651 baseline=1161 top=1144 w=64 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="handing"
+text node=108 x=720 baseline=1161 top=1144 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="out"
+rect x=219 y=1163 w=526 h=1 color=ff1769a4
+text node=108 x=219 baseline=1186 top=1169 w=31 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="free"
+text node=108 x=255 baseline=1186 top=1169 w=74 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6034048" value="groceries"
+rect x=219 y=1188 w=110 h=1 color=ff1769a4
+text node=106 x=203 baseline=1161 top=1144 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=112 x=219 baseline=1234 top=1217 w=31 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="The"
+text node=112 x=255 baseline=1234 top=1217 w=33 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="cost"
+text node=112 x=293 baseline=1234 top=1217 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="of"
+text node=112 x=313 baseline=1234 top=1217 w=57 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="college"
+text node=112 x=375 baseline=1234 top=1217 w=13 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="is"
+text node=112 x=393 baseline=1234 top=1217 w=82 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="confusing."
+text node=112 x=480 baseline=1234 top=1217 w=47 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="Some"
+text node=112 x=532 baseline=1234 top=1217 w=61 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="schools"
+text node=112 x=598 baseline=1234 top=1217 w=26 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="are"
+text node=112 x=629 baseline=1234 top=1217 w=44 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="trying"
+text node=112 x=678 baseline=1234 top=1217 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="to"
+text node=112 x=698 baseline=1234 top=1217 w=59 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="change"
+rect x=219 y=1236 w=538 h=1 color=ff1769a4
+text node=112 x=219 baseline=1259 top=1242 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6023392" value="that"
+rect x=219 y=1261 w=30 h=1 color=ff1769a4
+text node=110 x=203 baseline=1234 top=1217 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=116 x=219 baseline=1307 top=1290 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042457" value="Our"
+text node=116 x=254 baseline=1307 top=1290 w=84 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042457" value="impossibly"
+text node=116 x=343 baseline=1307 top=1290 w=34 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042457" value="high"
+text node=116 x=382 baseline=1307 top=1290 w=79 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042457" value="standards"
+text node=116 x=466 baseline=1307 top=1290 w=26 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042457" value="are"
+text node=116 x=497 baseline=1307 top=1290 w=54 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042457" value="ruining"
+text node=116 x=556 baseline=1307 top=1290 w=49 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042457" value="dating"
+rect x=219 y=1309 w=386 h=1 color=ff1769a4
+text node=114 x=203 baseline=1307 top=1290 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=120 x=219 baseline=1355 top=1338 w=33 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="Can"
+text node=120 x=257 baseline=1355 top=1338 w=58 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="Google"
+text node=120 x=320 baseline=1355 top=1338 w=27 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="win"
+text node=120 x=352 baseline=1355 top=1338 w=25 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="the"
+text node=120 x=382 baseline=1355 top=1338 w=17 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="AI"
+text node=120 x=404 baseline=1355 top=1338 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="race"
+text node=120 x=444 baseline=1355 top=1338 w=57 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="without"
+text node=120 x=506 baseline=1355 top=1338 w=45 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="killing"
+text node=120 x=556 baseline=1355 top=1338 w=18 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="its"
+text node=120 x=579 baseline=1355 top=1338 w=38 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="cash"
+text node=120 x=622 baseline=1355 top=1338 w=42 h=21 size=18 bold=false italic=false color=ff1769a4 href="/g-s1-153933" value="cow?"
+rect x=219 y=1357 w=445 h=1 color=ff1769a4
+text node=118 x=203 baseline=1355 top=1338 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=124 x=219 baseline=1403 top=1386 w=35 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="U.S."
+text node=124 x=259 baseline=1403 top=1386 w=63 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="tightens"
+text node=124 x=327 baseline=1403 top=1386 w=63 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="controls"
+text node=124 x=395 baseline=1403 top=1386 w=20 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="on"
+text node=124 x=420 baseline=1403 top=1386 w=56 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="remote"
+text node=124 x=481 baseline=1403 top=1386 w=56 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="access"
+text node=124 x=542 baseline=1403 top=1386 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="to"
+text node=124 x=562 baseline=1403 top=1386 w=17 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="AI"
+text node=124 x=584 baseline=1403 top=1386 w=87 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="technology"
+text node=124 x=676 baseline=1403 top=1386 w=39 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="amid"
+rect x=219 y=1405 w=496 h=1 color=ff1769a4
+text node=124 x=219 baseline=1428 top=1411 w=50 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="Nvidia"
+text node=124 x=274 baseline=1428 top=1411 w=48 h=21 size=18 bold=false italic=false color=ff1769a4 href="/nx-s1-6042883" value="fallout"
+rect x=219 y=1430 w=103 h=1 color=ff1769a4
+text node=122 x=203 baseline=1403 top=1386 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=134 x=219 baseline=1499 top=1482 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Topics"
+text node=140 x=245 baseline=1544 top=1527 w=45 h=21 size=18 bold=false italic=false color=ff1769a4 href="/1001" value="News"
+rect x=245 y=1546 w=45 h=1 color=ff1769a4
+text node=138 x=229 baseline=1544 top=1527 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=144 x=245 baseline=1579 top=1562 w=58 h=21 size=18 bold=false italic=false color=ff1769a4 href="/1008" value="Culture"
+rect x=245 y=1581 w=58 h=1 color=ff1769a4
+text node=142 x=229 baseline=1579 top=1562 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=148 x=245 baseline=1614 top=1597 w=47 h=21 size=18 bold=false italic=false color=ff1769a4 href="/1039" value="Music"
+rect x=245 y=1616 w=47 h=1 color=ff1769a4
+text node=146 x=229 baseline=1614 top=1597 w=6 h=21 size=18 bold=false italic=false color=ff263342 href="" value="•"
+text node=158 x=219 baseline=1707 top=1690 w=62 h=21 size=18 bold=false italic=false color=ff1769a4 href="/614470770" value="Contact"
+text node=158 x=286 baseline=1707 top=1690 w=22 h=21 size=18 bold=false italic=false color=ff1769a4 href="/614470770" value="Us"
+text node=162 x=313 baseline=1707 top=1690 w=51 h=21 size=18 bold=false italic=false color=ff1769a4 href="/179876898" value="Terms"
+text node=162 x=369 baseline=1707 top=1690 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/179876898" value="of"
+text node=162 x=389 baseline=1707 top=1690 w=32 h=21 size=18 bold=false italic=false color=ff1769a4 href="/179876898" value="Use"
+text node=166 x=426 baseline=1707 top=1690 w=98 h=21 size=18 bold=false italic=false color=ff1769a4 href="/179881519" value="Permissions"
+text node=170 x=529 baseline=1707 top=1690 w=59 h=21 size=18 bold=false italic=false color=ff1769a4 href="/179878450" value="Privacy"
+text node=170 x=593 baseline=1707 top=1690 w=48 h=21 size=18 bold=false italic=false color=ff1769a4 href="/179878450" value="Policy"
+rect x=219 y=1709 w=89 h=1 color=ff1769a4
+rect x=313 y=1709 w=108 h=1 color=ff1769a4
+rect x=426 y=1709 w=98 h=1 color=ff1769a4
+rect x=529 y=1709 w=112 h=1 color=ff1769a4
+text node=174 x=219 baseline=1734 top=1717 w=50 h=21 size=18 bold=false italic=false color=ff263342 href="" value="&copy"
+text node=174 x=274 baseline=1734 top=1717 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="NPR"

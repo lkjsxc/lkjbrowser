@@ -1,0 +1,763 @@
+URL https://www.rfc-editor.org/rfc/rfc5869.html
+VIEW 1000 760 SCROLL 0
+TITLE 
+IMAGES 0
+page width=988 height=19914 background=ffffffff title=""
+box node=0 tag=#document x=0 y=0 w=988 h=19914
+box node=1 tag=pre x=0 y=0 w=988 h=1280
+box node=21 tag=hr x=0 y=1316 w=988 h=2
+box node=22 tag=pre x=0 y=1336 w=988 h=1376
+box node=62 tag=hr x=0 y=2748 w=988 h=2
+box node=63 tag=pre x=0 y=2768 w=988 h=1376
+box node=100 tag=hr x=0 y=4180 w=988 h=2
+box node=101 tag=pre x=0 y=4200 w=988 h=1376
+box node=125 tag=hr x=0 y=5612 w=988 h=2
+box node=126 tag=pre x=0 y=5632 w=988 h=1376
+box node=150 tag=hr x=0 y=7044 w=988 h=2
+box node=151 tag=pre x=0 y=7064 w=988 h=1376
+box node=170 tag=hr x=0 y=8476 w=988 h=2
+box node=171 tag=pre x=0 y=8496 w=988 h=1376
+box node=204 tag=hr x=0 y=9908 w=988 h=2
+box node=205 tag=pre x=0 y=9928 w=988 h=1376
+box node=281 tag=hr x=0 y=11340 w=988 h=2
+box node=282 tag=pre x=0 y=11360 w=988 h=1376
+box node=305 tag=hr x=0 y=12772 w=988 h=2
+box node=306 tag=pre x=0 y=12792 w=988 h=1376
+box node=330 tag=hr x=0 y=14204 w=988 h=2
+box node=331 tag=pre x=0 y=14224 w=988 h=1376
+box node=352 tag=hr x=0 y=15636 w=988 h=2
+box node=353 tag=pre x=0 y=15656 w=988 h=1376
+box node=374 tag=hr x=0 y=17068 w=988 h=2
+box node=375 tag=pre x=0 y=17088 w=988 h=1376
+box node=396 tag=hr x=0 y=18500 w=988 h=2
+box node=397 tag=pre x=0 y=18520 w=988 h=1376
+rect x=0 y=0 w=988 h=1280 color=fff1f5f7
+text node=2 x=18 baseline=33 top=18 w=458 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Internet Engineering Task Force (IETF)                       H. Krawczyk"
+text node=2 x=18 baseline=57 top=42 w=444 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Request for Comments: 5869                                  IBM Research"
+text node=2 x=18 baseline=81 top=66 w=396 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Category: Informational                                        P. Eronen"
+text node=2 x=18 baseline=105 top=90 w=373 h=19 size=16 bold=false italic=false color=ff263342 href="" value="ISSN: 2070-1721                                                    Nokia"
+text node=2 x=18 baseline=129 top=114 w=326 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                                                                May 2010"
+text node=2 x=18 baseline=201 top=186 w=24 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      "
+text node=4 x=42 baseline=201 top=186 w=476 h=19 size=16 bold=false italic=false color=ff263342 href="" value="HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
+text node=5 x=18 baseline=249 top=234 w=58 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Abstract"
+text node=5 x=18 baseline=297 top=282 w=526 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   This document specifies a simple Hashed Message Authentication Code"
+text node=5 x=18 baseline=321 top=306 w=516 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   (HMAC)-based key derivation function (HKDF), which can be used as a"
+text node=5 x=18 baseline=345 top=330 w=443 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   building block in various protocols and applications.  The key"
+text node=5 x=18 baseline=369 top=354 w=458 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   derivation function (KDF) is intended to support a wide range of"
+text node=5 x=18 baseline=393 top=378 w=455 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   applications and requirements, and is conservative in its use of"
+text node=5 x=18 baseline=417 top=402 w=219 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   cryptographic hash functions."
+text node=5 x=18 baseline=465 top=450 w=145 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Status of This Memo"
+text node=5 x=18 baseline=513 top=498 w=484 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   This document is not an Internet Standards Track specification; it is"
+text node=5 x=18 baseline=537 top=522 w=274 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   published for informational purposes."
+text node=5 x=18 baseline=585 top=570 w=478 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   This document is a product of the Internet Engineering Task Force"
+text node=5 x=18 baseline=609 top=594 w=476 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   (IETF).  It represents the consensus of the IETF community.  It has"
+text node=5 x=18 baseline=633 top=618 w=494 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   received public review and has been approved for publication by the"
+text node=5 x=18 baseline=657 top=642 w=460 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Internet Engineering Steering Group (IESG).  Not all documents"
+text node=5 x=18 baseline=681 top=666 w=446 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   approved by the IESG are a candidate for any level of Internet"
+text node=5 x=18 baseline=705 top=690 w=115 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Standard; see "
+text node=7 x=133 baseline=705 top=690 w=162 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5741#section-2" value="Section 2 of RFC 5741"
+text node=8 x=295 baseline=705 top=690 w=4 h=19 size=16 bold=false italic=false color=ff263342 href="" value="."
+rect x=133 y=707 w=162 h=1 color=ff1769a4
+text node=8 x=18 baseline=753 top=738 w=463 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Information about the current status of this document, any errata,"
+text node=8 x=18 baseline=777 top=762 w=389 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   and how to provide feedback on it may be obtained at"
+text node=8 x=18 baseline=801 top=786 w=12 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   "
+text node=10 x=30 baseline=801 top=786 w=254 h=19 size=16 bold=false italic=false color=ff1769a4 href="http://www.rfc-editor.org/info/rfc5869" value="http://www.rfc-editor.org/info/rfc5869"
+text node=11 x=284 baseline=801 top=786 w=4 h=19 size=16 bold=false italic=false color=ff263342 href="" value="."
+rect x=30 y=803 w=254 h=1 color=ff1769a4
+text node=11 x=18 baseline=849 top=834 w=119 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Copyright Notice"
+text node=11 x=18 baseline=897 top=882 w=456 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Copyright (c) 2010 IETF Trust and the persons identified as the"
+text node=11 x=18 baseline=921 top=906 w=283 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   document authors.  All rights reserved."
+text node=11 x=18 baseline=969 top=954 w=209 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   This document is subject to "
+text node=13 x=227 baseline=969 top=954 w=56 h=19 size=16 bold=false italic=false color=ff1769a4 href="https://www.rfc-editor.org/bcp/bcp78" value="BCP 78"
+text node=14 x=283 baseline=969 top=954 w=191 h=19 size=16 bold=false italic=false color=ff263342 href="" value=" and the IETF Trust's Legal"
+rect x=227 y=971 w=56 h=1 color=ff1769a4
+text node=14 x=18 baseline=993 top=978 w=292 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Provisions Relating to IETF Documents"
+text node=14 x=18 baseline=1017 top=1002 w=17 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ("
+text node=16 x=35 baseline=1017 top=1002 w=224 h=19 size=16 bold=false italic=false color=ff1769a4 href="http://trustee.ietf.org/license-info" value="http://trustee.ietf.org/license-info"
+text node=17 x=259 baseline=1017 top=1002 w=164 h=19 size=16 bold=false italic=false color=ff263342 href="" value=") in effect on the date of"
+rect x=35 y=1019 w=224 h=1 color=ff1769a4
+text node=17 x=18 baseline=1041 top=1026 w=448 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   publication of this document.  Please review these documents"
+text node=17 x=18 baseline=1065 top=1050 w=475 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   carefully, as they describe your rights and restrictions with respect"
+text node=17 x=18 baseline=1089 top=1074 w=519 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   to this document.  Code Components extracted from this document must"
+text node=17 x=18 baseline=1113 top=1098 w=479 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   include Simplified BSD License text as described in Section 4.e of"
+text node=17 x=18 baseline=1137 top=1122 w=462 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   the Trust Legal Provisions and are provided without warranty as"
+text node=17 x=18 baseline=1161 top=1146 w=302 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   described in the Simplified BSD License."
+text node=19 x=18 baseline=1257 top=1242 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 1]"
+rect x=0 y=1316 w=988 h=1 color=ffd8e0e7
+rect x=0 y=1317 w=988 h=1 color=ffd8e0e7
+rect x=0 y=1316 w=1 h=2 color=ffd8e0e7
+rect x=987 y=1316 w=1 h=2 color=ffd8e0e7
+rect x=0 y=1336 w=988 h=1376 color=fff1f5f7
+text node=27 x=18 baseline=1393 top=1378 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=28 x=92 baseline=1393 top=1378 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=1395 w=74 h=1 color=ff1769a4
+text node=32 x=18 baseline=1465 top=1450 w=9 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-1" value="1"
+text node=33 x=27 baseline=1465 top=1450 w=95 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Introduction"
+rect x=18 y=1467 w=9 h=1 color=ff1769a4
+text node=34 x=18 baseline=1513 top=1498 w=503 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   A key derivation function (KDF) is a basic and essential component of"
+text node=34 x=18 baseline=1537 top=1522 w=454 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   cryptographic systems.  Its goal is to take some source of initial"
+text node=34 x=18 baseline=1561 top=1546 w=460 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   keying material and derive from it one or more cryptographically"
+text node=34 x=18 baseline=1585 top=1570 w=144 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   strong secret keys."
+text node=34 x=18 baseline=1633 top=1618 w=357 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   This document specifies a simple HMAC-based ["
+text node=36 x=375 baseline=1633 top=1618 w=48 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-HMAC" value="HMAC"
+text node=37 x=423 baseline=1633 top=1618 w=151 h=19 size=16 bold=false italic=false color=ff263342 href="" value="] KDF, named HKDF,"
+rect x=375 y=1635 w=48 h=1 color=ff1769a4
+text node=37 x=18 baseline=1657 top=1642 w=455 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   which can be used as a building block in various protocols and"
+text node=37 x=18 baseline=1681 top=1666 w=430 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   applications, and is already used in several IETF protocols,"
+text node=37 x=18 baseline=1705 top=1690 w=85 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   including ["
+text node=39 x=103 baseline=1705 top=1690 w=43 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-IKEv2" value="IKEv2"
+text node=40 x=146 baseline=1705 top=1690 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="], ["
+text node=42 x=162 baseline=1705 top=1690 w=45 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-PANA" value="PANA"
+text node=43 x=207 baseline=1705 top=1690 w=47 h=19 size=16 bold=false italic=false color=ff263342 href="" value="], and ["
+text node=45 x=254 baseline=1705 top=1690 w=71 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-EAP-AKA" value="EAP-AKA"
+text node=46 x=325 baseline=1705 top=1690 w=213 h=19 size=16 bold=false italic=false color=ff263342 href="" value="].  The purpose is to document"
+rect x=103 y=1707 w=43 h=1 color=ff1769a4
+rect x=162 y=1707 w=45 h=1 color=ff1769a4
+rect x=254 y=1707 w=71 h=1 color=ff1769a4
+text node=46 x=18 baseline=1729 top=1714 w=471 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   this KDF in a general way to facilitate adoption in future protocols"
+text node=46 x=18 baseline=1753 top=1738 w=492 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   and applications, and to discourage the proliferation of multiple KDF"
+text node=46 x=18 baseline=1777 top=1762 w=426 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   mechanisms.  It is not intended as a call to change existing"
+text node=46 x=18 baseline=1801 top=1786 w=504 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   protocols and does not change or update existing specifications using"
+text node=46 x=18 baseline=1825 top=1810 w=78 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   this KDF."
+text node=46 x=18 baseline=1873 top=1858 w=480 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HKDF follows the \"extract-then-expand\" paradigm, where the KDF"
+text node=46 x=18 baseline=1897 top=1882 w=463 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   logically consists of two modules.  The first stage takes the input"
+text node=46 x=18 baseline=1921 top=1906 w=480 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   keying material and \"extracts\" from it a fixed-length pseudorandom"
+text node=46 x=18 baseline=1945 top=1930 w=498 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   key K.  The second stage \"expands\" the key K into several additional"
+text node=46 x=18 baseline=1969 top=1954 w=324 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   pseudorandom keys (the output of the KDF)."
+text node=46 x=18 baseline=2017 top=2002 w=466 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   In many applications, the input keying material is not necessarily"
+text node=46 x=18 baseline=2041 top=2026 w=440 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   distributed uniformly, and the attacker may have some partial"
+text node=46 x=18 baseline=2065 top=2050 w=512 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   knowledge about it (for example, a Diffie-Hellman value computed by a"
+text node=46 x=18 baseline=2089 top=2074 w=449 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   key exchange protocol) or even partial control of it (as in some"
+text node=46 x=18 baseline=2113 top=2098 w=451 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   entropy-gathering applications).  Thus, the goal of the \"extract\""
+text node=46 x=18 baseline=2137 top=2122 w=485 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   stage is to \"concentrate\" the possibly dispersed entropy of the input"
+text node=46 x=18 baseline=2161 top=2146 w=409 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   keying material into a short, but cryptographically strong,"
+text node=46 x=18 baseline=2185 top=2170 w=501 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   pseudorandom key.  In some applications, the input may already be a"
+text node=46 x=18 baseline=2209 top=2194 w=476 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   good pseudorandom key; in these cases, the \"extract\" stage is not"
+text node=46 x=18 baseline=2233 top=2218 w=385 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   necessary, and the \"expand\" part can be used alone."
+text node=46 x=18 baseline=2281 top=2266 w=482 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   The second stage \"expands\" the pseudorandom key to the desired"
+text node=46 x=18 baseline=2305 top=2290 w=465 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   length; the number and lengths of the output keys depend on the"
+text node=46 x=18 baseline=2329 top=2314 w=464 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   specific cryptographic algorithms for which the keys are needed."
+text node=46 x=18 baseline=2377 top=2362 w=478 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Note that some existing KDF specifications, such as NIST Special"
+text node=46 x=18 baseline=2401 top=2386 w=165 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Publication 800-56A ["
+text node=48 x=183 baseline=2401 top=2386 w=61 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-800-56A" value="800-56A"
+text node=49 x=244 baseline=2401 top=2386 w=254 h=19 size=16 bold=false italic=false color=ff263342 href="" value="], NIST Special Publication 800-108"
+rect x=183 y=2403 w=61 h=1 color=ff1769a4
+text node=49 x=18 baseline=2425 top=2410 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=51 x=34 baseline=2425 top=2410 w=59 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-800-108" value="800-108"
+text node=52 x=93 baseline=2425 top=2410 w=243 h=19 size=16 bold=false italic=false color=ff263342 href="" value="] and IEEE Standard 1363a-2004 ["
+text node=54 x=336 baseline=2425 top=2410 w=45 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-1363a" value="1363a"
+text node=55 x=381 baseline=2425 top=2410 w=151 h=19 size=16 bold=false italic=false color=ff263342 href="" value="], either only consider"
+rect x=34 y=2427 w=59 h=1 color=ff1769a4
+rect x=336 y=2427 w=45 h=1 color=ff1769a4
+text node=55 x=18 baseline=2449 top=2434 w=511 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   the second stage (expanding a pseudorandom key), or do not explicitly"
+text node=55 x=18 baseline=2473 top=2458 w=443 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   differentiate between the \"extract\" and \"expand\" stages, often"
+text node=55 x=18 baseline=2497 top=2482 w=471 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   resulting in design shortcomings.  The goal of this specification is"
+text node=55 x=18 baseline=2521 top=2506 w=525 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   to accommodate a wide range of KDF requirements while minimizing the"
+text node=55 x=18 baseline=2545 top=2530 w=488 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   assumptions about the underlying hash function.  The \"extract-then-"
+text node=55 x=18 baseline=2569 top=2554 w=347 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   expand\" paradigm supports well this goal (see ["
+text node=57 x=365 baseline=2569 top=2554 w=91 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-HKDF-paper" value="HKDF-paper"
+text node=58 x=456 baseline=2569 top=2554 w=66 h=19 size=16 bold=false italic=false color=ff263342 href="" value="] for more"
+rect x=365 y=2571 w=91 h=1 color=ff1769a4
+text node=58 x=18 baseline=2593 top=2578 w=288 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   information about the design rationale)."
+text node=60 x=18 baseline=2689 top=2674 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 2]"
+rect x=0 y=2748 w=988 h=1 color=ffd8e0e7
+rect x=0 y=2749 w=988 h=1 color=ffd8e0e7
+rect x=0 y=2748 w=1 h=2 color=ffd8e0e7
+rect x=987 y=2748 w=1 h=2 color=ffd8e0e7
+rect x=0 y=2768 w=988 h=1376 color=fff1f5f7
+text node=68 x=18 baseline=2825 top=2810 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=69 x=92 baseline=2825 top=2810 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=2827 w=74 h=1 color=ff1769a4
+text node=73 x=18 baseline=2897 top=2882 w=9 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-2" value="2"
+text node=74 x=27 baseline=2897 top=2882 w=343 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  HMAC-based Key Derivation Function (HKDF)"
+rect x=18 y=2899 w=9 h=1 color=ff1769a4
+text node=78 x=18 baseline=2945 top=2930 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-2.1" value="2.1"
+text node=79 x=40 baseline=2945 top=2930 w=72 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Notation"
+rect x=18 y=2947 w=22 h=1 color=ff1769a4
+text node=80 x=18 baseline=2993 top=2978 w=310 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HMAC-Hash denotes the HMAC function ["
+text node=82 x=328 baseline=2993 top=2978 w=48 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-HMAC" value="HMAC"
+text node=83 x=376 baseline=2993 top=2978 w=162 h=19 size=16 bold=false italic=false color=ff263342 href="" value="] instantiated with hash"
+rect x=328 y=2995 w=48 h=1 color=ff1769a4
+text node=83 x=18 baseline=3017 top=3002 w=485 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   function 'Hash'.  HMAC always has two arguments: the first is a key"
+text node=83 x=18 baseline=3041 top=3026 w=454 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   and the second an input (or message).  (Note that in the extract"
+text node=83 x=18 baseline=3065 top=3050 w=444 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   step, 'IKM' is used as the HMAC input, not as the HMAC key.)"
+text node=83 x=18 baseline=3113 top=3098 w=544 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   When the message is composed of several elements we use concatenation"
+text node=83 x=18 baseline=3137 top=3122 w=481 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   (denoted |) in the second argument; for example, HMAC(K, elem1 |"
+text node=83 x=18 baseline=3161 top=3146 w=121 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   elem2 | elem3)."
+text node=83 x=18 baseline=3209 top=3194 w=574 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   The key words \"MUST\", \"MUST NOT\", \"REQUIRED\", \"SHALL\", \"SHALL NOT\","
+text node=83 x=18 baseline=3233 top=3218 w=602 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   \"SHOULD\", \"SHOULD NOT\", \"RECOMMENDED\", \"MAY\", and \"OPTIONAL\" in this"
+text node=83 x=18 baseline=3257 top=3242 w=348 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   document are to be interpreted as described in ["
+text node=85 x=366 baseline=3257 top=3242 w=95 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-KEYWORDS" value="KEYWORDS"
+text node=86 x=461 baseline=3257 top=3242 w=8 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]."
+rect x=366 y=3259 w=95 h=1 color=ff1769a4
+text node=89 x=18 baseline=3305 top=3290 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-2.2" value="2.2"
+text node=90 x=40 baseline=3305 top=3290 w=115 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Step 1: Extract"
+rect x=18 y=3307 w=22 h=1 color=ff1769a4
+text node=91 x=18 baseline=3353 top=3338 w=238 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HKDF-Extract(salt, IKM) -> PRK"
+text node=91 x=18 baseline=3401 top=3386 w=71 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Options:"
+text node=91 x=18 baseline=3425 top=3410 w=441 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      Hash     a hash function; HashLen denotes the length of the"
+text node=91 x=18 baseline=3449 top=3434 w=266 h=19 size=16 bold=false italic=false color=ff263342 href="" value="               hash function output in octets"
+text node=91 x=18 baseline=3497 top=3482 w=59 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Inputs:"
+text node=91 x=18 baseline=3521 top=3506 w=405 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      salt     optional salt value (a non-secret random value);"
+text node=91 x=18 baseline=3545 top=3530 w=423 h=19 size=16 bold=false italic=false color=ff263342 href="" value="               if not provided, it is set to a string of HashLen zeros."
+text node=91 x=18 baseline=3569 top=3554 w=223 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      IKM      input keying material"
+text node=91 x=18 baseline=3617 top=3602 w=63 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Output:"
+text node=91 x=18 baseline=3641 top=3626 w=373 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      PRK      a pseudorandom key (of HashLen octets)"
+text node=91 x=18 baseline=3689 top=3674 w=298 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   The output PRK is calculated as follows:"
+text node=91 x=18 baseline=3737 top=3722 w=225 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   PRK = HMAC-Hash(salt, IKM)"
+text node=94 x=18 baseline=3785 top=3770 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-2.3" value="2.3"
+text node=95 x=40 baseline=3785 top=3770 w=121 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Step 2: Expand"
+rect x=18 y=3787 w=22 h=1 color=ff1769a4
+text node=96 x=18 baseline=3833 top=3818 w=270 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HKDF-Expand(PRK, info, L) -> OKM"
+text node=96 x=18 baseline=3881 top=3866 w=71 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Options:"
+text node=96 x=18 baseline=3905 top=3890 w=441 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      Hash     a hash function; HashLen denotes the length of the"
+text node=96 x=18 baseline=3929 top=3914 w=266 h=19 size=16 bold=false italic=false color=ff263342 href="" value="               hash function output in octets"
+text node=98 x=18 baseline=4121 top=4106 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 3]"
+rect x=0 y=4180 w=988 h=1 color=ffd8e0e7
+rect x=0 y=4181 w=988 h=1 color=ffd8e0e7
+rect x=0 y=4180 w=1 h=2 color=ffd8e0e7
+rect x=987 y=4180 w=1 h=2 color=ffd8e0e7
+rect x=0 y=4200 w=988 h=1376 color=fff1f5f7
+text node=106 x=18 baseline=4257 top=4242 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=107 x=92 baseline=4257 top=4242 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=4259 w=74 h=1 color=ff1769a4
+text node=108 x=18 baseline=4329 top=4314 w=59 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Inputs:"
+text node=108 x=18 baseline=4353 top=4338 w=418 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      PRK      a pseudorandom key of at least HashLen octets"
+text node=108 x=18 baseline=4377 top=4362 w=345 h=19 size=16 bold=false italic=false color=ff263342 href="" value="               (usually, the output from the extract step)"
+text node=108 x=18 baseline=4401 top=4386 w=436 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      info     optional context and application specific information"
+text node=108 x=18 baseline=4425 top=4410 w=258 h=19 size=16 bold=false italic=false color=ff263342 href="" value="               (can be a zero-length string)"
+text node=108 x=18 baseline=4449 top=4434 w=349 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      L        length of output keying material in octets"
+text node=108 x=18 baseline=4473 top=4458 w=190 h=19 size=16 bold=false italic=false color=ff263342 href="" value="               (<= 255*HashLen)"
+text node=108 x=18 baseline=4521 top=4506 w=63 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Output:"
+text node=108 x=18 baseline=4545 top=4530 w=326 h=19 size=16 bold=false italic=false color=ff263342 href="" value="      OKM      output keying material (of L octets)"
+text node=108 x=18 baseline=4593 top=4578 w=300 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   The output OKM is calculated as follows:"
+text node=108 x=18 baseline=4641 top=4626 w=154 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   N = ceil(L/HashLen)"
+text node=108 x=18 baseline=4665 top=4650 w=218 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   T = T(1) | T(2) | T(3) | ... | T(N)"
+text node=108 x=18 baseline=4689 top=4674 w=180 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   OKM = first L octets of T"
+text node=108 x=18 baseline=4737 top=4722 w=60 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   where:"
+text node=108 x=18 baseline=4761 top=4746 w=237 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   T(0) = empty string (zero length)"
+text node=108 x=18 baseline=4785 top=4770 w=315 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   T(1) = HMAC-Hash(PRK, T(0) | info | 0x01)"
+text node=108 x=18 baseline=4809 top=4794 w=315 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   T(2) = HMAC-Hash(PRK, T(1) | info | 0x02)"
+text node=108 x=18 baseline=4833 top=4818 w=315 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   T(3) = HMAC-Hash(PRK, T(2) | info | 0x03)"
+text node=108 x=18 baseline=4857 top=4842 w=24 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ..."
+text node=108 x=18 baseline=4905 top=4890 w=443 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   (where the constant concatenated to the end of each T(n) is a"
+text node=108 x=18 baseline=4929 top=4914 w=102 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   single octet.)"
+text node=111 x=18 baseline=4977 top=4962 w=9 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-3" value="3"
+text node=112 x=27 baseline=4977 top=4962 w=166 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Notes to HKDF Users"
+rect x=18 y=4979 w=9 h=1 color=ff1769a4
+text node=113 x=18 baseline=5025 top=5010 w=475 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   This section contains a set of guiding principles regarding the use"
+text node=113 x=18 baseline=5049 top=5034 w=523 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   of HKDF.  A much more extensive account of such principles and design"
+text node=113 x=18 baseline=5073 top=5058 w=195 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   rationale can be found in ["
+text node=115 x=213 baseline=5073 top=5058 w=91 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-HKDF-paper" value="HKDF-paper"
+text node=116 x=304 baseline=5073 top=5058 w=8 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]."
+rect x=213 y=5075 w=91 h=1 color=ff1769a4
+text node=119 x=18 baseline=5121 top=5106 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-3.1" value="3.1"
+text node=120 x=40 baseline=5121 top=5106 w=156 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  To Salt or not to Salt"
+rect x=18 y=5123 w=22 h=1 color=ff1769a4
+text node=121 x=18 baseline=5169 top=5154 w=470 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HKDF is defined to operate with and without random salt.  This is"
+text node=121 x=18 baseline=5193 top=5178 w=507 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   done to accommodate applications where a salt value is not available."
+text node=121 x=18 baseline=5217 top=5202 w=457 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   We stress, however, that the use of salt adds significantly to the"
+text node=121 x=18 baseline=5241 top=5226 w=518 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   strength of HKDF, ensuring independence between different uses of the"
+text node=121 x=18 baseline=5265 top=5250 w=456 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   hash function, supporting \"source-independent\" extraction, and"
+text node=121 x=18 baseline=5289 top=5274 w=457 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   strengthening the analytical results that back the HKDF design."
+text node=121 x=18 baseline=5337 top=5322 w=485 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Random salt differs fundamentally from the initial keying material in"
+text node=121 x=18 baseline=5361 top=5346 w=483 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   two ways: it is non-secret and can be re-used.  As such, salt values"
+text node=121 x=18 baseline=5385 top=5370 w=483 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   are available to many applications.  For example, a pseudorandom"
+text node=121 x=18 baseline=5409 top=5394 w=470 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   number generator (PRNG) that continuously produces outputs by"
+text node=121 x=18 baseline=5433 top=5418 w=493 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   applying HKDF to renewable pools of entropy (e.g., sampled system"
+text node=121 x=18 baseline=5457 top=5442 w=461 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   events) can fix a salt value and use it for multiple applications of"
+text node=123 x=18 baseline=5553 top=5538 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 4]"
+rect x=0 y=5612 w=988 h=1 color=ffd8e0e7
+rect x=0 y=5613 w=988 h=1 color=ffd8e0e7
+rect x=0 y=5612 w=1 h=2 color=ffd8e0e7
+rect x=987 y=5612 w=1 h=2 color=ffd8e0e7
+rect x=0 y=5632 w=988 h=1376 color=fff1f5f7
+text node=131 x=18 baseline=5689 top=5674 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=132 x=92 baseline=5689 top=5674 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=5691 w=74 h=1 color=ff1769a4
+text node=133 x=18 baseline=5761 top=5746 w=428 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HKDF without having to protect the secrecy of the salt.  In a"
+text node=133 x=18 baseline=5785 top=5770 w=456 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   different application domain, a key agreement protocol deriving"
+text node=133 x=18 baseline=5809 top=5794 w=493 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   cryptographic keys from a Diffie-Hellman exchange can derive a salt"
+text node=133 x=18 baseline=5833 top=5818 w=468 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   value from public nonces exchanged and authenticated between"
+text node=133 x=18 baseline=5857 top=5842 w=452 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   communicating parties as part of the key agreement (this is the"
+text node=133 x=18 baseline=5881 top=5866 w=147 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   approach taken in ["
+text node=135 x=165 baseline=5881 top=5866 w=43 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-IKEv2" value="IKEv2"
+text node=136 x=208 baseline=5881 top=5866 w=13 h=19 size=16 bold=false italic=false color=ff263342 href="" value="])."
+rect x=165 y=5883 w=43 h=1 color=ff1769a4
+text node=136 x=18 baseline=5929 top=5914 w=473 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Ideally, the salt value is a random (or pseudorandom) string of the"
+text node=136 x=18 baseline=5953 top=5938 w=465 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   length HashLen.  Yet, even a salt value of less quality (shorter in"
+text node=136 x=18 baseline=5977 top=5962 w=399 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   size or with limited entropy) may still make a significant"
+text node=136 x=18 baseline=6001 top=5986 w=478 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   contribution to the security of the output keying material; designers"
+text node=136 x=18 baseline=6025 top=6010 w=469 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   of applications are therefore encouraged to provide salt values to"
+text node=136 x=18 baseline=6049 top=6034 w=409 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HKDF if such values can be obtained by the application."
+text node=136 x=18 baseline=6097 top=6082 w=390 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   It is worth noting that, while not the typical case, some"
+text node=136 x=18 baseline=6121 top=6106 w=484 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   applications may even have a secret salt value available for use; in"
+text node=136 x=18 baseline=6145 top=6130 w=505 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   such a case, HKDF provides an even stronger security guarantee.  An"
+text node=136 x=18 baseline=6169 top=6154 w=471 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   example of such application is IKEv1 in its \"public-key encryption"
+text node=136 x=18 baseline=6193 top=6178 w=496 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   mode\", where the \"salt\" to the extractor is computed from nonces that"
+text node=136 x=18 baseline=6217 top=6202 w=466 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   are secret; similarly, the pre-shared mode of IKEv1 uses a secret"
+text node=136 x=18 baseline=6241 top=6226 w=269 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   salt derived from the pre-shared key."
+text node=139 x=18 baseline=6289 top=6274 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-3.2" value="3.2"
+text node=140 x=40 baseline=6289 top=6274 w=181 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  The 'info' Input to HKDF"
+rect x=18 y=6291 w=22 h=1 color=ff1769a4
+text node=141 x=18 baseline=6337 top=6322 w=445 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   While the 'info' value is optional in the definition of HKDF, it is"
+text node=141 x=18 baseline=6361 top=6346 w=462 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   often of great importance in applications.  Its main objective is to"
+text node=141 x=18 baseline=6385 top=6370 w=465 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   bind the derived key material to application- and context-specific"
+text node=141 x=18 baseline=6409 top=6394 w=458 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   information.  For example, 'info' may contain a protocol number,"
+text node=141 x=18 baseline=6433 top=6418 w=432 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   algorithm identifiers, user identities, etc.  In particular, it may"
+text node=141 x=18 baseline=6457 top=6442 w=446 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   prevent the derivation of the same keying material for different"
+text node=141 x=18 baseline=6481 top=6466 w=469 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   contexts (when the same input key material (IKM) is used in such"
+text node=141 x=18 baseline=6505 top=6490 w=467 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   different contexts).  It may also accommodate additional inputs to"
+text node=141 x=18 baseline=6529 top=6514 w=481 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   the key expansion part, if so desired (e.g., an application may want"
+text node=141 x=18 baseline=6553 top=6538 w=455 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   to bind the key material to its length L, thus making L part of the"
+text node=141 x=18 baseline=6577 top=6562 w=428 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   'info' field).  There is one technical requirement from 'info': it"
+text node=141 x=18 baseline=6601 top=6586 w=426 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   should be independent of the input key material value IKM."
+text node=144 x=18 baseline=6649 top=6634 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-3.3" value="3.3"
+text node=145 x=40 baseline=6649 top=6634 w=164 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  To Skip or not to Skip"
+rect x=18 y=6651 w=22 h=1 color=ff1769a4
+text node=146 x=18 baseline=6697 top=6682 w=462 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   In some applications, the input key material IKM may already be"
+text node=146 x=18 baseline=6721 top=6706 w=498 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   present as a cryptographically strong key (for example, the premaster"
+text node=146 x=18 baseline=6745 top=6730 w=478 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   secret in TLS RSA cipher suites would be a pseudorandom string,"
+text node=146 x=18 baseline=6769 top=6754 w=432 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   except for the first two octets).  In this case, one can skip the"
+text node=146 x=18 baseline=6793 top=6778 w=503 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   extract part and use IKM directly to key HMAC in the expand step.  On"
+text node=146 x=18 baseline=6817 top=6802 w=456 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   the other hand, applications may still use the extract part for the"
+text node=146 x=18 baseline=6841 top=6826 w=454 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   sake of compatibility with the general case.  In particular, if IKM"
+text node=146 x=18 baseline=6865 top=6850 w=515 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   is random (or pseudorandom) but longer than an HMAC key, the extract"
+text node=146 x=18 baseline=6889 top=6874 w=489 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   step can serve to output a suitable HMAC key (in the case of HMAC"
+text node=148 x=18 baseline=6985 top=6970 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 5]"
+rect x=0 y=7044 w=988 h=1 color=ffd8e0e7
+rect x=0 y=7045 w=988 h=1 color=ffd8e0e7
+rect x=0 y=7044 w=1 h=2 color=ffd8e0e7
+rect x=987 y=7044 w=1 h=2 color=ffd8e0e7
+rect x=0 y=7064 w=988 h=1376 color=fff1f5f7
+text node=156 x=18 baseline=7121 top=7106 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=157 x=92 baseline=7121 top=7106 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=7123 w=74 h=1 color=ff1769a4
+text node=158 x=18 baseline=7193 top=7178 w=442 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   this shortening via the extractor is not strictly necessary since"
+text node=158 x=18 baseline=7217 top=7202 w=485 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HMAC is defined to work with long keys too).  Note, however, that if"
+text node=158 x=18 baseline=7241 top=7226 w=480 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   the IKM is a Diffie-Hellman value, as in the case of TLS with Diffie-"
+text node=158 x=18 baseline=7265 top=7250 w=534 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hellman, then the extract part SHOULD NOT be skipped.  Doing so would"
+text node=158 x=18 baseline=7289 top=7274 w=475 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   result in using the Diffie-Hellman value g^{xy} itself (which is NOT"
+text node=158 x=18 baseline=7313 top=7298 w=517 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   a uniformly random or pseudorandom string) as the key PRK for HMAC."
+text node=158 x=18 baseline=7337 top=7322 w=467 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Instead, HKDF should apply the extract step to g^{xy} (preferably"
+text node=158 x=18 baseline=7361 top=7346 w=496 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   with a salt value) and use the resultant PRK as a key to HMAC in the"
+text node=158 x=18 baseline=7385 top=7370 w=121 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   expansion part."
+text node=158 x=18 baseline=7433 top=7418 w=492 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   In the case where the amount of required key bits, L, is no more than"
+text node=158 x=18 baseline=7457 top=7442 w=497 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HashLen, one could use PRK directly as the OKM.  This, however, is"
+text node=158 x=18 baseline=7481 top=7466 w=528 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   NOT RECOMMENDED, especially because it would omit the use of 'info'"
+text node=158 x=18 baseline=7505 top=7490 w=461 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   as part of the derivation process (and adding 'info' as an input to"
+text node=158 x=18 baseline=7529 top=7514 w=286 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   the extract step is not advisable -- see ["
+text node=160 x=304 baseline=7529 top=7514 w=91 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-HKDF-paper" value="HKDF-paper"
+text node=161 x=395 baseline=7529 top=7514 w=13 h=19 size=16 bold=false italic=false color=ff263342 href="" value="])."
+rect x=304 y=7531 w=91 h=1 color=ff1769a4
+text node=164 x=18 baseline=7577 top=7562 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-3.4" value="3.4"
+text node=165 x=40 baseline=7577 top=7562 w=201 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  The Role of Independence"
+rect x=18 y=7579 w=22 h=1 color=ff1769a4
+text node=166 x=18 baseline=7625 top=7610 w=454 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   The analysis of key derivation functions assumes that the input"
+text node=166 x=18 baseline=7649 top=7634 w=521 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   keying material (IKM) comes from some source modeled as a probability"
+text node=166 x=18 baseline=7673 top=7658 w=435 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   distribution over bit streams of a certain length (e.g., streams"
+text node=166 x=18 baseline=7697 top=7682 w=467 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   produced by an entropy pool, values derived from Diffie-Hellman"
+text node=166 x=18 baseline=7721 top=7706 w=496 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   exponents chosen at random, etc.); each instance of IKM is a sample"
+text node=166 x=18 baseline=7745 top=7730 w=461 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   from that distribution.  A major goal of key derivation functions is"
+text node=166 x=18 baseline=7769 top=7754 w=508 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   to ensure that, when applying the KDF to any two values IKM and IKM'"
+text node=166 x=18 baseline=7793 top=7778 w=493 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   sampled from the (same) source distribution, the resultant keys OKM"
+text node=166 x=18 baseline=7817 top=7802 w=483 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   and OKM' are essentially independent of each other (in a statistical"
+text node=166 x=18 baseline=7841 top=7826 w=469 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   or computational sense).  To achieve this goal, it is important that"
+text node=166 x=18 baseline=7865 top=7850 w=480 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   inputs to KDF are selected from appropriate input distributions and"
+text node=166 x=18 baseline=7889 top=7874 w=492 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   also that inputs are chosen independently of each other (technically,"
+text node=166 x=18 baseline=7913 top=7898 w=472 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   it is necessary that each sample will have sufficient entropy, even"
+text node=166 x=18 baseline=7937 top=7922 w=310 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   when conditioned on other inputs to KDF)."
+text node=166 x=18 baseline=7985 top=7970 w=488 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Independence is also an important aspect of the salt value provided"
+text node=166 x=18 baseline=8009 top=7994 w=465 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   to a KDF.  While there is no need to keep the salt secret, and the"
+text node=166 x=18 baseline=8033 top=8018 w=491 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   same salt value can be used with multiple IKM values, it is assumed"
+text node=166 x=18 baseline=8057 top=8042 w=457 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   that salt values are independent of the input keying material.  In"
+text node=166 x=18 baseline=8081 top=8066 w=466 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   particular, an application needs to make sure that salt values are"
+text node=166 x=18 baseline=8105 top=8090 w=490 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   not chosen or manipulated by an attacker.  As an example, consider"
+text node=166 x=18 baseline=8129 top=8114 w=482 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   the case (as in IKE) where the salt is derived from nonces supplied"
+text node=166 x=18 baseline=8153 top=8138 w=477 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   by the parties in a key exchange protocol.  Before the protocol can"
+text node=166 x=18 baseline=8177 top=8162 w=495 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   use such salt to derive keys, it needs to make sure that these nonces"
+text node=166 x=18 baseline=8201 top=8186 w=478 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   are authenticated as coming from the legitimate parties rather than"
+text node=166 x=18 baseline=8225 top=8210 w=471 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   selected by the attacker (in IKE, for example this authentication is"
+text node=166 x=18 baseline=8249 top=8234 w=450 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   an integral part of the authenticated Diffie-Hellman exchange)."
+text node=168 x=18 baseline=8417 top=8402 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 6]"
+rect x=0 y=8476 w=988 h=1 color=ffd8e0e7
+rect x=0 y=8477 w=988 h=1 color=ffd8e0e7
+rect x=0 y=8476 w=1 h=2 color=ffd8e0e7
+rect x=987 y=8476 w=1 h=2 color=ffd8e0e7
+rect x=0 y=8496 w=988 h=1376 color=fff1f5f7
+text node=176 x=18 baseline=8553 top=8538 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=177 x=92 baseline=8553 top=8538 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=8555 w=74 h=1 color=ff1769a4
+text node=181 x=18 baseline=8625 top=8610 w=9 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-4" value="4"
+text node=182 x=27 baseline=8625 top=8610 w=166 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Applications of HKDF"
+rect x=18 y=8627 w=9 h=1 color=ff1769a4
+text node=183 x=18 baseline=8673 top=8658 w=458 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   HKDF is intended for use in a wide variety of KDF applications."
+text node=183 x=18 baseline=8697 top=8682 w=512 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   These include the building of pseudorandom generators from imperfect"
+text node=183 x=18 baseline=8721 top=8706 w=505 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   sources of randomness (such as a physical random number generator"
+text node=183 x=18 baseline=8745 top=8730 w=497 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   (RNG)); the generation of pseudorandomness out of weak sources of"
+text node=183 x=18 baseline=8769 top=8754 w=478 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   randomness, such as entropy collected from system events, user's"
+text node=183 x=18 baseline=8793 top=8778 w=480 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   keystrokes, etc.; the derivation of cryptographic keys from a shared"
+text node=183 x=18 baseline=8817 top=8802 w=453 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Diffie-Hellman value in a key-agreement protocol; derivation of"
+text node=183 x=18 baseline=8841 top=8826 w=465 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   symmetric keys from a hybrid public-key encryption scheme; key"
+text node=183 x=18 baseline=8865 top=8850 w=464 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   derivation for key-wrapping mechanisms; and more.  All of these"
+text node=183 x=18 baseline=8889 top=8874 w=492 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   applications can benefit from the simplicity and multi-purpose nature"
+text node=183 x=18 baseline=8913 top=8898 w=363 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   of HKDF, as well as from its analytical foundation."
+text node=183 x=18 baseline=8961 top=8946 w=470 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   On the other hand, it is anticipated that some applications will not"
+text node=183 x=18 baseline=8985 top=8970 w=502 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   be able to use HKDF \"as-is\" due to specific operational requirements,"
+text node=183 x=18 baseline=9009 top=8994 w=405 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   or will be able to use it but without the full benefits of the"
+text node=183 x=18 baseline=9033 top=9018 w=484 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   scheme.  One significant example is the derivation of cryptographic"
+text node=183 x=18 baseline=9057 top=9042 w=483 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   keys from a source of low entropy, such as a user's password.  The"
+text node=183 x=18 baseline=9081 top=9066 w=470 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   extract step in HKDF can concentrate existing entropy but cannot"
+text node=183 x=18 baseline=9105 top=9090 w=500 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   amplify entropy.  In the case of password-based KDFs, a main goal is"
+text node=183 x=18 baseline=9129 top=9114 w=480 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   to slow down dictionary attacks using two ingredients: a salt value,"
+text node=183 x=18 baseline=9153 top=9138 w=496 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   and the intentional slowing of the key derivation computation.  HKDF"
+text node=183 x=18 baseline=9177 top=9162 w=475 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   naturally accommodates the use of salt; however, a slowing down"
+text node=183 x=18 baseline=9201 top=9186 w=480 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   mechanism is not part of this specification.  Applications interested"
+text node=183 x=18 baseline=9225 top=9210 w=478 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   in a password-based KDF should consider whether, for example, ["
+text node=185 x=496 baseline=9225 top=9210 w=54 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-PKCS5" value="PKCS5"
+text node=186 x=550 baseline=9225 top=9210 w=4 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]"
+rect x=496 y=9227 w=54 h=1 color=ff1769a4
+text node=186 x=18 baseline=9249 top=9234 w=270 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   meets their needs better than HKDF."
+text node=189 x=18 baseline=9297 top=9282 w=9 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-5" value="5"
+text node=190 x=27 baseline=9297 top=9282 w=182 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Security Considerations"
+rect x=18 y=9299 w=9 h=1 color=ff1769a4
+text node=191 x=18 baseline=9345 top=9330 w=415 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   In spite of the simplicity of HKDF, there are many security"
+text node=191 x=18 baseline=9369 top=9354 w=484 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   considerations that have been taken into account in the design and"
+text node=191 x=18 baseline=9393 top=9378 w=473 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   analysis of this construction.  An exposition of all of these aspects"
+text node=191 x=18 baseline=9417 top=9402 w=397 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   is beyond the scope of this document.  Please refer to ["
+text node=193 x=415 baseline=9417 top=9402 w=91 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-HKDF-paper" value="HKDF-paper"
+text node=194 x=506 baseline=9417 top=9402 w=4 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]"
+rect x=415 y=9419 w=91 h=1 color=ff1769a4
+text node=194 x=18 baseline=9441 top=9426 w=466 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   for detailed information, including rationale for the design and for"
+text node=194 x=18 baseline=9465 top=9450 w=208 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   the guidelines presented in "
+text node=196 x=226 baseline=9465 top=9450 w=67 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-3" value="Section 3"
+text node=197 x=293 baseline=9465 top=9450 w=4 h=19 size=16 bold=false italic=false color=ff263342 href="" value="."
+rect x=226 y=9467 w=67 h=1 color=ff1769a4
+text node=197 x=18 baseline=9513 top=9498 w=364 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   A major effort has been made in the above paper ["
+text node=199 x=382 baseline=9513 top=9498 w=91 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-HKDF-paper" value="HKDF-paper"
+text node=200 x=473 baseline=9513 top=9498 w=21 h=19 size=16 bold=false italic=false color=ff263342 href="" value="] to"
+rect x=382 y=9515 w=91 h=1 color=ff1769a4
+text node=200 x=18 baseline=9537 top=9522 w=509 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   provide a cryptographic analysis of HKDF as a multi-purpose KDF that"
+text node=200 x=18 baseline=9561 top=9546 w=439 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   exercises much care in the way it utilizes cryptographic hash"
+text node=200 x=18 baseline=9585 top=9570 w=412 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   functions.  This is particularly important due to the limited"
+text node=200 x=18 baseline=9609 top=9594 w=478 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   confidence we have in the strength of current hash functions.  This"
+text node=200 x=18 baseline=9633 top=9618 w=448 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   analysis, however, does not imply the absolute security of any"
+text node=200 x=18 baseline=9657 top=9642 w=506 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   scheme, and it depends heavily on the strength of the underlying hash"
+text node=200 x=18 baseline=9681 top=9666 w=435 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   function and on modeling choices.  Yet, it serves as a strong"
+text node=200 x=18 baseline=9705 top=9690 w=436 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   indication of the correct structure of the HKDF design and its"
+text node=200 x=18 baseline=9729 top=9714 w=344 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   advantages over other common KDF schemes."
+text node=202 x=18 baseline=9849 top=9834 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 7]"
+rect x=0 y=9908 w=988 h=1 color=ffd8e0e7
+rect x=0 y=9909 w=988 h=1 color=ffd8e0e7
+rect x=0 y=9908 w=1 h=2 color=ffd8e0e7
+rect x=987 y=9908 w=1 h=2 color=ffd8e0e7
+rect x=0 y=9928 w=988 h=1376 color=fff1f5f7
+text node=210 x=18 baseline=9985 top=9970 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=211 x=92 baseline=9985 top=9970 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=9987 w=74 h=1 color=ff1769a4
+text node=215 x=18 baseline=10057 top=10042 w=9 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-6" value="6"
+text node=216 x=27 baseline=10057 top=10042 w=143 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Acknowledgments"
+rect x=18 y=10059 w=9 h=1 color=ff1769a4
+text node=217 x=18 baseline=10105 top=10090 w=502 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   The authors would like to thank members of the CFRG (Crypto Forum"
+text node=217 x=18 baseline=10129 top=10114 w=484 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Research Group) list for their useful comments, and to Dan Harkins"
+text node=217 x=18 baseline=10153 top=10138 w=188 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   for providing test vectors."
+text node=220 x=18 baseline=10201 top=10186 w=9 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-7" value="7"
+text node=221 x=27 baseline=10201 top=10186 w=94 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  References"
+rect x=18 y=10203 w=9 h=1 color=ff1769a4
+text node=225 x=18 baseline=10249 top=10234 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-7.1" value="7.1"
+text node=226 x=40 baseline=10249 top=10234 w=171 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Normative References"
+rect x=18 y=10251 w=22 h=1 color=ff1769a4
+text node=227 x=18 baseline=10297 top=10282 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=229 x=34 baseline=10297 top=10282 w=48 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="HMAC"
+text node=230 x=82 baseline=10297 top=10282 w=440 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]       Krawczyk, H., Bellare, M., and R. Canetti, \"HMAC: Keyed-"
+rect x=34 y=10299 w=48 h=1 color=ff1769a4
+text node=230 x=18 baseline=10321 top=10306 w=335 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Hashing for Message Authentication\", "
+text node=232 x=353 baseline=10321 top=10306 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc2104" value="RFC 2104"
+text node=233 x=427 baseline=10321 top=10306 w=4 h=19 size=16 bold=false italic=false color=ff263342 href="" value=","
+rect x=353 y=10323 w=74 h=1 color=ff1769a4
+text node=233 x=18 baseline=10345 top=10330 w=172 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                February 1997."
+text node=233 x=18 baseline=10393 top=10378 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=235 x=34 baseline=10393 top=10378 w=95 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="KEYWORDS"
+text node=236 x=129 baseline=10393 top=10378 w=377 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]   Bradner, S., \"Key words for use in RFCs to Indicate"
+rect x=34 y=10395 w=95 h=1 color=ff1769a4
+text node=236 x=18 baseline=10417 top=10402 w=221 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Requirement Levels\", "
+text node=238 x=239 baseline=10417 top=10402 w=56 h=19 size=16 bold=false italic=false color=ff1769a4 href="https://www.rfc-editor.org/bcp/bcp14" value="BCP 14"
+text node=239 x=295 baseline=10417 top=10402 w=8 h=19 size=16 bold=false italic=false color=ff263342 href="" value=", "
+text node=241 x=303 baseline=10417 top=10402 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc2119" value="RFC 2119"
+text node=242 x=377 baseline=10417 top=10402 w=96 h=19 size=16 bold=false italic=false color=ff263342 href="" value=", March 1997."
+rect x=239 y=10419 w=56 h=1 color=ff1769a4
+rect x=303 y=10419 w=74 h=1 color=ff1769a4
+text node=242 x=18 baseline=10465 top=10450 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=244 x=34 baseline=10465 top=10450 w=34 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="SHS"
+text node=245 x=68 baseline=10465 top=10450 w=433 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]        National Institute of Standards and Technology, \"Secure"
+rect x=34 y=10467 w=34 h=1 color=ff1769a4
+text node=245 x=18 baseline=10489 top=10474 w=412 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Hash Standard\", FIPS PUB 180-3, October 2008."
+text node=248 x=18 baseline=10537 top=10522 w=22 h=19 size=16 bold=false italic=false color=ff1769a4 href="#section-7.2" value="7.2"
+text node=249 x=40 baseline=10537 top=10522 w=176 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Informative References"
+rect x=18 y=10539 w=22 h=1 color=ff1769a4
+text node=250 x=18 baseline=10585 top=10570 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=252 x=34 baseline=10585 top=10570 w=45 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="1363a"
+text node=253 x=79 baseline=10585 top=10570 w=412 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]      Institute of Electrical and Electronics Engineers, \"IEEE"
+rect x=34 y=10587 w=45 h=1 color=ff1769a4
+text node=253 x=18 baseline=10609 top=10594 w=446 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Standard Specifications for Public-Key Cryptography -"
+text node=253 x=18 baseline=10633 top=10618 w=410 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Amendment 1: Additional Techniques\", IEEE Std"
+text node=253 x=18 baseline=10657 top=10642 w=198 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                1363a-2004, 2004."
+text node=253 x=18 baseline=10705 top=10690 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=255 x=34 baseline=10705 top=10690 w=59 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="800-108"
+text node=256 x=93 baseline=10705 top=10690 w=356 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]    National Institute of Standards and Technology,"
+rect x=34 y=10707 w=59 h=1 color=ff1769a4
+text node=256 x=18 baseline=10729 top=10714 w=486 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                \"Recommendation for Key Derivation Using Pseudorandom"
+text node=256 x=18 baseline=10753 top=10738 w=394 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Functions\", NIST Special Publication 800-108,"
+text node=256 x=18 baseline=10777 top=10762 w=182 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                November 2008."
+text node=256 x=18 baseline=10825 top=10810 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=258 x=34 baseline=10825 top=10810 w=61 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="800-56A"
+text node=259 x=95 baseline=10825 top=10810 w=356 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]    National Institute of Standards and Technology,"
+rect x=34 y=10827 w=61 h=1 color=ff1769a4
+text node=259 x=18 baseline=10849 top=10834 w=500 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                \"Recommendation for Pair-Wise Key Establishment Schemes"
+text node=259 x=18 baseline=10873 top=10858 w=468 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Using Discrete Logarithm Cryptography (Revised)\", NIST"
+text node=259 x=18 baseline=10897 top=10882 w=363 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Special Publication 800-56A, March 2007."
+text node=259 x=18 baseline=10945 top=10930 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=261 x=34 baseline=10945 top=10930 w=71 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="EAP-AKA"
+text node=262 x=105 baseline=10945 top=10930 w=372 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]    Arkko, J., Lehtovirta, V., and P. Eronen, \"Improved"
+rect x=34 y=10947 w=71 h=1 color=ff1769a4
+text node=262 x=18 baseline=10969 top=10954 w=414 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Extensible Authentication Protocol Method for 3rd"
+text node=262 x=18 baseline=10993 top=10978 w=492 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Generation Authentication and Key Agreement (EAP-AKA')\","
+text node=262 x=18 baseline=11017 top=11002 w=64 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                "
+text node=264 x=82 baseline=11017 top=11002 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5448" value="RFC 5448"
+text node=265 x=156 baseline=11017 top=11002 w=82 h=19 size=16 bold=false italic=false color=ff263342 href="" value=", May 2009."
+rect x=82 y=11019 w=74 h=1 color=ff1769a4
+text node=265 x=18 baseline=11065 top=11050 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=267 x=34 baseline=11065 top=11050 w=91 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="HKDF-paper"
+text node=268 x=125 baseline=11065 top=11050 w=353 h=19 size=16 bold=false italic=false color=ff263342 href="" value="] Krawczyk, H., \"Cryptographic Extraction and Key"
+rect x=34 y=11067 w=91 h=1 color=ff1769a4
+text node=268 x=18 baseline=11089 top=11074 w=518 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Derivation: The HKDF Scheme\", Proceedings of CRYPTO 2010"
+text node=268 x=18 baseline=11113 top=11098 w=202 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                (to appear), 2010, <"
+text node=270 x=220 baseline=11113 top=11098 w=206 h=19 size=16 bold=false italic=false color=ff1769a4 href="http://eprint.iacr.org/2010/264" value="http://eprint.iacr.org/2010/264"
+text node=271 x=426 baseline=11113 top=11098 w=13 h=19 size=16 bold=false italic=false color=ff263342 href="" value=">."
+rect x=220 y=11115 w=206 h=1 color=ff1769a4
+text node=271 x=18 baseline=11161 top=11146 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=273 x=34 baseline=11161 top=11146 w=43 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="IKEv2"
+text node=274 x=77 baseline=11161 top=11146 w=380 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]      Kaufman, C., Ed., \"Internet Key Exchange (IKEv2)"
+rect x=34 y=11163 w=43 h=1 color=ff1769a4
+text node=274 x=18 baseline=11185 top=11170 w=137 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Protocol\", "
+text node=276 x=155 baseline=11185 top=11170 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc4306" value="RFC 4306"
+text node=277 x=229 baseline=11185 top=11170 w=126 h=19 size=16 bold=false italic=false color=ff263342 href="" value=", December 2005."
+rect x=155 y=11187 w=74 h=1 color=ff1769a4
+text node=279 x=18 baseline=11281 top=11266 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 8]"
+rect x=0 y=11340 w=988 h=1 color=ffd8e0e7
+rect x=0 y=11341 w=988 h=1 color=ffd8e0e7
+rect x=0 y=11340 w=1 h=2 color=ffd8e0e7
+rect x=987 y=11340 w=1 h=2 color=ffd8e0e7
+rect x=0 y=11360 w=988 h=1376 color=fff1f5f7
+text node=287 x=18 baseline=11417 top=11402 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=288 x=92 baseline=11417 top=11402 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=11419 w=74 h=1 color=ff1769a4
+text node=289 x=18 baseline=11489 top=11474 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=291 x=34 baseline=11489 top=11474 w=45 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="PANA"
+text node=292 x=79 baseline=11489 top=11474 w=400 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]       Forsberg, D., Ohba, Y., Ed., Patil, B., Tschofenig, H.,"
+rect x=34 y=11491 w=45 h=1 color=ff1769a4
+text node=292 x=18 baseline=11513 top=11498 w=444 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                and A. Yegin, \"Protocol for Carrying Authentication for"
+text node=292 x=18 baseline=11537 top=11522 w=252 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Network Access (PANA)\", "
+text node=294 x=270 baseline=11537 top=11522 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5191" value="RFC 5191"
+text node=295 x=344 baseline=11537 top=11522 w=82 h=19 size=16 bold=false italic=false color=ff263342 href="" value=", May 2008."
+rect x=270 y=11539 w=74 h=1 color=ff1769a4
+text node=295 x=18 baseline=11585 top=11570 w=16 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   ["
+text node=297 x=34 baseline=11585 top=11570 w=54 h=19 size=16 bold=false italic=false color=ff1769a4 href="" value="PKCS5"
+text node=298 x=88 baseline=11585 top=11570 w=410 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]      Kaliski, B., \"PKCS #5: Password-Based Cryptography"
+rect x=34 y=11587 w=54 h=1 color=ff1769a4
+text node=298 x=18 baseline=11609 top=11594 w=255 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                Specification Version 2.0\", "
+text node=300 x=273 baseline=11609 top=11594 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc2898" value="RFC 2898"
+text node=301 x=347 baseline=11609 top=11594 w=130 h=19 size=16 bold=false italic=false color=ff263342 href="" value=", September 2000."
+rect x=273 y=11611 w=74 h=1 color=ff1769a4
+text node=303 x=18 baseline=12713 top=12698 w=427 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                     [Page 9]"
+rect x=0 y=12772 w=988 h=1 color=ffd8e0e7
+rect x=0 y=12773 w=988 h=1 color=ffd8e0e7
+rect x=0 y=12772 w=1 h=2 color=ffd8e0e7
+rect x=987 y=12772 w=1 h=2 color=ffd8e0e7
+rect x=0 y=12792 w=988 h=1376 color=fff1f5f7
+text node=311 x=18 baseline=12849 top=12834 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=312 x=92 baseline=12849 top=12834 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=12851 w=74 h=1 color=ff1769a4
+text node=316 x=18 baseline=12921 top=12906 w=83 h=19 size=16 bold=false italic=false color=ff1769a4 href="#appendix-A" value="Appendix A"
+text node=317 x=101 baseline=12921 top=12906 w=101 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Test Vectors"
+rect x=18 y=12923 w=83 h=1 color=ff1769a4
+text node=318 x=18 baseline=12969 top=12954 w=476 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   This appendix provides test vectors for SHA-256 and SHA-1 hash"
+text node=318 x=18 baseline=12993 top=12978 w=84 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   functions ["
+text node=320 x=102 baseline=12993 top=12978 w=34 h=19 size=16 bold=false italic=false color=ff1769a4 href="#ref-SHS" value="SHS"
+text node=321 x=136 baseline=12993 top=12978 w=8 h=19 size=16 bold=false italic=false color=ff263342 href="" value="]."
+rect x=102 y=12995 w=34 h=1 color=ff1769a4
+text node=324 x=18 baseline=13041 top=13026 w=24 h=19 size=16 bold=false italic=false color=ff1769a4 href="#appendix-A.1" value="A.1"
+text node=325 x=42 baseline=13041 top=13026 w=98 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Test Case 1"
+rect x=18 y=13043 w=24 h=1 color=ff1769a4
+text node=326 x=18 baseline=13089 top=13074 w=222 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Basic test case with SHA-256"
+text node=326 x=18 baseline=13137 top=13122 w=133 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hash = SHA-256"
+text node=326 x=18 baseline=13161 top=13146 w=552 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   IKM  = 0x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b (22 octets)"
+text node=326 x=18 baseline=13185 top=13170 w=382 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   salt = 0x000102030405060708090a0b0c (13 octets)"
+text node=326 x=18 baseline=13209 top=13194 w=280 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   info = 0xf0f1f2f3f4f5f6f7f8f9 (10 octets)"
+text node=326 x=18 baseline=13233 top=13218 w=68 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   L    = 42"
+text node=326 x=18 baseline=13281 top=13266 w=359 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   PRK  = 0x077709362c2e32df0ddc3f0dc47bba63"
+text node=326 x=18 baseline=13305 top=13290 w=397 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          90b6c73bb50f9c3122ec844ad7c2b3e5 (32 octets)"
+text node=326 x=18 baseline=13329 top=13314 w=352 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   OKM  = 0x3cb25f25faacd57a90434f64d0362f2a"
+text node=326 x=18 baseline=13353 top=13338 w=313 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          2d2d0a90cf1a5a4c5db02d56ecc4c5bf"
+text node=326 x=18 baseline=13377 top=13362 w=298 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          34007208d5b887185865 (42 octets)"
+text node=328 x=18 baseline=14145 top=14130 w=432 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                    [Page 10]"
+rect x=0 y=14204 w=988 h=1 color=ffd8e0e7
+rect x=0 y=14205 w=988 h=1 color=ffd8e0e7
+rect x=0 y=14204 w=1 h=2 color=ffd8e0e7
+rect x=987 y=14204 w=1 h=2 color=ffd8e0e7
+rect x=0 y=14224 w=988 h=1376 color=fff1f5f7
+text node=336 x=18 baseline=14281 top=14266 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=337 x=92 baseline=14281 top=14266 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=14283 w=74 h=1 color=ff1769a4
+text node=341 x=18 baseline=14353 top=14338 w=24 h=19 size=16 bold=false italic=false color=ff1769a4 href="#appendix-A.2" value="A.2"
+text node=342 x=42 baseline=14353 top=14338 w=98 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Test Case 2"
+rect x=18 y=14355 w=24 h=1 color=ff1769a4
+text node=343 x=18 baseline=14401 top=14386 w=329 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Test with SHA-256 and longer inputs/outputs"
+text node=343 x=18 baseline=14449 top=14434 w=133 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hash = SHA-256"
+text node=343 x=18 baseline=14473 top=14458 w=360 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   IKM  = 0x000102030405060708090a0b0c0d0e0f"
+text node=343 x=18 baseline=14497 top=14482 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          101112131415161718191a1b1c1d1e1f"
+text node=343 x=18 baseline=14521 top=14506 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          202122232425262728292a2b2c2d2e2f"
+text node=343 x=18 baseline=14545 top=14530 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          303132333435363738393a3b3c3d3e3f"
+text node=343 x=18 baseline=14569 top=14554 w=400 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          404142434445464748494a4b4c4d4e4f (80 octets)"
+text node=343 x=18 baseline=14593 top=14578 w=353 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   salt = 0x606162636465666768696a6b6c6d6e6f"
+text node=343 x=18 baseline=14617 top=14602 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          707172737475767778797a7b7c7d7e7f"
+text node=343 x=18 baseline=14641 top=14626 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          808182838485868788898a8b8c8d8e8f"
+text node=343 x=18 baseline=14665 top=14650 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          909192939495969798999a9b9c9d9e9f"
+text node=343 x=18 baseline=14689 top=14674 w=400 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          a0a1a2a3a4a5a6a7a8a9aaabacadaeaf (80 octets)"
+text node=343 x=18 baseline=14713 top=14698 w=354 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   info = 0xb0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
+text node=343 x=18 baseline=14737 top=14722 w=306 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"
+text node=343 x=18 baseline=14761 top=14746 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
+text node=343 x=18 baseline=14785 top=14770 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          e0e1e2e3e4e5e6e7e8e9eaebecedeeef"
+text node=343 x=18 baseline=14809 top=14794 w=320 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff (80 octets)"
+text node=343 x=18 baseline=14833 top=14818 w=68 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   L    = 82"
+text node=343 x=18 baseline=14881 top=14866 w=368 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   PRK  = 0x06a6b88c5853361a06104c9ceb35b45c"
+text node=343 x=18 baseline=14905 top=14890 w=389 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          ef760014904671014a193f40c15fc244 (32 octets)"
+text node=343 x=18 baseline=14929 top=14914 w=366 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   OKM  = 0xb11e398dc80327a1c8e7f78c596a4934"
+text node=343 x=18 baseline=14953 top=14938 w=309 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          4f012eda2d4efad8a050cc4c19afa97c"
+text node=343 x=18 baseline=14977 top=14962 w=324 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          59045a99cac7827271cb41c65e590e09"
+text node=343 x=18 baseline=15001 top=14986 w=321 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          da3275600c2f09b8367793a9aca3db71"
+text node=343 x=18 baseline=15025 top=15010 w=311 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          cc30c58179ec3e87c14c01d5c1f3434f"
+text node=343 x=18 baseline=15049 top=15034 w=154 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          1d87 (82 octets)"
+text node=346 x=18 baseline=15097 top=15082 w=24 h=19 size=16 bold=false italic=false color=ff1769a4 href="#appendix-A.3" value="A.3"
+text node=347 x=42 baseline=15097 top=15082 w=98 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Test Case 3"
+rect x=18 y=15099 w=24 h=1 color=ff1769a4
+text node=348 x=18 baseline=15145 top=15130 w=320 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Test with SHA-256 and zero-length salt/info"
+text node=348 x=18 baseline=15193 top=15178 w=133 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hash = SHA-256"
+text node=348 x=18 baseline=15217 top=15202 w=552 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   IKM  = 0x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b (22 octets)"
+text node=348 x=18 baseline=15241 top=15226 w=119 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   salt = (0 octets)"
+text node=348 x=18 baseline=15265 top=15250 w=120 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   info = (0 octets)"
+text node=348 x=18 baseline=15289 top=15274 w=68 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   L    = 42"
+text node=348 x=18 baseline=15337 top=15322 w=351 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   PRK  = 0x19ef24a32c717b167f33a91d6f648bdf"
+text node=348 x=18 baseline=15361 top=15346 w=396 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          96596776afdb6377ac434c1c293ccb04 (32 octets)"
+text node=348 x=18 baseline=15385 top=15370 w=362 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   OKM  = 0x8da4e775a563c18f715f802a063c5a31"
+text node=348 x=18 baseline=15409 top=15394 w=315 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          b8a11f5c5ee1879ec3454e5f3c738d2d"
+text node=348 x=18 baseline=15433 top=15418 w=292 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          9d201395faa4b61a96c8 (42 octets)"
+text node=350 x=18 baseline=15577 top=15562 w=432 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                    [Page 11]"
+rect x=0 y=15636 w=988 h=1 color=ffd8e0e7
+rect x=0 y=15637 w=988 h=1 color=ffd8e0e7
+rect x=0 y=15636 w=1 h=2 color=ffd8e0e7
+rect x=987 y=15636 w=1 h=2 color=ffd8e0e7
+rect x=0 y=15656 w=988 h=1376 color=fff1f5f7
+text node=358 x=18 baseline=15713 top=15698 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=359 x=92 baseline=15713 top=15698 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=15715 w=74 h=1 color=ff1769a4
+text node=363 x=18 baseline=15785 top=15770 w=24 h=19 size=16 bold=false italic=false color=ff1769a4 href="#appendix-A.4" value="A.4"
+text node=364 x=42 baseline=15785 top=15770 w=98 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Test Case 4"
+rect x=18 y=15787 w=24 h=1 color=ff1769a4
+text node=365 x=18 baseline=15833 top=15818 w=204 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Basic test case with SHA-1"
+text node=365 x=18 baseline=15881 top=15866 w=115 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hash = SHA-1"
+text node=365 x=18 baseline=15905 top=15890 w=354 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   IKM  = 0x0b0b0b0b0b0b0b0b0b0b0b (11 octets)"
+text node=365 x=18 baseline=15929 top=15914 w=382 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   salt = 0x000102030405060708090a0b0c (13 octets)"
+text node=365 x=18 baseline=15953 top=15938 w=280 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   info = 0xf0f1f2f3f4f5f6f7f8f9 (10 octets)"
+text node=365 x=18 baseline=15977 top=15962 w=68 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   L    = 42"
+text node=365 x=18 baseline=16025 top=16010 w=504 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   PRK  = 0x9b6c18c432a7bf8f0e71c8eb88f4b30baa2ba243 (20 octets)"
+text node=365 x=18 baseline=16049 top=16034 w=364 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   OKM  = 0x085a01ea1b10f36933068b56efa5ad81"
+text node=365 x=18 baseline=16073 top=16058 w=307 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          a4f14b822f5b091568a9cdd4f155fda2"
+text node=365 x=18 baseline=16097 top=16082 w=287 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          c22e422478d305f3f896 (42 octets)"
+text node=368 x=18 baseline=16145 top=16130 w=24 h=19 size=16 bold=false italic=false color=ff1769a4 href="#appendix-A.5" value="A.5"
+text node=369 x=42 baseline=16145 top=16130 w=98 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Test Case 5"
+rect x=18 y=16147 w=24 h=1 color=ff1769a4
+text node=370 x=18 baseline=16193 top=16178 w=311 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Test with SHA-1 and longer inputs/outputs"
+text node=370 x=18 baseline=16241 top=16226 w=115 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hash = SHA-1"
+text node=370 x=18 baseline=16265 top=16250 w=360 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   IKM  = 0x000102030405060708090a0b0c0d0e0f"
+text node=370 x=18 baseline=16289 top=16274 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          101112131415161718191a1b1c1d1e1f"
+text node=370 x=18 baseline=16313 top=16298 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          202122232425262728292a2b2c2d2e2f"
+text node=370 x=18 baseline=16337 top=16322 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          303132333435363738393a3b3c3d3e3f"
+text node=370 x=18 baseline=16361 top=16346 w=400 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          404142434445464748494a4b4c4d4e4f (80 octets)"
+text node=370 x=18 baseline=16385 top=16370 w=353 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   salt = 0x606162636465666768696a6b6c6d6e6f"
+text node=370 x=18 baseline=16409 top=16394 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          707172737475767778797a7b7c7d7e7f"
+text node=370 x=18 baseline=16433 top=16418 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          808182838485868788898a8b8c8d8e8f"
+text node=370 x=18 baseline=16457 top=16442 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          909192939495969798999a9b9c9d9e9f"
+text node=370 x=18 baseline=16481 top=16466 w=400 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          a0a1a2a3a4a5a6a7a8a9aaabacadaeaf (80 octets)"
+text node=370 x=18 baseline=16505 top=16490 w=354 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   info = 0xb0b1b2b3b4b5b6b7b8b9babbbcbdbebf"
+text node=370 x=18 baseline=16529 top=16514 w=306 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"
+text node=370 x=18 baseline=16553 top=16538 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
+text node=370 x=18 baseline=16577 top=16562 w=322 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          e0e1e2e3e4e5e6e7e8e9eaebecedeeef"
+text node=370 x=18 baseline=16601 top=16586 w=320 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff (80 octets)"
+text node=370 x=18 baseline=16625 top=16610 w=68 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   L    = 82"
+text node=370 x=18 baseline=16673 top=16658 w=510 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   PRK  = 0x8adae09a2a307059478d309b26c4115a224cfaf6 (20 octets)"
+text node=370 x=18 baseline=16697 top=16682 w=362 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   OKM  = 0x0bd770a74d1160f7c9f12cd5912a06eb"
+text node=370 x=18 baseline=16721 top=16706 w=302 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          ff6adcae899d92191fe4305673ba2ffe"
+text node=370 x=18 baseline=16745 top=16730 w=307 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          8fa3f1a4e5ad79f3f334b3b202b2173c"
+text node=370 x=18 baseline=16769 top=16754 w=315 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          486ea37ce3d397ed034c7f9dfeb15c5e"
+text node=370 x=18 baseline=16793 top=16778 w=311 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          927336d0441f4c4300e2cff0d0900b52"
+text node=370 x=18 baseline=16817 top=16802 w=154 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          d3b4 (82 octets)"
+text node=372 x=18 baseline=17009 top=16994 w=432 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                    [Page 12]"
+rect x=0 y=17068 w=988 h=1 color=ffd8e0e7
+rect x=0 y=17069 w=988 h=1 color=ffd8e0e7
+rect x=0 y=17068 w=1 h=2 color=ffd8e0e7
+rect x=987 y=17068 w=1 h=2 color=ffd8e0e7
+rect x=0 y=17088 w=988 h=1376 color=fff1f5f7
+text node=380 x=18 baseline=17145 top=17130 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=381 x=92 baseline=17145 top=17130 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=17147 w=74 h=1 color=ff1769a4
+text node=385 x=18 baseline=17217 top=17202 w=24 h=19 size=16 bold=false italic=false color=ff1769a4 href="#appendix-A.6" value="A.6"
+text node=386 x=42 baseline=17217 top=17202 w=98 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Test Case 6"
+rect x=18 y=17219 w=24 h=1 color=ff1769a4
+text node=387 x=18 baseline=17265 top=17250 w=302 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Test with SHA-1 and zero-length salt/info"
+text node=387 x=18 baseline=17313 top=17298 w=115 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hash = SHA-1"
+text node=387 x=18 baseline=17337 top=17322 w=552 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   IKM  = 0x0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b (22 octets)"
+text node=387 x=18 baseline=17361 top=17346 w=119 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   salt = (0 octets)"
+text node=387 x=18 baseline=17385 top=17370 w=120 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   info = (0 octets)"
+text node=387 x=18 baseline=17409 top=17394 w=68 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   L    = 42"
+text node=387 x=18 baseline=17457 top=17442 w=508 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   PRK  = 0xda8c8a73c7fa77288ec6f5e7c297786aa0d32d01 (20 octets)"
+text node=387 x=18 baseline=17481 top=17466 w=368 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   OKM  = 0x0ac1af7002b3d761d1e55298da9d0506"
+text node=387 x=18 baseline=17505 top=17490 w=323 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          b9ae52057220a306e07b6b87e8df21d0"
+text node=387 x=18 baseline=17529 top=17514 w=298 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          ea00033de03984d34918 (42 octets)"
+text node=390 x=18 baseline=17577 top=17562 w=24 h=19 size=16 bold=false italic=false color=ff1769a4 href="#appendix-A.7" value="A.7"
+text node=391 x=42 baseline=17577 top=17562 w=98 h=19 size=16 bold=false italic=false color=ff263342 href="" value=".  Test Case 7"
+rect x=18 y=17579 w=24 h=1 color=ff1769a4
+text node=392 x=18 baseline=17625 top=17610 w=494 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Test with SHA-1, salt not provided (defaults to HashLen zero octets),"
+text node=392 x=18 baseline=17649 top=17634 w=122 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   zero-length info"
+text node=392 x=18 baseline=17697 top=17682 w=115 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hash = SHA-1"
+text node=392 x=18 baseline=17721 top=17706 w=530 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   IKM  = 0x0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c (22 octets)"
+text node=392 x=18 baseline=17745 top=17730 w=379 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   salt = not provided (defaults to HashLen zero octets)"
+text node=392 x=18 baseline=17769 top=17754 w=120 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   info = (0 octets)"
+text node=392 x=18 baseline=17793 top=17778 w=68 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   L    = 42"
+text node=392 x=18 baseline=17841 top=17826 w=514 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   PRK  = 0x2adccada18779e7c2077ad2eb19d3f3e731385dd (20 octets)"
+text node=392 x=18 baseline=17865 top=17850 w=358 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   OKM  = 0x2c91117204d745f3500d636a62f64f0a"
+text node=392 x=18 baseline=17889 top=17874 w=318 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          b3bae548aa53d423b0d1f27ebba6f5e5"
+text node=392 x=18 baseline=17913 top=17898 w=289 h=19 size=16 bold=false italic=false color=ff263342 href="" value="          673a081d70cce7acfc48 (42 octets)"
+text node=394 x=18 baseline=18441 top=18426 w=432 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                    [Page 13]"
+rect x=0 y=18500 w=988 h=1 color=ffd8e0e7
+rect x=0 y=18501 w=988 h=1 color=ffd8e0e7
+rect x=0 y=18500 w=1 h=2 color=ffd8e0e7
+rect x=987 y=18500 w=1 h=2 color=ffd8e0e7
+rect x=0 y=18520 w=988 h=1376 color=fff1f5f7
+text node=402 x=18 baseline=18577 top=18562 w=74 h=19 size=16 bold=false italic=false color=ff1769a4 href="./rfc5869" value="RFC 5869"
+text node=403 x=92 baseline=18577 top=18562 w=392 h=19 size=16 bold=false italic=false color=ff263342 href="" value="                 Extract-and-Expand HKDF                May 2010"
+rect x=18 y=18579 w=74 h=1 color=ff1769a4
+text node=404 x=18 baseline=18649 top=18634 w=138 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Authors' Addresses"
+text node=404 x=18 baseline=18697 top=18682 w=124 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hugo Krawczyk"
+text node=404 x=18 baseline=18721 top=18706 w=113 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   IBM Research"
+text node=404 x=18 baseline=18745 top=18730 w=129 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   19 Skyline Drive"
+text node=404 x=18 baseline=18769 top=18754 w=170 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Hawthorne, NY 10532"
+text node=404 x=18 baseline=18793 top=18778 w=46 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   USA"
+text node=404 x=18 baseline=18841 top=18826 w=228 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   EMail: hugokraw@us.ibm.com"
+text node=404 x=18 baseline=18913 top=18898 w=100 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Pasi Eronen"
+text node=404 x=18 baseline=18937 top=18922 w=179 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Nokia Research Center"
+text node=404 x=18 baseline=18961 top=18946 w=106 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   P.O. Box 407"
+text node=404 x=18 baseline=18985 top=18970 w=170 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   FI-00045 Nokia Group"
+text node=404 x=18 baseline=19009 top=18994 w=66 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   Finland"
+text node=404 x=18 baseline=19057 top=19042 w=234 h=19 size=16 bold=false italic=false color=ff263342 href="" value="   EMail: pasi.eronen@nokia.com"
+text node=404 x=18 baseline=19873 top=19858 w=432 h=19 size=16 bold=false italic=false color=ff263342 href="" value="Krawczyk & Eronen             Informational                    [Page 14]"

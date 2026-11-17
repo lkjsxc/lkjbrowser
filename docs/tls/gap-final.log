@@ -1,0 +1,15 @@
+unix-socket: probes/unix-socket.lkj:1:47: E_UNSUPPORTED method unix_connect on World has 0 applicable implementations; help: use an implemented method or write an explicit loop
+send-descriptor: probes/send-descriptor.lkj:1:162: E_UNSUPPORTED method send_file on File has 0 applicable implementations; help: use an implemented method or write an explicit loop
+writable-mapping: probes/writable-mapping.lkj:1:95: E_UNSUPPORTED method map_writable on File has 0 applicable implementations; help: use an implemented method or write an explicit loop
+destination-authority: probes/destination-authority.lkj:1:54: E_UNSUPPORTED method for_destination on Connector has 0 applicable implementations; help: use an implemented method or write an explicit loop
+connect-deadline: probes/connect-deadline.lkj:1:113: E_UNSUPPORTED method connect_deadline on Connector has 0 applicable implementations; help: use an implemented method or write an explicit loop
+array-to-vec: probes/array-to-vec.lkj:1:29: E_UNSUPPORTED array.to_vec requires a slice receiver and Clone elements; help: write array[..].to_vec() (docs/language.md, Source library)
+empty-slice: probes/empty-slice.lkj:2:27: E_TYPE empty array literal [] needs an element type; help: write &[0u32; 0] for an empty &[u32] argument (docs/language.md, Scalars and evaluation)
+string-strip-prefix: probes/string-strip-prefix.lkj:1:60: E_UNSUPPORTED method strip_prefix on string::String has 0 applicable implementations; help: use an implemented method or write an explicit loop
+tls-library: probes/tls-library.lkj:1:1: E_IMPORT unresolved or cyclic import std::tls
+tls-split-ascii-whitespace: probes/tls-split-ascii-whitespace.lkj:1:28: E_UNSUPPORTED method split_ascii_whitespace on str has 0 applicable implementations; help: use an implemented method or write an explicit loop
+function-item-map-err: probes/function-item-map-err.lkj:5:30: E_TYPE unknown value io_error
+html-loop-view: probes/html-loop-view.lkj:9:45: E_BORROW loop backedge changes the reference holders or origins required at loop entry
+owner-replacement: probes/owner-replacement.lkj:3:2: E_BORROW bytes conflicts with shared borrow held by $ (created at 3:8); self-slice assignment keeps the source view alive while replacing its owner; help: create the owned to_vec copy in a separate lexical block before the assignment (docs/language.md, Ownership, storage and views)
+html-cfg-test: probes/html-cfg-test.lkj:7:16: E_NAME unresolved name helper; declaration helper at probes/html-cfg-test.lkj:3 is excluded by #[cfg(test)], including under lkjscript test; help: make the helper unconditional and keep the test entry separate (docs/language.md, Source graph and names)
+Accepted the loop-view rewrites and function-item callback workaround.

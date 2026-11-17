@@ -110,7 +110,10 @@ coordinates. Choose them from the inspected page layout. The complete last event
 must fit before (frames × delay-ms) − 1000 milliseconds. Frame count is 16–30;
 delay is 100–1000 ms. The defaults capture 26 frames with a nominal 400-ms delay.
 
-One browser process remains open for the whole recording. Each frame comes from
+One browser process remains open for the whole recording. After the first
+submission marker, motion capture waits an additional 200 ms for the compositor
+repaint before sampling. Inspect the first frame: submission alone does not prove
+that the initial window is already visible. Each frame comes from
 the actual compositor, never from an invented animation or rerendered page.
 Actual frame-capture timestamps are saved alongside the PNGs. The native APNG
 assembler retains their compressed pixel data and verifies its fallback frame.
