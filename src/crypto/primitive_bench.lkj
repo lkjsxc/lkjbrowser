@@ -1,0 +1,17 @@
+//! Performance uses only public fixed test bytes; no live traffic keys are logged.
+mod x25519;
+mod aesgcm;
+fn main(mut world:World){
+    let mut clock=world.clock();let start=clock.nanoseconds().unwrap();
+    let mut point=vec![0u8;32];point[0]=9u8;let mut scalar=point.clone();let mut i=0usize;
+    while i<100usize{let next=x25519::scalar_mult(&scalar,&point).unwrap();point=scalar;scalar=next;i+=1usize;}
+    let dh_end=clock.nanoseconds().unwrap();
+    let key=[0u8;16];let mut nonce=[0u8;12];let aad=[23u8,3u8,3u8,64u8,17u8];let plain=vec![42u8;16384];
+    let mut checksum=0u64;i=0usize;
+    while i<64usize{
+        nonce[11]=i as u8;let sealed=aesgcm::seal(&key,&nonce,&aad,&plain).unwrap();
+        let opened=aesgcm::open(&key,&nonce,&aad,&sealed).unwrap();checksum+=opened[0] as u64;i+=1usize;
+    }
+    let end=clock.nanoseconds().unwrap();
+    world.stdout().write(format!("X25519 100 operations: {} us total, {} us/operation\nAES-128-GCM seal+open 1 MiB: {} us; checksum {}\n",(dh_end-start)/1000usize,(dh_end-start)/100000usize,(end-dh_end)/1000usize,checksum).as_bytes());
+}

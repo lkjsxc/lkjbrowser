@@ -1,0 +1,90 @@
+//! X25519 from RFC 7748, using sixteen radix-2^16 limbs and u64 products.
+//! Every field operation normalizes to 15 full 16-bit limbs plus a 15-bit top.
+//! A convolution cell is below 16*(65535^2); folding high cells by 38 stays
+//! below 2^42. Four fixed carry passes cover every operation's carry bound.
+//! Neither emitted-code timing nor reliable secret erasure has been reviewed.
+
+fn reduced(mut x:[u64;16])->[u64;16]{
+    let mut pass=0usize;
+    while pass<4usize{
+        let mut i=0usize;
+        while i<15usize{let carry=x[i]>>16usize;x[i]&=65535u64;x[i+1usize]+=carry;i+=1usize;}
+        let carry=x[15]>>15usize;x[15]&=32767u64;x[0]+=carry*19u64;
+        pass+=1usize;
+    }
+    x
+}
+fn add(a:&[u64;16],b:&[u64;16])->[u64;16]{
+    let mut x=[0u64;16];let mut i=0usize;
+    while i<16usize{x[i]=a[i]+b[i];i+=1usize;}reduced(x)
+}
+fn sub(a:&[u64;16],b:&[u64;16])->[u64;16]{
+    let mut x=[0u64;16];let mut i=0usize;
+    while i<16usize{
+        let bias=if i==0usize{131034u64}else if i==15usize{65534u64}else{131070u64};
+        x[i]=a[i]+bias-b[i];i+=1usize;
+    }
+    reduced(x)
+}
+fn mul(a:&[u64;16],b:&[u64;16])->[u64;16]{
+    let mut product=[0u64;32];let mut i=0usize;
+    while i<16usize{let mut j=0usize;while j<16usize{product[i+j]+=a[i]*b[j];j+=1usize;}i+=1usize;}
+    let mut x=[0u64;16];i=0usize;
+    while i<16usize{x[i]=product[i]+38u64*product[i+16usize];i+=1usize;}
+    reduced(x)
+}
+fn square(a:&[u64;16])->[u64;16]{mul(a,a)}
+fn multiply_small(a:&[u64;16],constant:u64)->[u64;16]{
+    let mut x=[0u64;16];let mut i=0usize;while i<16usize{x[i]=a[i]*constant;i+=1usize;}reduced(x)
+}
+fn invert(a:&[u64;16])->[u64;16]{
+    // p-2=2^255-21: bits 254..5 all set, low bits 01011.
+    let mut r=[0u64;16];r[0]=1u64;let mut bit=255usize;
+    while bit>0usize{
+        bit-=1usize;r=square(&r);
+        if bit>=5usize || bit==3usize || bit==1usize || bit==0usize{r=mul(&r,a);}
+    }
+    r
+}
+fn swap(a:&mut [u64;16],b:&mut [u64;16],bit:u64){
+    let mask=0u64.wrapping_sub(bit);let mut i=0usize;
+    while i<16usize{let difference=(a[i]^b[i])&mask;a[i]^=difference;b[i]^=difference;i+=1usize;}
+}
+fn decode(bytes:&[u8])->[u64;16]{
+    let mut x=[0u64;16];let mut i=0usize;
+    while i<16usize{x[i]=(bytes[2usize*i] as u64)|((bytes[2usize*i+1usize] as u64)<<8usize);i+=1usize;}
+    x[15]&=32767u64;reduced(x)
+}
+fn encode(value:&[u64;16])->Vec<u8>{
+    let x=reduced(*value);let mut candidate=[0u64;16];let mut borrow=0u64;let mut i=0usize;
+    while i<16usize{
+        let p=if i==0usize{65517u64}else if i==15usize{32767u64}else{65535u64};
+        let difference=65536u64+x[i]-p-borrow;
+        candidate[i]=difference&65535u64;borrow=1u64-(difference>>16usize);i+=1usize;
+    }
+    let mask=0u64.wrapping_sub(1u64-borrow);
+    let mut out=vec![0u8;32];i=0usize;
+    while i<16usize{let limb=(candidate[i]&mask)|(x[i]&!mask);out[2usize*i]=limb as u8;out[2usize*i+1usize]=(limb>>8usize) as u8;i+=1usize;}
+    out
+}
+pub fn scalar_mult(scalar:&[u8],point:&[u8])->Result<Vec<u8>,String>{
+    if scalar.len()!=32usize || point.len()!=32usize{return Err("X25519 keys must contain 32 bytes".to_string());}
+    let mut secret=[0u8;32];secret[..].copy_from_slice(scalar);secret[0]&=248u8;secret[31]&=127u8;secret[31]|=64u8;
+    let x1=decode(point);let mut x2=[0u64;16];x2[0]=1u64;
+    let mut z2=[0u64;16];let mut x3=x1;let mut z3=[0u64;16];z3[0]=1u64;
+    let mut previous=0u64;let mut at=255usize;
+    while at>0usize{
+        at-=1usize;let bit=((secret[at/8usize]>>(at%8usize))&1u8) as u64;
+        swap(&mut x2,&mut x3,previous^bit);swap(&mut z2,&mut z3,previous^bit);previous=bit;
+        let a=add(&x2,&z2);let aa=square(&a);let b=sub(&x2,&z2);let bb=square(&b);let e=sub(&aa,&bb);
+        let c=add(&x3,&z3);let d=sub(&x3,&z3);let da=mul(&d,&a);let cb=mul(&c,&b);
+        let sum=add(&da,&cb);x3=square(&sum);
+        let difference=sub(&da,&cb);let difference_squared=square(&difference);z3=mul(&x1,&difference_squared);
+        x2=mul(&aa,&bb);let scaled=multiply_small(&e,121665u64);let factor=add(&aa,&scaled);z2=mul(&e,&factor);
+    }
+    swap(&mut x2,&mut x3,previous);swap(&mut z2,&mut z3,previous);
+    let reciprocal=invert(&z2);let result=mul(&x2,&reciprocal);let output=encode(&result);
+    let mut nonzero=0u8;let mut i=0usize;while i<32usize{nonzero|=output[i];i+=1usize;}
+    if nonzero==0u8{return Err("The X25519 peer key produced an unusable shared secret".to_string());}
+    Ok(output)
+}
