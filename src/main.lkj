@@ -265,7 +265,7 @@ impl Browser {
         let hover=if self.hover.is_empty() || self.hover.starts_with("about:"){self.hover.clone()}
             else{net::resolve(self.url.as_str(),self.hover.as_str())};
         chrome::View{width:self.width,height:self.height,url:self.url.clone(),address:self.address.clone(),
-            title:self.title.clone(),hover:hover,verified:self.status=="Verified HTTPS",
+            hover:hover,verified:self.status=="Verified HTTPS",
             failed:self.status=="Unable to load this address",editing:self.editing,select_all:self.select_all,
             can_back:self.history_at>0usize,can_forward:self.history_at+1usize<self.history.len(),
             scroll:self.scroll,max_scroll:self.max_scroll(),page_height:self.page.height}

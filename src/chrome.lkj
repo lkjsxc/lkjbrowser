@@ -44,7 +44,7 @@ pub enum Action { None, Consumed, Back, Forward, Reload, Close, Edit, Move, Scro
 
 /// Everything the chrome shows, copied from the browser for one event or frame.
 pub struct View {
-    pub width: i32, pub height: i32, pub url: String, pub address: String, pub title: String, pub hover: String,
+    pub width: i32, pub height: i32, pub url: String, pub address: String, pub hover: String,
     pub verified: bool, pub failed: bool, pub editing: bool, pub select_all: bool,
     pub can_back: bool, pub can_forward: bool, pub scroll: i32, pub max_scroll: i32, pub page_height: i32,
 }
@@ -306,13 +306,6 @@ fn field(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View, p: &P
         let after = fit(font, tail.as_str(), TEXT, right - pen);
         pen += canvas.text(font, after.as_str(), TEXT, pen, BASELINE, MUTED);
     }
-    // The page title sits at the far end of the field when the address leaves room for it.
-    let space = right - pen - 32i32;
-    if space >= 96i32 && !view.title.is_empty() && !view.failed {
-        let title = fit(font, view.title.as_str(), SMALL, space);
-        let title_width = font.text_width(title.as_str(), SMALL);
-        canvas.text(font, title.as_str(), SMALL, right - title_width, BASELINE, MUTED);
-    }
 }
 fn scrollbar(state: &State, canvas: &mut Canvas, view: &View) {
     if view.max_scroll <= 0i32 { return; }
@@ -372,7 +365,7 @@ pub fn paint(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View) {
 
 /// A typical view for the tests below.
 fn sample(width: i32) -> View {
-    View { width, height: 760i32, url: "https://example.com/a".to_string(), address: String::new(), title: String::new(),
+    View { width, height: 760i32, url: "https://example.com/a".to_string(), address: String::new(),
         hover: String::new(), verified: true, failed: false, editing: false, select_all: false,
         can_back: true, can_forward: false, scroll: 0i32, max_scroll: 2000i32, page_height: 2708i32 }
 }
