@@ -5,6 +5,8 @@ mod resources;
 mod font;
 mod paint;
 mod chrome;
+mod address;
+mod address_words;
 mod html;
 mod css;
 mod layout;
@@ -124,22 +126,24 @@ fn fit(font:&Font,text:&str,size:i32,max_width:i32)->String{
     }
     out.push('…');out
 }
-struct Modifiers {shift:u8,ctrl:u8}
+struct Modifiers {shift:u8,ctrl:u8,alt:u8}
 impl Modifiers{
     fn update(&mut self,key:u32,pressed:bool)->bool{
-        let mask=if key==42u32 || key==29u32{1u8}else{2u8};
+        let mask=if key==42u32 || key==29u32 || key==56u32{1u8}else{2u8};
         if key==42u32 || key==54u32{
             if pressed{self.shift|=mask;}else{self.shift&=!mask;}true
         }else if key==29u32 || key==97u32{
             if pressed{self.ctrl|=mask;}else{self.ctrl&=!mask;}true
+        }else if key==56u32 || key==100u32{
+            if pressed{self.alt|=mask;}else{self.alt&=!mask;}true
         }else{false}
     }
 }
 struct HistoryEntry {url:String,allow_file:bool}
 struct LoadedImage { src:String,image:png::Image }
 struct Browser {
-    fonts:Fonts,page:layout::Page,document:html::Document,computed:Vec<css::Style>,url:String,address:String,source:String,title:String,status:String,
-    width:i32,height:i32,scroll:i32,editing:bool,select_all:bool,modifiers:Modifiers,
+    fonts:Fonts,page:layout::Page,document:html::Document,computed:Vec<css::Style>,url:String,address:address::Editor,source:String,title:String,status:String,
+    width:i32,height:i32,scroll:i32,editing:bool,modifiers:Modifiers,
     history:Vec<HistoryEntry>,history_at:usize,hover:String,dns:String,images:Vec<LoadedImage>,image_sizes:Vec<layout::ImageSize>,file_authority:bool,
     trust_file:String,paint_started:Option<usize>,styles:String,image_attempted:Vec<String>,chrome:chrome::State,
 }
@@ -148,9 +152,9 @@ impl Browser {
         let document=html::parse("<html><body></body></html>");
         let page=layout::build_in_viewport(&document,width,width,height-TOP-BOTTOM,&fonts.normal,&fonts.bold,&fonts.italic,&fonts.bolditalic);
         let computed=css::compute_viewport(&document,width,height-TOP-BOTTOM);
-        Browser {fonts,page,document,computed,url:String::new(),address:String::new(),source:String::new(),
+        Browser {fonts,page,document,computed,url:String::new(),address:address::Editor::new(),source:String::new(),
             title:String::new(),status:String::new(),width,height,scroll:0i32,editing:false,
-            select_all:false,modifiers:Modifiers{shift:0u8,ctrl:0u8},history:Vec::new(),history_at:0usize,
+            modifiers:Modifiers{shift:0u8,ctrl:0u8,alt:0u8},history:Vec::new(),history_at:0usize,
             hover:String::new(),dns,images:Vec::new(),image_sizes:Vec::new(),file_authority:true,
             trust_file:net::SYSTEM_TRUST.to_string(),paint_started:None,styles:String::new(),image_attempted:Vec::new(),chrome:chrome::State::new()}
     }
@@ -223,11 +227,11 @@ impl Browser {
                 }
             }
         };
-        self.source=source;self.url=final_address;self.address=self.url.clone();
+        self.source=source;self.url=final_address;self.address.reset(self.url.as_str(),false);
         self.images.clear();self.image_sizes.clear();self.image_attempted.clear();
         self.load_styles(world);
         self.rebuild_document();
-        self.scroll=0i32;self.editing=false;self.select_all=false;self.hover.clear();
+        self.scroll=0i32;self.editing=false;self.hover.clear();
         self.relayout();
         self.load_images(world);
         if let Some((_,fragment))=self.url.as_str().split_once('#'){
@@ -292,7 +296,7 @@ impl Browser {
     fn follow(&mut self,world:&mut World,href:&str){
         if href.starts_with('#'){
             self.scroll=self.page.anchor(&href[1..]).max(0i32).min(self.max_scroll());
-            self.url=net::resolve(self.url.as_str(),href);self.address=self.url.clone();
+            self.url=net::resolve(self.url.as_str(),href);self.address.reset(self.url.as_str(),false);
         }else{
             let address=if href.starts_with("about:"){href.to_string()}else{net::resolve(self.url.as_str(),href)};
             let allowed=self.local_files_allowed();
@@ -320,9 +324,10 @@ impl Browser {
         // The bubble shows where a link leads, not how the page spelled it.
         let hover=if self.hover.is_empty() || self.hover.starts_with("about:"){self.hover.clone()}
             else{net::resolve(self.url.as_str(),self.hover.as_str())};
-        chrome::View{width:self.width,height:self.height,url:self.url.clone(),address:self.address.clone(),
+        chrome::View{width:self.width,height:self.height,url:self.url.clone(),address:self.address.text.clone(),
             hover:hover,verified:self.status=="Verified HTTPS",
-            failed:self.status=="Unable to load this address",editing:self.editing,select_all:self.select_all,
+            failed:self.status=="Unable to load this address",editing:self.editing,
+            caret:self.address.caret,anchor:self.address.anchor,edit_offset:self.address.offset,
             can_back:self.history_at>0usize,can_forward:self.history_at+1usize<self.history.len(),
             scroll:self.scroll,max_scroll:self.max_scroll(),page_height:self.page.height}
     }
@@ -331,9 +336,12 @@ impl Browser {
         match event{
             Event::Key(key,true)=>{
                 if self.modifiers.ctrl!=0u8 && key==19u32{return self.url.clone();}
-                if self.editing && key==28u32{return net::entered_address(self.address.as_str());}
-                if !self.editing && self.modifiers.ctrl!=0u8 && key==105u32 && self.history_at>0usize{
+                if self.editing && key==28u32{return net::entered_address(self.address.text.as_str());}
+                if (self.modifiers.alt!=0u8 || (!self.editing && self.modifiers.ctrl!=0u8)) && key==105u32 && self.history_at>0usize{
                     return self.history[self.history_at-1usize].url.clone();
+                }
+                if self.modifiers.alt!=0u8 && key==106u32 && self.history_at+1usize<self.history.len(){
+                    return self.history[self.history_at+1usize].url.clone();
                 }
             }
             Event::Click(x,y)=>{
@@ -357,31 +365,51 @@ impl Browser {
         }
         String::new()
     }
+    fn edit_address(&mut self){
+        if !self.editing {self.address.reset(self.url.as_str(),true);}
+        else {self.address.select_all();}
+        self.editing=true;self.address.cancel_pointer();self.reveal_address();
+    }
+    fn discard_address(&mut self){
+        self.editing=false;self.address.reset(self.url.as_str(),false);
+    }
+    fn reveal_address(&mut self){
+        let (_,room)=chrome::address_area(self.width);
+        self.address.ensure_visible(&self.fonts.normal,room);
+    }
     fn key(&mut self,world:&mut World,key:u32,pressed:bool)->bool{
         if self.modifiers.update(key,pressed){return true;}
         if !pressed{return true;}
-        if self.modifiers.ctrl!=0u8 && (key==16u32 || key==17u32){return false;}
-        if self.modifiers.ctrl!=0u8 && key==38u32{self.editing=true;self.select_all=true;return true;}
-        if self.modifiers.ctrl!=0u8 && key==19u32{self.reload(world);return true;}
+        let ctrl=self.modifiers.ctrl!=0u8;let shift=self.modifiers.shift!=0u8;let alt=self.modifiers.alt!=0u8;
+        if ctrl && (key==16u32 || key==17u32){return false;}
+        // History chords precede address movement, including while editing.
+        if alt && key==105u32{self.back(world);return true;}
+        if alt && key==106u32{self.forward(world);return true;}
+        if (ctrl && key==38u32) || (alt && key==32u32) || key==64u32{self.edit_address();return true;}
+        if ctrl && key==19u32{self.reload(world);return true;}
         if self.editing{
-            if key==1u32{self.editing=false;self.select_all=false;self.address=self.url.clone();}
-            else if key==28u32{
-                let address=self.address.clone();self.navigate(world,address.as_str(),true);
-            }else if key==14u32{
-                if self.select_all {self.address.clear();self.select_all=false;}
-                else if !self.address.is_empty(){
-                    let mut last=0usize;let mut offset=0usize;
-                    for c in self.address.as_str().chars(){last=offset;offset+=c.len_utf8();}
-                    let shortened={self.address.as_str()[..last].to_string()};
-                    self.address=shortened;
-                }
-            }else if self.modifiers.ctrl==0u8{
-                let byte=wayland::key_ascii(key,self.modifiers.shift!=0u8);
+            self.address.cancel_pointer();
+            if key==1u32{
+                if self.address.text!=self.url{self.address.reset(self.url.as_str(),true);}
+                else{self.discard_address();}
+            }else if key==28u32{
+                let address=self.address.text.clone();self.navigate(world,address.as_str(),true);
+            }else if alt{
+                // A shortcut modifier never inserts the physical key's printable character.
+            }else if key==105u32{self.address.left(ctrl,shift);}
+            else if key==106u32{self.address.right(ctrl,shift);}
+            else if key==102u32{self.address.home(shift);}
+            else if key==107u32{self.address.end(shift);}
+            else if key==14u32{self.address.backspace(ctrl);}
+            else if key==111u32{self.address.delete(ctrl);}
+            else if ctrl && key==30u32{self.address.select_all();}
+            else if !ctrl{
+                let byte=wayland::key_ascii(key,shift);
                 if byte>=32u8 && byte<127u8{
-                    if self.select_all{self.address.clear();self.select_all=false;}
-                    self.address.push(byte as char);
+                    let mut inserted=String::new();inserted.push(byte as char);self.address.insert(inserted.as_str());
                 }
             }
+            self.reveal_address();
         }else{
             if key==108u32{self.move_scroll(72i32);}
             else if key==103u32{self.move_scroll(-72i32);}
@@ -389,7 +417,7 @@ impl Browser {
             else if key==104u32{let step=-(self.height-TOP-BOTTOM-48i32);self.move_scroll(step);}
             else if key==102u32{self.scroll=0i32;}
             else if key==107u32{self.scroll=self.max_scroll();}
-            else if key==105u32 && self.modifiers.ctrl!=0u8{self.back(world);}
+            else if key==105u32 && ctrl{self.back(world);}
         }
         true
     }
@@ -411,6 +439,10 @@ impl Browser {
             Event::Scroll(delta)=>{self.move_scroll(delta);true}
             Event::Key(key,pressed)=>self.key(world,key,pressed),
             Event::Motion(x,y)=>{
+                if self.editing && self.address.dragging{
+                    let (start,room)=chrome::address_area(self.width);
+                    self.address.motion(&self.fonts.normal,start,room,x,y);self.hover.clear();return true;
+                }
                 let view=self.chrome_view();
                 self.hover=match self.chrome.motion(&view,x,y){
                     chrome::Action::Scroll(to)=>{self.scroll=to.max(0i32).min(self.max_scroll());String::new()}
@@ -420,9 +452,16 @@ impl Browser {
                 true
             }
             Event::Click(x,y)=>{
+                if self.editing && !chrome::address_hit(self.width,x,y){self.discard_address();}
                 let view=self.chrome_view();
                 match self.chrome.press(&view,x,y){
-                    chrome::Action::Edit=>{self.editing=true;self.select_all=true;}
+                    chrome::Action::Edit=>{
+                        let entering=!self.editing;
+                        if entering{self.address.reset(self.url.as_str(),true);self.editing=true;self.reveal_address();}
+                        let (start,room)=chrome::address_area(self.width);
+                        let mut clock=world.clock();let now=clock.nanoseconds().unwrap()/1000000usize;
+                        self.address.press(&self.fonts.normal,start,room,x,y,now,entering);
+                    }
                     chrome::Action::Scroll(to)=>{self.scroll=to.max(0i32).min(self.max_scroll());}
                     chrome::Action::None=>{
                         self.editing=false;
@@ -435,6 +474,7 @@ impl Browser {
                 true
             }
             Event::Release(x,y)=>{
+                self.address.release();
                 let view=self.chrome_view();
                 match self.chrome.release(&view,x,y){
                     chrome::Action::Back=>{self.back(world);}
@@ -445,7 +485,7 @@ impl Browser {
                 }
                 true
             }
-            Event::Leave=>{self.chrome.leave();self.hover.clear();true}
+            Event::Leave=>{self.chrome.leave();self.address.cancel_pointer();self.hover.clear();true}
             Event::Resize(_,_)=>true, // First slice advertises fixed minimum/maximum size.
         }
     }
@@ -518,7 +558,7 @@ impl Browser {
             }else if command=="loading"{self.chrome.loading=arg.to_string();}else if command=="open"{self.navigate(world,arg,true);}
             else if command=="follow"{self.follow(world,arg);}
             else if command=="back"{self.back(world);}
-            else if command=="address"{self.editing=true;self.address=arg.to_string();self.select_all=false;}
+            else if command=="address"{self.editing=true;self.address.reset(arg,false);self.reveal_address();}
             else{return Err(format!("Unknown input script command: {}",command));}
         }
         Ok(())
@@ -593,6 +633,21 @@ fn schedule(source:&str)->Result<Vec<(usize,String)>,String>{
     }
     Ok(result)
 }
+/// Deliver only to the unchanged editor that requested the asynchronous transfer.
+fn deliver_clipboard(app:&mut Browser,window:&mut wayland::Wayland,pending:&mut Option<usize>)->bool{
+    // Copy ownership round trips can queue input that must invalidate this paste first.
+    if window.has_deferred_input(){return false;}
+    if let Some(text)=window.take_clipboard(){
+        let expected=*pending;*pending=None;
+        if let Some(revision)=expected{
+            if app.editing && app.address.revision==revision && window.clipboard_available(){
+                app.address.paste(text.as_str());app.reveal_address();return true;
+            }
+        }
+    }
+    if !window.clipboard_pending(){*pending=None;}
+    false
+}
 fn run(world:&mut World)->Result<(),String>{
     let args=world.args();
     if !args.is_empty() && args[0]==b"--fetch-style"[..].to_vec(){return resources::style_worker(world,&args);}
@@ -632,6 +687,7 @@ fn run(world:&mut World)->Result<(),String>{
     let mut action_index=0usize;
     let mut clock=world.clock();let start=clock.nanoseconds().unwrap();
     let mut dirty=true;let mut alive=true;
+    let mut pending_paste:Option<usize>=None;let mut last_drag_tick=0usize;
     while alive{
         if dirty{
             let slot=if window.available(0u32){0u32}else{1u32};
@@ -653,6 +709,21 @@ fn run(world:&mut World)->Result<(),String>{
             action_index+=1usize;changed=true;
         }
         for event in events{
+            if let Event::Key(key,true)=event{
+                if app.editing && app.modifiers.ctrl!=0u8 && app.modifiers.alt==0u8{
+                    if key==46u32 || key==45u32{
+                        let selected=app.address.selected();
+                        if !selected.is_empty(){
+                            let copied=match window.clipboard_copy(selected.as_str()){Ok(ok)=>ok,Err(_)=>false};
+                            if key==45u32 && copied{app.address.remove_selection();app.reveal_address();}
+                        }
+                    }else if key==47u32 && pending_paste.is_none(){
+                        if match window.clipboard_paste(){Ok(ok)=>ok,Err(_)=>false}{
+                            pending_paste=Some(app.address.revision);
+                        }
+                    }
+                }
+            }
             let loading=app.about_to_load(event);
             if !loading.is_empty(){
                 // The fetch blocks this loop: show where we are going before it starts.
@@ -668,6 +739,14 @@ fn run(world:&mut World)->Result<(),String>{
             if !app.event(world,event){alive=false;}
             if app.chrome.take_move(){window.start_move()?;}
             changed=true;
+        }
+        if deliver_clipboard(&mut app,&mut window,&mut pending_paste){changed=true;}
+        if elapsed-last_drag_tick>=50usize{
+            last_drag_tick=elapsed;
+            if app.editing{
+                let (start,room)=chrome::address_area(app.width);
+                if app.address.drag_tick(&app.fonts.normal,start,room){changed=true;}
+            }
         }
         if changed{
             if window_title!=app.title{
@@ -690,7 +769,7 @@ pub fn main(mut world:World){
 
 #[test]
 fn both_modifier_keys_survive_one_release(){
-    let mut modifiers=Modifiers{shift:0u8,ctrl:0u8};
+    let mut modifiers=Modifiers{shift:0u8,ctrl:0u8,alt:0u8};
     assert!(modifiers.update(42u32,true));
     assert!(modifiers.update(54u32,true));
     modifiers.update(42u32,false);assert!(modifiers.shift!=0u8);
@@ -698,6 +777,9 @@ fn both_modifier_keys_survive_one_release(){
     modifiers.update(29u32,true);modifiers.update(97u32,true);
     modifiers.update(29u32,false);assert!(modifiers.ctrl!=0u8);
     modifiers.update(97u32,false);assert_eq!(modifiers.ctrl,0u8);
+    modifiers.update(56u32,true);modifiers.update(100u32,true);
+    modifiers.update(56u32,false);assert!(modifiers.alt!=0u8);
+    modifiers.update(100u32,false);assert_eq!(modifiers.alt,0u8);
 }
 
 fn anchor_test_browser(source:&str,width:i32)->Browser{

@@ -2,12 +2,12 @@
 mod wayland;
 pub fn main(mut world:World) {
     let args=world.args();let port=std::str::from_utf8(&args[0]).unwrap().parse::<u16>().unwrap();
-    let mut client=wayland::Wayland::open(&mut world,port,1000i32,760i32,"input proof").unwrap();
+    let mut client=wayland::Wayland::open_test_peer(&mut world,port,1000i32,760i32,"input proof").unwrap();
     client.present(0u32).unwrap();
     let mut motion=false;let mut click=false;let mut scroll=false;let mut release=false;let mut leave=false;
     let mut down=false;let mut up=false;let mut resize=false;let mut close=false;
     let mut mod_down=0usize;let mut mod_up=0usize;let mut held=0u32;
-    let mut rounds=0usize;
+    let mut rounds=0usize;let mut no_clipboard=false;
     while rounds<50usize && !close {
         let events=client.poll(100usize).unwrap();
         for event in events {
@@ -20,7 +20,7 @@ pub fn main(mut world:World) {
                 wayland::Event::Key(key,pressed)=>{
                     if key==30u32 {if pressed {down=true;}else{up=true;}}
                     else {
-                        let bit=match key {42u32=>1u32,54u32=>2u32,29u32=>4u32,97u32=>8u32,_=>panic!("focus replayed an ordinary key")};
+                        let bit=match key {42u32=>1u32,54u32=>2u32,29u32=>4u32,97u32=>8u32,56u32=>16u32,100u32=>32u32,_=>panic!("focus replayed an ordinary key")};
                         if pressed {mod_down+=1usize;held|=bit;}else{mod_up+=1usize;held&=!bit;}
                     }
                 },
@@ -28,14 +28,24 @@ pub fn main(mut world:World) {
                 wayland::Event::Close=>close=true,
             }
         }
+        if down && !close {
+            assert!(client.keyboard_has_focus());
+            assert!(!client.clipboard_available());
+            assert!(!client.clipboard_copy("synthetic clipboard refusal").unwrap());
+            assert!(!client.clipboard_paste().unwrap());
+            assert!(!client.clipboard_pending());
+            assert!(client.take_clipboard().is_none());
+            no_clipboard=true;
+        }
         rounds+=1usize;
     }
     assert!(motion && click && release && leave && scroll && down && up && resize && close);
-    assert!(mod_down==3usize && mod_up==16usize && held==0u32);
+    assert!(no_clipboard);
+    assert!(mod_down==3usize && mod_up==30usize && held==0u32);
     assert!(wayland::key_ascii(30u32,false)==b'a');
     assert!(wayland::key_ascii(30u32,true)==b'A');
     assert!(wayland::key_ascii(53u32,false)==b'/');
     assert!(wayland::key_ascii(39u32,true)==b':');
     assert!(wayland::cursor_bytes().len()==2304usize);
-    world.stdout().write(b"input PASS motion=120,220 click=120,220 release=120,220 move=requested leave=true scroll=24 key=press+release resize=900x700 focus=clear+restore close=true\n");
+    world.stdout().write(b"input PASS motion=120,220 click=120,220 release=120,220 move=requested leave=true scroll=24 key=press+release resize=900x700 focus=clear+restore clipboard=focused-no-manager-noop close=true\n");
 }

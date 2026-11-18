@@ -2,6 +2,7 @@
 # Continuous compositor capture. Requires an explicitly approved browser SHA.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+. ./tools/wayland-auth.sh
 root=$PWD
 expected=${1:?usage: bash review/motion/capture-integrated.sh APPROVED_BROWSER_SHA256}
 test "${#expected}" = 64
@@ -40,6 +41,7 @@ export LD_LIBRARY_PATH="$root/.deps/root/usr/lib/x86_64-linux-gnu:$root/.deps/ro
 export WESTON_MODULE_MAP="headless-backend.so=$root/.deps/root/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so;kiosk-shell.so=$root/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so"
 weston_pid= server_pid= bridge_pid= client_pid=
 cleanup() {
+ wayland_auth_close
     set +e
     for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"; do
         if test -n "$owned_pid"; then kill "$owned_pid" 2>/dev/null; wait "$owned_pid" 2>/dev/null; fi
@@ -53,30 +55,33 @@ trap 'exit 130' HUP INT TERM
 weston_pid=$!
 for ((attempt=0;attempt<100;attempt++)); do
     test -S "$run/r/$WAYLAND_DISPLAY" && break
-    kill -0 "$weston_pid";sleep 0.05
+    kill -0 "$weston_pid";sleep 0.05 8<&- 9<&-
 done
 test -S "$run/r/$WAYLAND_DISPLAY"
 "$run/fixture-server" "$run/fixtures" "$run/http-port" >"$out/http-server.log" 2>&1 &
 server_pid=$!
 for ((attempt=0;attempt<100;attempt++)); do
     test -s "$run/http-port" && break
-    kill -0 "$server_pid";sleep 0.05
+    kill -0 "$server_pid";sleep 0.05 8<&- 9<&-
 done
-port=$(cat "$run/http-port")
+port=$(cat "$run/http-port" 8<&- 9<&-)
 printf '%s\n' "$port" >"$out/http-port.txt"
 truncate -s 6082304 "$run/frame.bgra"
-"$run/byte-descriptor-bridge" "$run/r/$WAYLAND_DISPLAY" "$run/frame.bgra" >"$run/bridge-port" 2>"$out/bridge.log" &
+wayland_auth_prepare
+"$run/byte-descriptor-bridge" "$run/r/$WAYLAND_DISPLAY" "$run/frame.bgra" >"$run/bridge-port" 2>"$out/bridge.log" <&8 8<&- 9<&- &
 bridge_pid=$!
+exec 8<&-
 for ((attempt=0;attempt<100;attempt++)); do
     test -s "$run/bridge-port" && break
-    kill -0 "$bridge_pid";sleep 0.05
+    kill -0 "$bridge_pid";sleep 0.05 8<&- 9<&-
 done
-bridge_port=$(cat "$run/bridge-port")
-browser_started_ns=$(date +%s%N)
-"$run/lkjbrowser" --wayland "$bridge_port" --frame-file "$run/frame.bgra" --font-dir "$font_dir" --live-script "$out/events.script" --layout "$out/final.layout" --max-ms 15000 "http://127.0.0.1:$port/article.html" >"$out/browser.log" 2>"$out/browser.err" &
+bridge_port=$(cat "$run/bridge-port" 8<&- 9<&-)
+browser_started_ns=$(date +%s%N 8<&- 9<&-)
+"$run/lkjbrowser" --wayland "$bridge_port" --frame-file "$run/frame.bgra" --font-dir "$font_dir" --live-script "$out/events.script" --layout "$out/final.layout" --max-ms 15000 "http://127.0.0.1:$port/article.html" >"$out/browser.log" 2>"$out/browser.err" <&9 8<&- 9<&- &
 client_pid=$!
+wayland_auth_close
 printf '%s\n' "$client_pid" >"$out/browser.pid"
-sleep 0.25
+sleep 0.25 8<&- 9<&-
 capture_started_ns=$(date +%s%N)
 for ((index=0;index<55;index++)); do
     deadline_ns=$((capture_started_ns+index*200000000))

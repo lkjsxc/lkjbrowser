@@ -26,7 +26,7 @@ const FIELD_TOP: i32 = 9i32;
 const FIELD_HEIGHT: i32 = 34i32;
 const CENTRE: i32 = 26i32;
 const BASELINE: i32 = 31i32;
-const TEXT: i32 = 15i32;
+const TEXT: i32 = crate::address::TEXT_SIZE;
 const SMALL: i32 = 13i32;
 const STROKE: i32 = 32i32;
 
@@ -45,7 +45,8 @@ pub enum Action { None, Consumed, Back, Forward, Reload, Close, Edit, Move, Scro
 /// Everything the chrome shows, copied from the browser for one event or frame.
 pub struct View {
     pub width: i32, pub height: i32, pub url: String, pub address: String, pub hover: String,
-    pub verified: bool, pub failed: bool, pub editing: bool, pub select_all: bool,
+    pub verified: bool, pub failed: bool, pub editing: bool,
+    pub caret: usize, pub anchor: usize, pub edit_offset: i32,
     pub can_back: bool, pub can_forward: bool, pub scroll: i32, pub max_scroll: i32, pub page_height: i32,
 }
 
@@ -66,6 +67,14 @@ fn plan(width: i32) -> Plan {
     let field_width = (right - left).min(860i32);
     let field = ((width - field_width) / 2i32).max(left).min(right - field_width);
     Plan { back: 10i32, forward: 46i32, reload: 82i32, close: width - 42i32, field, field_width }
+}
+/// The editing viewport uses the existing 16 px horizontal inset.
+pub fn address_area(width: i32) -> (i32, i32) {
+    let p = plan(width); (p.field + 16i32, p.field_width - 32i32)
+}
+pub fn address_hit(width: i32, x: i32, y: i32) -> bool {
+    let p = plan(width);
+    within(y, FIELD_TOP, FIELD_HEIGHT) && within(x, p.field, p.field_width)
 }
 fn within(x: i32, start: i32, length: i32) -> bool { x >= start && x < start + length }
 fn target(view: &View, x: i32, y: i32) -> u8 {
@@ -256,13 +265,27 @@ fn field(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View, p: &P
         canvas.shape(&outline, PAPER, 255u8);
         canvas.shape(&Shape::frame(x * 16i32, FIELD_TOP * 16i32, width * 16i32, FIELD_HEIGHT * 16i32, FIELD_HEIGHT * 8i32, 24i32), ACCENT, 255u8);
         let start = x + 16i32;
-        let text = fit_end(font, view.address.as_str(), TEXT, right - start - 4i32);
-        let drawn = font.text_width(text.as_str(), TEXT);
-        if view.select_all && drawn > 0i32 {
-            canvas.shape(&Shape::round((start - 3i32) * 16i32, (CENTRE - 11i32) * 16i32, (drawn + 6i32) * 16i32, 22i32 * 16i32, 64i32), ACCENT_SOFT, 255u8);
+        let room = right - start;
+        // A small opaque viewport clips glyphs and range paint without touching page painting
+        // or the pill's ring/halo. It contains the same paper already painted underneath.
+        let top = FIELD_TOP + 4i32; let height = FIELD_HEIGHT - 8i32;
+        let mut text_canvas = Canvas::new(room as usize, height as usize, PAPER);
+        let first = view.anchor.min(view.caret); let last = view.anchor.max(view.caret);
+        if first != last {
+            let left = font.text_width(&view.address.as_str()[..first], TEXT) - view.edit_offset - 1i32;
+            let selected = font.text_width(&view.address.as_str()[first..last], TEXT) + 2i32;
+            text_canvas.shape(&Shape::round(left * 16i32, (CENTRE - 11i32 - top) * 16i32,
+                selected * 16i32, 22i32 * 16i32, 64i32), ACCENT_SOFT, 255u8);
         }
-        canvas.text(font, text.as_str(), TEXT, start, BASELINE, INK);
-        if !view.select_all { canvas.rect(start + drawn + 1i32, CENTRE - 9i32, 2i32, 18i32, ACCENT); }
+        text_canvas.text(font, view.address.as_str(), TEXT, -view.edit_offset, BASELINE - top, INK);
+        canvas.image(text_canvas.width, text_canvas.height, &text_canvas.pixels, start, top, room, height);
+        if first == last {
+            let boundary = start + font.text_width(&view.address.as_str()[..view.caret], TEXT) - view.edit_offset;
+            // Keep the next glyph's stem clear. The parent canvas preserves both caret
+            // columns at the start edge while the text itself remains viewport-clipped.
+            let caret = boundary + if view.caret < view.address.len() { -1i32 } else { 1i32 };
+            canvas.rect(caret, CENTRE - 9i32, 2i32, 18i32, ACCENT);
+        }
         return;
     }
     canvas.shape(&outline, FIELD, 255u8);
@@ -366,7 +389,7 @@ pub fn paint(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View) {
 /// A typical view for the tests below.
 fn sample(width: i32) -> View {
     View { width, height: 760i32, url: "https://example.com/a".to_string(), address: String::new(),
-        hover: String::new(), verified: true, failed: false, editing: false, select_all: false,
+        hover: String::new(), verified: true, failed: false, editing: false, caret: 0usize, anchor: 0usize, edit_offset: 0i32,
         can_back: true, can_forward: false, scroll: 0i32, max_scroll: 2000i32, page_height: 2708i32 }
 }
 #[test]

@@ -2,6 +2,7 @@
 # Actual Weston captures. This script never builds, installs, or starts a public listener.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. ./tools/wayland-auth.sh
 root=$PWD
 manifest=docs/tls/public-pages.tsv
 round=r1
@@ -62,6 +63,7 @@ proof="$root/docs/tls/wayland-$round.log"
 weston_pid= bridge_pid= browser_pid= shooter_pid=
 cleanup() {
  local status=$?
+ wayland_auth_close
  trap - EXIT HUP INT TERM
  set +e
  for owned_pid in "$shooter_pid" "$browser_pid" "$bridge_pid" "$weston_pid"; do
@@ -135,23 +137,25 @@ weston_pid=$!
 for ((attempt=0;attempt<150;attempt++)); do
  [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] && break
  kill -0 "$weston_pid" 2>/dev/null || { cat "$run/weston.log" >&2; exit 1; }
- sleep 0.02
+ sleep 0.02 8<&- 9<&-
 done
 [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] || { echo "Weston startup timed out" >&2; exit 1; }
 
 start_bridge() {
  local directory=$1
  truncate -s 6082304 "$directory/frame.bgra"
+ wayland_auth_prepare
  "$run/byte-descriptor-bridge" "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$directory/frame.bgra" \
-  >"$directory/bridge-port" 2>"$directory/bridge.log" &
+  >"$directory/bridge-port" 2>"$directory/bridge.log" <&8 8<&- 9<&- &
  bridge_pid=$!
+ exec 8<&-
  for ((attempt=0;attempt<150;attempt++)); do
   [[ -s "$directory/bridge-port" ]] && break
-  kill -0 "$bridge_pid" 2>/dev/null || { cat "$directory/bridge.log" >&2; exit 1; }
-  sleep 0.02
+  kill -0 "$bridge_pid" 2>/dev/null || { cat "$directory/bridge.log" 8<&- 9<&- >&2; exit 1; }
+  sleep 0.02 8<&- 9<&-
  done
  [[ -s "$directory/bridge-port" ]] || { echo "Bridge startup timed out" >&2; exit 1; }
- bridge_port=$(cat "$directory/bridge-port")
+ bridge_port=$(cat "$directory/bridge-port" 8<&- 9<&-)
 }
 # Return only the first HTTPS presentation after the generated ordinary Enter event.
 # Script timestamps are scheduled offsets, not wall-clock input measurements.
@@ -168,7 +172,7 @@ await_paint() {
    elif grep -q '^PAINT wayland-submit ' "$directory/browser.log"; then return; fi
   fi
   kill -0 "$browser_pid" 2>/dev/null || { cat "$directory/browser.log" >&2; echo "Browser exited before presenting" >&2; exit 1; }
-  sleep 0.02
+  sleep 0.02 8<&- 9<&-
  done
  cat "$directory/browser.log" >&2
  echo "Browser did not present within 30 seconds" >&2
@@ -182,7 +186,7 @@ capture_frame() {
  local finished=0
  for ((attempt=0;attempt<250;attempt++)); do
   if ! kill -0 "$shooter_pid" 2>/dev/null; then finished=1; break; fi
-  sleep 0.02
+  sleep 0.02 8<&- 9<&-
  done
  [[ "$finished" = 1 ]] || { echo "Screenshooter timed out" >&2; exit 1; }
  local status=0
@@ -200,7 +204,7 @@ finish_browser() {
  [[ "$status" = 0 ]] || { cat "$directory/browser.log" >&2; exit "$status"; }
  wait "$bridge_pid" || status=$?
  bridge_pid=
- [[ "$status" = 0 ]] || { cat "$directory/bridge.log" >&2; exit "$status"; }
+ [[ "$status" = 0 ]] || { cat "$directory/bridge.log" 8<&- 9<&- >&2; exit "$status"; }
 }
 still() {
  local name=$1 url=$2
@@ -225,10 +229,11 @@ still() {
  start_bridge "$directory"
  "$run/lkjbrowser" --wayland "$bridge_port" --frame-file "$directory/frame.bgra" --max-ms "$max_ms" \
   --trust-file "$trust" "${live_args[@]}" --screenshot "$directory/program.png" --layout "$directory/page.layout" "$launch_url" \
-  >"$directory/browser.log" 2>&1 &
+  >"$directory/browser.log" 2>&1 <&9 8<&- 9<&- &
  browser_pid=$!
+ wayland_auth_close
  await_paint "$directory" "$enter_still"
- sleep 0.2
+ sleep 0.2 8<&- 9<&-
  if grep -Fxq 'TITLE Unable to open this page' "$directory/page.layout"; then
   cat "$directory/browser.log" >&2; cat "$directory/page.layout" >&2
   echo "Requested page became an error page: $name" >&2; exit 1
@@ -271,11 +276,12 @@ else
  max_ms=$((frames * delay_ms + 1500))
  "$run/lkjbrowser" --wayland "$bridge_port" --frame-file "$directory/frame.bgra" --max-ms "$max_ms" \
   --trust-file "$trust" --live-script "$run/events.live" --screenshot "$directory/program.png" \
-  --layout "$directory/final.layout" "$start_url" >"$directory/browser.log" 2>&1 &
+  --layout "$directory/final.layout" "$start_url" >"$directory/browser.log" 2>&1 <&9 8<&- 9<&- &
  browser_pid=$!
+ wayland_auth_close
  await_paint "$directory"
  # Submission precedes compositor repaint; allow the first real window frame to become visible.
- sleep 0.2
+ sleep 0.2 8<&- 9<&-
  capture_started_ns=$(date +%s%N)
  : >"$out/frames.tsv"
  for ((index=0;index<frames;index++)); do
@@ -293,7 +299,7 @@ else
   printf '%s\tframe-%s.png\n' "$(((captured-capture_started_ns)/1000000))" "$number" >>"$out/frames.tsv"
  done
  # The script leaves the final page still so its native pixels can be compared too.
- sleep 0.1
+ sleep 0.1 8<&- 9<&-
  cp "$directory/program.png" "$directory/final-program.png"
  capture_frame "$directory/final-capture" "$out/final.png"
  "$run/pixel-compare" "$out/final.png" "$directory/final-program.png" >>"$proof"

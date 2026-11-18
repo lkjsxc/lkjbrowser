@@ -2,6 +2,7 @@
 # Full browser on an owned headless Weston, serving pages on a fresh loopback port.
 set -eu
 cd "$(dirname "$0")/.."
+. ./tools/wayland-auth.sh
 sh tools/build.sh
 sh tools/wayland-build-bridge.sh
 if ! test -x .deps/root/usr/bin/weston; then sh tools/wayland-deps.sh; fi
@@ -11,6 +12,7 @@ if ! test -x .deps/root/usr/bin/weston; then sh tools/wayland-deps.sh; fi
 run=$(mktemp -d "$PWD/target/browser-capture.XXXXXXXX")
 comp_pid= server_pid= bridge_pid= browser_pid=
 cleanup() {
+ wayland_auth_close
  for pid in "$browser_pid" "$bridge_pid" "$server_pid" "$comp_pid"; do
   if test -n "$pid"; then kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; fi
  done
@@ -29,10 +31,10 @@ attempt=0
 while ! test -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" || ! test -s "$run/port"; do
  if ! kill -0 "$comp_pid" 2>/dev/null || ! kill -0 "$server_pid" 2>/dev/null; then cat "$run/compositor.log" "$run/server.log"; exit 1; fi
  attempt=$((attempt+1)); if test "$attempt" -gt 100; then echo "Capture setup timed out" >&2; exit 1; fi
- sleep 0.05
+ sleep 0.05 8<&- 9<&-
 done
-port=$(cat "$run/port")
-closed=$(cat "$run/port.closed")
+port=$(cat "$run/port" 8<&- 9<&-)
+closed=$(cat "$run/port.closed" 8<&- 9<&-)
 printf 'Real Weston 13 pixman screenshots; browser source pin:\n' >docs/wayland-final-proof.log
 cat toolchain.lock >>docs/wayland-final-proof.log
 capture() {
@@ -40,24 +42,27 @@ capture() {
  mkdir -p "$run/$name"
  frame="$run/$name/frame.bgra"
  truncate -s 6082304 "$frame"
- target/byte-descriptor-bridge "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$frame" >"$run/$name/bridge-port" 2>"$run/$name/bridge.log" &
+ wayland_auth_prepare
+ target/byte-descriptor-bridge "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$frame" >"$run/$name/bridge-port" 2>"$run/$name/bridge.log" <&8 8<&- 9<&- &
  bridge_pid=$!
+ exec 8<&-
  attempt=0
  while ! test -s "$run/$name/bridge-port"; do
   attempt=$((attempt+1)); if test "$attempt" -gt 100; then echo "Bridge timed out" >&2; exit 1; fi
-  sleep 0.03
+  sleep 0.03 8<&- 9<&-
  done
- bridge_port=$(cat "$run/$name/bridge-port")
+ bridge_port=$(cat "$run/$name/bridge-port" 8<&- 9<&-)
  target/lkjbrowser --wayland "$bridge_port" --frame-file "$frame" --max-ms 2000 \
-  --screenshot "$run/$name/program.png" --layout "shots/$name.layout" "$url" >"$run/$name/browser.log" 2>&1 &
+  --screenshot "$run/$name/program.png" --layout "shots/$name.layout" "$url" >"$run/$name/browser.log" 2>&1 <&9 8<&- 9<&- &
  browser_pid=$!
+ wayland_auth_close
  attempt=0
  while ! test -s "$run/$name/program.png"; do
   if ! kill -0 "$browser_pid" 2>/dev/null; then cat "$run/$name/browser.log"; exit 1; fi
   attempt=$((attempt+1)); if test "$attempt" -gt 100; then echo "Browser timed out" >&2; exit 1; fi
-  sleep 0.03
+  sleep 0.03 8<&- 9<&-
  done
- sleep 0.3
+ sleep 0.3 8<&- 9<&-
  root=$PWD
  (cd "$run/$name"; LD_LIBRARY_PATH="$root/.deps/root/usr/lib/x86_64-linux-gnu:$root/.deps/root/usr/lib/x86_64-linux-gnu/weston" "$root/.deps/root/usr/bin/weston-screenshooter")
  set -- "$run/$name"/wayland-screenshot-*.png
@@ -77,25 +82,28 @@ capture_motion() {
  mkdir -p "$run/motion"
  frame="$run/motion/frame.bgra"
  truncate -s 6082304 "$frame"
- target/byte-descriptor-bridge "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$frame" >"$run/motion/bridge-port" 2>"$run/motion/bridge.log" &
+ wayland_auth_prepare
+ target/byte-descriptor-bridge "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$frame" >"$run/motion/bridge-port" 2>"$run/motion/bridge.log" <&8 8<&- 9<&- &
  bridge_pid=$!
+ exec 8<&-
  attempt=0
  while ! test -s "$run/motion/bridge-port"; do
   attempt=$((attempt+1)); if test "$attempt" -gt 100; then echo "Motion bridge timed out" >&2; exit 1; fi
-  sleep 0.03
+  sleep 0.03 8<&- 9<&-
  done
- bridge_port=$(cat "$run/motion/bridge-port")
+ bridge_port=$(cat "$run/motion/bridge-port" 8<&- 9<&-)
  target/lkjbrowser --wayland "$bridge_port" --frame-file "$frame" --max-ms 15000 \
   --live-script tests/demo.live --screenshot "$run/motion/initial.png" --layout "$run/motion/final.layout" \
-  "http://127.0.0.1:$port/article.html" >"$run/motion/browser.log" 2>&1 &
+  "http://127.0.0.1:$port/article.html" >"$run/motion/browser.log" 2>&1 <&9 8<&- 9<&- &
  browser_pid=$!
+ wayland_auth_close
  attempt=0
  while ! test -s "$run/motion/initial.png"; do
   if ! kill -0 "$browser_pid" 2>/dev/null; then cat "$run/motion/browser.log"; exit 1; fi
   attempt=$((attempt+1)); if test "$attempt" -gt 100; then echo "Motion browser timed out" >&2; exit 1; fi
-  sleep 0.03
+  sleep 0.03 8<&- 9<&-
  done
- sleep 0.1
+ sleep 0.1 8<&- 9<&-
  root=$PWD
  i=0
  while test "$i" -lt 16; do
@@ -109,7 +117,7 @@ capture_motion() {
   test -s "$1"
   mv "$1" "$run/motion/frame-$label.png"
   i=$((i+1))
-  if test "$i" -lt 16; then sleep 0.35; fi
+  if test "$i" -lt 16; then sleep 0.35 8<&- 9<&-; fi
  done
  wait "$browser_pid"; browser_pid=
  wait "$bridge_pid"; bridge_pid=

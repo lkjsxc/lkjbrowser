@@ -1,0 +1,51 @@
+//! Native clipboard lifecycle regression, using a framed authenticated synthetic peer.
+mod wayland;
+fn acknowledged(client: &mut wayland::Wayland) {
+    let mut found=false;let mut rounds=0usize;
+    while !found && rounds<80usize{
+        for event in client.poll(50usize).unwrap(){
+            if let wayland::Event::Resize(321i32,241i32)=event{found=true;}
+        }
+        rounds+=1usize;
+    }
+    assert!(found);
+}
+fn stage(client: &mut wayland::Wayland, name: &str) {
+    client.set_title(name).unwrap();acknowledged(client);
+}
+pub fn main(mut world: World) {
+    let args=world.args();let port=std::str::from_utf8(&args[0]).unwrap().parse::<u16>().unwrap();
+    let mut client=wayland::Wayland::open(&mut world,port,1000i32,760i32,"clipboard lifecycle").unwrap();
+    stage(&mut client,"ready");
+    assert!(client.keyboard_has_focus() && client.clipboard_available());
+    client.set_title("copy-live").unwrap();assert!(client.clipboard_copy("kept-source").unwrap());
+    client.set_title("copy-rejected").unwrap();assert!(!client.clipboard_copy("must-not-cut").unwrap());
+    stage(&mut client,"late-source-fd");stage(&mut client,"assert-late-source-fd");
+    stage(&mut client,"dnd");stage(&mut client,"assert-dnd");
+    stage(&mut client,"focus-leave");
+    assert!(!client.keyboard_has_focus() && !client.clipboard_available());
+    assert!(!client.clipboard_paste().unwrap());assert!(client.take_clipboard().is_none());
+    stage(&mut client,"assert-focus");stage(&mut client,"focus-enter");
+    assert!(client.clipboard_available());
+
+    client.set_title("late-eof").unwrap();assert!(client.clipboard_paste().unwrap());
+    // Deliberately leave the native client unpolled while the peer completes after five seconds.
+    let mut clock=world.clock();let mut timer=world.readiness().unwrap();
+    let deadline=clock.nanoseconds().unwrap()+5250000000usize;
+    timer.wait(&mut clock,deadline).unwrap();acknowledged(&mut client);
+    assert!(client.take_clipboard().is_none());assert!(!client.clipboard_pending());
+
+    client.set_title("deferred-paste").unwrap();assert!(client.clipboard_paste().unwrap());
+    assert!(client.clipboard_copy("second-source").unwrap());
+    assert!(client.has_deferred_input());assert!(client.clipboard_pending());
+    assert!(client.take_clipboard().is_none());assert!(client.clipboard_pending());
+    assert!(!client.clipboard_paste().unwrap());
+    let mut moved=false;
+    for event in client.poll(0usize).unwrap(){
+        if let wayland::Event::Key(106u32,true)=event{moved=true;}
+    }
+    assert!(moved && !client.has_deferred_input());
+    assert_eq!(client.take_clipboard().unwrap(),"queued");assert!(!client.clipboard_pending());
+    stage(&mut client,"finish");
+    world.stdout().write(b"clipboard PASS ownership=confirmed refusal=retains-source late_fd=ordered dnd=retired focus=retired late_eof=rejected deferred_paste=held-until-input\n");
+}

@@ -1,17 +1,27 @@
-//! Native Wayland wire client. The transport bridge forwards bytes and one FD only.
+//! Native Wayland wire client. The transport bridge forwards opaque bytes and descriptors.
 //! Protocol sources: Wayland XML and stable xdg-shell XML, not client libraries.
 #[derive(Clone, Copy)]
 pub enum Event {
     Scroll(i32), Key(u32, bool), Click(i32, i32), Release(i32, i32), Motion(i32, i32),
     Leave, Resize(i32, i32), Close,
 }
+#[derive(Clone)]
+struct ClipboardOffer { object: u32, utf8: bool, plain: bool, marker: String }
+#[derive(Clone)]
+struct ClipboardSource { object: u32, text: String, marker: String, retired: bool }
+const CLIPBOARD_LIMIT: usize = 1048576usize;
 pub struct Wayland {
-    socket: File, ready: Readiness, clock: Clock, incoming: Vec<u8>,
+    socket: File, ready: Readiness, clock: Clock, incoming: Vec<u8>, wire: Vec<u8>,
+    transport_decided: bool, descriptor_bridge: bool, authenticated_transport: bool, descriptors: Vec<u32>, deferred: Vec<Event>,
+    data_manager: u32, data_device: u32, selection_serial: u32, keyboard_focused: bool,
+    offers: Vec<ClipboardOffer>, sources: Vec<ClipboardSource>, selection: u32, clipboard_nonce: String,
+    copy_marker: String, copy_confirmed: bool, copy_sync: u32, copy_synced: bool,
+    next_transfer: u32, paste_id: u32, paste_started: usize, paste_bytes: Vec<u8>, clipboard_text: Option<String>,
     next_id: u32, registry: u32, sync: u32, synced: bool,
     compositor: u32, shm: u32, wm: u32, seat: u32,
     surface: u32, xdg: u32, top: u32, pool: u32,
     first: u32, second: u32, pointer: u32, keyboard: u32, cursor_surface: u32, cursor_buffer: u32,
-    first_free: bool, second_free: bool, configured: bool, closed: bool,
+    first_free: bool, second_free: bool, configured: bool, closed: bool, transport_failed: bool,
     px: i32, py: i32, width: i32, height: i32, press_serial: u32,
     pub sent_messages: usize, pub received_messages: usize, pub committed_frames: usize,
 }
@@ -33,9 +43,17 @@ fn wire_string(bytes: &mut Vec<u8>, value: &str) {
     bytes.push(0u8);
     while bytes.len() % 4usize != 0usize { bytes.push(0u8); }
 }
+fn event_string(data: &[u8]) -> String {
+    let n = number(data, 0usize) as usize;
+    if n == 0usize || data.len() < 4usize || n > data.len() - 4usize || data[3usize + n] != 0u8 {
+        return String::new();
+    }
+    match std::str::from_utf8(&data[4usize..3usize + n]) { Ok(text) => text.to_string(), Err(_) => String::new() }
+}
 fn modifiers_up(events: &mut Vec<Event>) {
     events.push(Event::Key(42u32, false)); events.push(Event::Key(54u32, false));
     events.push(Event::Key(29u32, false)); events.push(Event::Key(97u32, false));
+    events.push(Event::Key(56u32, false)); events.push(Event::Key(100u32, false));
 }
 fn failure(step: &str, errno: i64) -> String { format!("Wayland {}: errno {}", step, errno) }
 fn io(result: Result<(), i64>, step: &str) -> Result<(), String> {
@@ -52,7 +70,30 @@ impl Wayland {
         let top=self.top;let seat=self.seat;let serial=self.press_serial;
         self.request(top,5u32,vec![seat,serial],false)
     }
+    /// The normal launcher supplies a fresh 32-byte handoff key on inherited stdin.
+    /// It is sent before any framed protocol command and never enters argv or logs.
     pub fn open(world: &mut World, port: u16, width: i32, height: i32, title: &str) -> Result<Wayland, String> {
+        let mut input = world.stdin_file().map_err(|e: i64| -> String { failure("handoff input", e) })?;
+        io(input.set_nonblocking(true), "handoff input mode")?;
+        let mut token = [0u8; 32]; let mut at = 0usize;
+        while at < token.len() {
+            match input.read(&mut token[at..]) {
+                Ok(0usize) => return Err("Wayland: missing launcher handoff key".to_string()),
+                Ok(n) => at += n,
+                Err(4i64) => (),
+                Err(_) => return Err("Wayland: launcher handoff key unavailable".to_string()),
+            }
+        }
+        drop(input);
+        Wayland::open_transport(world, port, width, height, title, &token, true)
+    }
+    /// Only the raw native protocol fixture uses this entry. It cannot negotiate
+    /// descriptor transport or clipboard authority, and is not selected by main.
+    pub fn open_test_peer(world: &mut World, port: u16, width: i32, height: i32, title: &str) -> Result<Wayland, String> {
+        Wayland::open_transport(world, port, width, height, title, &[0u8; 0], false)
+    }
+    fn open_transport(world: &mut World, port: u16, width: i32, height: i32, title: &str,
+        token: &[u8], authenticated_transport: bool) -> Result<Wayland, String> {
         if width < 1i32 || height < 1i32 || width > 8192i32 || height > 8192i32 {
             return Err("Wayland: viewport outside 1..8192".to_string());
         }
@@ -62,19 +103,43 @@ impl Wayland {
         let mut socket = match connector.connect() {
             Ok(s) => s, Err(e) => return Err(failure("bridge connect", e)),
         };
+        if authenticated_transport {
+            let mut sent = 0usize;
+            while sent < token.len() {
+                match socket.write(&token[sent..]) {
+                    Ok(0usize) => return Err("Wayland: launcher handoff connection closed".to_string()),
+                    Ok(n) => sent += n,
+                    Err(4i64) => (),
+                    Err(e) => return Err(failure("handoff authentication", e)),
+                }
+            }
+        }
         io(socket.set_nonblocking(true), "nonblocking")?;
         let mut ready = match world.readiness() {
             Ok(r) => r, Err(e) => return Err(failure("readiness", e)),
         };
         io(ready.watch_file(&mut socket, 1usize, 1u8), "watch")?;
         let clock = world.clock();
+        let mut entropy = world.entropy();
+        let mut nonce = [0u8; 16];
+        let clipboard_nonce = match entropy.fill(&mut nonce) {
+            Ok(()) => format!("{}-{}-{}-{}", number(&nonce, 0usize), number(&nonce, 4usize),
+                number(&nonce, 8usize), number(&nonce, 12usize)),
+            Err(_) => String::new(),
+        };
         let mut client = Wayland {
-            socket, ready, clock, incoming: Vec::new(), next_id: 4u32,
+            socket, ready, clock, incoming: Vec::new(), wire: Vec::new(),
+            transport_decided: false, descriptor_bridge: false, authenticated_transport, descriptors: Vec::new(), deferred: Vec::new(),
+            data_manager: 0u32, data_device: 0u32, selection_serial: 0u32, keyboard_focused: false,
+            offers: Vec::new(), sources: Vec::new(), selection: 0u32, clipboard_nonce,
+            copy_marker: String::new(), copy_confirmed: false, copy_sync: 0u32, copy_synced: false,
+            next_transfer: 0x80000001u32, paste_id: 0u32, paste_started: 0usize, paste_bytes: Vec::new(), clipboard_text: None,
+            next_id: 4u32,
             registry: 2u32, sync: 3u32, synced: false,
             compositor: 0u32, shm: 0u32, wm: 0u32, seat: 0u32,
             surface: 0u32, xdg: 0u32, top: 0u32, pool: 0u32,
             first: 0u32, second: 0u32, pointer: 0u32, keyboard: 0u32, cursor_surface: 0u32, cursor_buffer: 0u32,
-            first_free: true, second_free: true, configured: false, closed: false,
+            first_free: true, second_free: true, configured: false, closed: false, transport_failed: false,
             px: 0i32, py: 0i32, width, height, press_serial: 0u32,
             sent_messages: 0usize, received_messages: 0usize, committed_frames: 0usize,
         };
@@ -137,26 +202,36 @@ impl Wayland {
         Ok(client)
     }
     fn allocate(&mut self) -> u32 { let id = self.next_id; self.next_id += 1u32; id }
-    fn send(&mut self, object: u32, opcode: u32, args: Vec<u8>, attach: bool) -> Result<(), String> {
-        let size = args.len() + 8usize;
-        if size > 65535usize || size % 4usize != 0usize {
-            return Err("Wayland: invalid outgoing message length".to_string());
+    fn transport(&mut self, operation: u32, bytes: &[u8]) -> Result<(), String> {
+        if self.transport_failed { return Err("Wayland: descriptor transport is closed".to_string()); }
+        match self.transport_write(operation, bytes) {
+            Ok(()) => Ok(()),
+            Err(problem) => {
+                // Even a prefix of a command changes the bridge framing. Never retry
+                // or issue another command on a connection whose write failed.
+                self.transport_failed = true; self.closed = true;
+                self.paste_id = 0u32; self.paste_bytes.clear(); self.clipboard_text = None;
+                Err(problem)
+            },
         }
+    }
+    fn transport_write(&mut self, operation: u32, bytes: &[u8]) -> Result<(), String> {
         let mut packet = Vec::new();
-        word(&mut packet, size as u32);
-        word(&mut packet, if attach { 1u32 } else { 0u32 });
-        word(&mut packet, object);
-        word(&mut packet, ((size as u32) << 16u32) | opcode);
-        packet.extend_from_slice(&args);
+        word(&mut packet, bytes.len() as u32);
+        word(&mut packet, operation);
+        packet.extend_from_slice(bytes);
         let mut at = 0usize;
+        let deadline = self.clock.nanoseconds().unwrap() + 1000000000usize;
         while at < packet.len() {
             match self.socket.write(&packet[at..]) {
                 Ok(0usize) => return Err("Wayland: closed bridge writer".to_string()),
                 Ok(n) => at += n,
                 Err(11i64) => {
                     io(self.ready.watch_file(&mut self.socket, 1usize, 3u8), "write watch")?;
-                    let now = self.clock.nanoseconds().unwrap();
-                    match self.ready.wait(&mut self.clock, now + 1000000000usize) {
+                    if self.clock.nanoseconds().unwrap() >= deadline {
+                        return Err("Wayland: bridge writer timed out".to_string());
+                    }
+                    match self.ready.wait(&mut self.clock, deadline) {
                         Ok(_events) => (), Err(e) => return Err(failure("write wait", e)),
                     }
                 },
@@ -164,6 +239,18 @@ impl Wayland {
             }
         }
         io(self.ready.watch_file(&mut self.socket, 1usize, 1u8), "read watch")?;
+        Ok(())
+    }
+    fn send(&mut self, object: u32, opcode: u32, args: Vec<u8>, attach: bool) -> Result<(), String> {
+        let size = args.len() + 8usize;
+        if size > 65535usize || size % 4usize != 0usize {
+            return Err("Wayland: invalid outgoing message length".to_string());
+        }
+        let mut packet = Vec::new();
+        word(&mut packet, object);
+        word(&mut packet, ((size as u32) << 16u32) | opcode);
+        packet.extend_from_slice(&args);
+        self.transport(if attach { 1u32 } else { 0u32 }, &packet)?;
         self.sent_messages += 1usize;
         Ok(())
     }
@@ -202,6 +289,24 @@ impl Wayland {
         Ok(())
     }
     pub fn poll(&mut self, timeout_ms: usize) -> Result<Vec<Event>, String> {
+        let mut events = self.deferred.clone();
+        self.deferred.clear();
+        let fresh = self.poll_wire(if events.is_empty() { timeout_ms } else { 0usize })?;
+        events.extend_from_slice(&fresh);
+        Ok(events)
+    }
+    fn poll_wire(&mut self, timeout_ms: usize) -> Result<Vec<Event>, String> {
+        if self.transport_failed { return Ok(vec![Event::Close]); }
+        match self.poll_input(timeout_ms) {
+            Ok(events) => Ok(events),
+            Err(problem) => {
+                self.transport_failed = true; self.closed = true;
+                self.paste_id = 0u32; self.paste_bytes.clear(); self.clipboard_text = None;
+                Err(problem)
+            },
+        }
+    }
+    fn poll_input(&mut self, timeout_ms: usize) -> Result<Vec<Event>, String> {
         let now = match self.clock.nanoseconds() { Ok(n) => n, Err(e) => return Err(failure("clock", e)) };
         match self.ready.wait(&mut self.clock, now + timeout_ms * 1000000usize) {
             Ok(_events) => (), Err(e) => return Err(failure("wait", e)),
@@ -215,24 +320,278 @@ impl Wayland {
                 Err(e) => return Err(failure("read", e)),
             }
         }
+        self.unpack_transport()?;
+        if self.paste_id != 0u32 && self.clock.nanoseconds().unwrap() - self.paste_started >= 5000000000usize {
+            self.cancel_paste()?;
+        }
         let mut events = Vec::new();
         let mut consumed = 0usize;
-        while self.incoming.len() - consumed >= 8usize {
-            let h = number(&self.incoming, consumed + 4usize);
+        while self.wire.len() - consumed >= 8usize {
+            let h = number(&self.wire, consumed + 4usize);
             let size = (h >> 16u32) as usize;
             if size < 8usize || size % 4usize != 0usize {
                 return Err("Wayland: malformed event size".to_string());
             }
-            if size > self.incoming.len() - consumed { break; }
-            let object = number(&self.incoming, consumed);
-            let args = self.incoming[consumed + 8usize..consumed + size].to_vec();
+            if size > self.wire.len() - consumed { break; }
+            let object = number(&self.wire, consumed);
+            let args = self.wire[consumed + 8usize..consumed + size].to_vec();
             self.dispatch(object, h & 65535u32, &args, &mut events)?;
             self.received_messages += 1usize;
             consumed += size;
         }
-        if consumed != 0usize { self.incoming = { let owned = self.incoming[consumed..].to_vec(); owned }; }
+        if consumed != 0usize { self.wire = { let owned = self.wire[consumed..].to_vec(); owned }; }
         if self.closed { events.push(Event::Close); }
         Ok(events)
+    }
+
+    /// Clipboard operations require the actual compositor data device and keyboard focus.
+    pub fn clipboard_available(&self) -> bool {
+        self.descriptor_bridge && self.data_device != 0u32 && self.keyboard_focused && !self.closed
+    }
+    pub fn keyboard_has_focus(&self) -> bool { self.keyboard_focused }
+    pub fn has_deferred_input(&self) -> bool { !self.deferred.is_empty() }
+    pub fn clipboard_pending(&self) -> bool { self.paste_id != 0u32 || self.clipboard_text.is_some() }
+    pub fn take_clipboard(&mut self) -> Option<String> {
+        // A copy round trip can read an input event before this completion. Let
+        // the caller apply those earlier edits before comparing its paste revision.
+        if self.has_deferred_input() { return None; }
+        let text = self.clipboard_text.clone(); self.clipboard_text = None; text
+    }
+    /// A true result corroborates ownership with this instance's private MIME marker
+    /// in the compositor's new selection offer and a completed display round trip.
+    /// A pipe consumer is not required to exist yet; later transfers serve the source.
+    pub fn clipboard_copy(&mut self, text: &str) -> Result<bool, String> {
+        if !self.clipboard_available() || self.selection_serial == 0u32 || self.clipboard_nonce.is_empty()
+            || text.is_empty() || text.len() > CLIPBOARD_LIMIT { return Ok(false); }
+        let source = self.allocate();
+        let marker = format!("application/x-lkjbrowser-clipboard-{}-{}", self.clipboard_nonce, source);
+        self.copy_marker = marker.clone(); self.copy_confirmed = false;
+        self.sources.push(ClipboardSource { object: source, text: text.to_string(), marker: marker.clone(), retired: false });
+        let manager = self.data_manager;
+        self.request(manager, 0u32, vec![source], false)?;
+        let mut mime = Vec::new(); wire_string(&mut mime, "text/plain;charset=utf-8");
+        self.send(source, 0u32, mime, false)?;
+        let mut plain = Vec::new(); wire_string(&mut plain, "text/plain");
+        self.send(source, 0u32, plain, false)?;
+        let mut tag = Vec::new(); wire_string(&mut tag, marker.as_str());
+        self.send(source, 0u32, tag, false)?;
+        let device = self.data_device; let serial = self.selection_serial;
+        self.request(device, 1u32, vec![source, serial], false)?;
+        self.copy_sync = self.allocate(); self.copy_synced = false;
+        let callback = self.copy_sync;
+        self.request(1u32, 0u32, vec![callback], false)?;
+        let deadline = self.clock.nanoseconds().unwrap() + 750000000usize;
+        while !self.copy_synced && self.keyboard_focused && !self.closed && self.clock.nanoseconds().unwrap() < deadline {
+            let events = self.poll_wire(25usize)?;
+            self.deferred.extend_from_slice(&events);
+        }
+        let accepted = self.copy_synced && self.copy_confirmed && self.keyboard_focused && !self.closed
+            && self.clock.nanoseconds().unwrap() < deadline;
+        self.copy_sync = 0u32;
+        if !accepted { self.destroy_source(source)?; }
+        Ok(accepted)
+    }
+    /// Request a real plain-text transfer. The result is delivered by poll and
+    /// take_clipboard; failed/oversized/timed-out transfers yield no partial text.
+    pub fn clipboard_paste(&mut self) -> Result<bool, String> {
+        if !self.clipboard_available() || self.clipboard_pending() { return Ok(false); }
+        let mut mime = String::new();
+        for offer in &self.offers {
+            if offer.object == self.selection {
+                if offer.utf8 { mime = "text/plain;charset=utf-8".to_string(); }
+                else if offer.plain { mime = "text/plain".to_string(); }
+            }
+        }
+        if mime.is_empty() { return Ok(false); }
+        let token = self.next_transfer; self.next_transfer += 1u32;
+        if self.next_transfer == 0u32 { self.next_transfer = 0x80000001u32; }
+        let mut args = Vec::new(); wire_string(&mut args, mime.as_str());
+        let mut packet = Vec::new();
+        word(&mut packet, token);
+        word(&mut packet, self.selection);
+        word(&mut packet, (((args.len() + 8usize) as u32) << 16u32) | 1u32);
+        packet.extend_from_slice(&args);
+        self.paste_id = token; self.paste_started = self.clock.nanoseconds().unwrap();
+        self.paste_bytes.clear(); self.clipboard_text = None;
+        self.transport(2u32, &packet)?;
+        self.sent_messages += 1usize;
+        Ok(true)
+    }
+    fn cancel_paste(&mut self) -> Result<(), String> {
+        let token = self.paste_id; self.paste_id = 0u32;
+        self.paste_bytes.clear(); self.clipboard_text = None;
+        self.close_descriptor(token)
+    }
+    fn take_descriptor(&mut self) -> u32 {
+        if self.descriptors.is_empty() { return 0u32; }
+        let first = self.descriptors[0usize];
+        self.descriptors = { let rest = self.descriptors[1usize..].to_vec(); rest };
+        first
+    }
+    fn close_descriptor(&mut self, token: u32) -> Result<(), String> {
+        if !self.descriptor_bridge || token == 0u32 { return Ok(()); }
+        let mut bytes = Vec::new(); word(&mut bytes, token);
+        self.transport(4u32, &bytes)
+    }
+    fn destroy_source(&mut self, source: u32) -> Result<(), String> {
+        let mut found = false; let mut i = 0usize;
+        while i < self.sources.len() {
+            if self.sources[i].object == source && !self.sources[i].retired {
+                found = true;
+                if self.sources[i].marker == self.copy_marker { self.copy_confirmed = false; }
+                // The interface type remains until wl_display.delete_id. A send
+                // event already in flight still has one FD to consume and close.
+                self.sources[i].retired = true;
+                self.sources[i].text = String::new(); self.sources[i].marker = String::new();
+            }
+            i += 1usize;
+        }
+        if found { self.request(source, 1u32, Vec::new(), false)?; }
+        Ok(())
+    }
+    fn deleted_source(&mut self, source: u32) {
+        let mut kept = Vec::new();
+        for entry in &self.sources { if entry.object != source { kept.push(entry.clone()); } }
+        self.sources = kept;
+    }
+    fn destroy_offer(&mut self, offer: u32) -> Result<(), String> {
+        if offer == 0u32 { return Ok(()); }
+        let mut found = false; let mut kept = Vec::new();
+        for entry in &self.offers {
+            if entry.object == offer { found = true; }
+            else { kept.push(entry.clone()); }
+        }
+        self.offers = kept;
+        if found { self.request(offer, 2u32, Vec::new(), false)?; }
+        Ok(())
+    }
+    fn retire_unselected_offers(&mut self) -> Result<(), String> {
+        let mut discarded = Vec::new();
+        for offer in &self.offers { if offer.object != self.selection { discarded.push(offer.object); } }
+        for object in discarded { self.destroy_offer(object)?; }
+        Ok(())
+    }
+    fn clipboard_focus_lost(&mut self) -> Result<(), String> {
+        self.keyboard_focused = false; self.selection_serial = 0u32; self.copy_confirmed = false;
+        self.cancel_paste()?;
+        let selection = self.selection; self.selection = 0u32;
+        self.destroy_offer(selection)?;
+        self.retire_unselected_offers()
+    }
+    fn clipboard_event(&mut self, object: u32, opcode: u32, data: &[u8]) -> Result<(), String> {
+        if self.data_device != 0u32 && object == self.data_device {
+            if opcode == 0u32 && data.len() == 4usize {
+                self.offers.push(ClipboardOffer { object: number(data, 0usize), utf8: false, plain: false, marker: String::new() });
+                if self.offers.len() > 64usize { self.retire_unselected_offers()?; }
+            } else if opcode == 1u32 && data.len() >= 20usize {
+                // No drag-and-drop target authority is used by this browser.
+                // The drag offer is a separate object from the clipboard offer.
+                let offer = number(data, 16usize);
+                if offer != self.selection { self.destroy_offer(offer)?; }
+            } else if opcode == 2u32 || opcode == 4u32 {
+                self.retire_unselected_offers()?;
+            } else if opcode == 5u32 && data.len() == 4usize {
+                let previous = self.selection; self.selection = number(data, 0usize);
+                self.copy_confirmed = false;
+                for offer in &self.offers {
+                    if offer.object == self.selection && !self.copy_marker.is_empty() && offer.marker == self.copy_marker {
+                        self.copy_confirmed = true;
+                    }
+                }
+                if previous != self.selection { self.destroy_offer(previous)?; }
+            }
+        }
+        let mut i = 0usize;
+        while i < self.offers.len() {
+            if self.offers[i].object == object && opcode == 0u32 {
+                let mime = event_string(data);
+                if mime == "text/plain;charset=utf-8" { self.offers[i].utf8 = true; }
+                else if mime == "text/plain" { self.offers[i].plain = true; }
+                else if mime.starts_with("application/x-lkjbrowser-clipboard-") { self.offers[i].marker = mime; }
+            }
+            i += 1usize;
+        }
+        let mut source_text = String::new(); let mut source_found = false; let mut source_retired = false;
+        for source in &self.sources {
+            if source.object == object {
+                source_found = true; source_retired = source.retired; source_text = source.text.clone();
+            }
+        }
+        if source_found && opcode == 1u32 {
+            let token = self.take_descriptor();
+            let mime = event_string(data);
+            if token != 0u32 {
+                if !source_retired && (mime == "text/plain;charset=utf-8" || mime == "text/plain") {
+                    let mut bytes = Vec::new(); word(&mut bytes, token);
+                    bytes.extend_from_slice(source_text.as_bytes());
+                    self.transport(3u32, &bytes)?;
+                } else { self.close_descriptor(token)?; }
+            }
+        } else if source_found && opcode == 2u32 { self.destroy_source(object)?; }
+        Ok(())
+    }
+    fn unpack_transport(&mut self) -> Result<(), String> {
+        if !self.transport_decided {
+            if self.incoming.len() < 8usize { return Ok(()); }
+            self.transport_decided = true;
+            self.descriptor_bridge = number(&self.incoming, 0usize) == 0u32;
+            if self.descriptor_bridge != self.authenticated_transport {
+                return Err("Wayland: descriptor authority requires the authenticated launcher".to_string());
+            }
+        }
+        if !self.descriptor_bridge {
+            self.wire.extend_from_slice(&self.incoming); self.incoming.clear(); return Ok(());
+        }
+        let mut consumed = 0usize;
+        while self.incoming.len() - consumed >= 8usize {
+            let header = number(&self.incoming, consumed + 4usize);
+            let size = (header >> 16u32) as usize;
+            if number(&self.incoming, consumed) != 0u32 || size < 8usize || size % 4usize != 0usize {
+                return Err("Wayland: malformed descriptor bridge record".to_string());
+            }
+            if size > self.incoming.len() - consumed { break; }
+            let data = self.incoming[consumed + 8usize..consumed + size].to_vec();
+            let kind = header & 65535u32;
+            if kind == 3u32 {
+                if data.len() != 4usize || number(&data, 0usize) != 1u32 {
+                    return Err("Wayland: unsupported descriptor bridge version".to_string());
+                }
+            } else if kind == 4u32 {
+                let n = number(&data, 0usize) as usize; let count = number(&data, 4usize) as usize;
+                let start = 8usize + count * 4usize;
+                if data.len() < 8usize || count > 64usize || start > data.len() || n > data.len() - start {
+                    return Err("Wayland: malformed descriptor bridge bytes".to_string());
+                }
+                let mut i = 0usize;
+                while i < count { self.descriptors.push(number(&data, 8usize + i * 4usize)); i += 1usize; }
+                self.wire.extend_from_slice(&data[start..start + n]);
+            } else if kind == 1u32 {
+                let token = number(&data, 0usize); let n = number(&data, 4usize) as usize;
+                if data.len() < 8usize || n > data.len() - 8usize {
+                    return Err("Wayland: malformed descriptor bridge transfer".to_string());
+                }
+                if token == self.paste_id && token != 0u32 {
+                    if n > CLIPBOARD_LIMIT - self.paste_bytes.len() { self.cancel_paste()?; }
+                    else { self.paste_bytes.extend_from_slice(&data[8usize..8usize + n]); }
+                }
+            } else if kind == 2u32 {
+                if data.len() != 8usize { return Err("Wayland: malformed descriptor bridge completion".to_string()); }
+                if number(&data, 0usize) == self.paste_id && self.paste_id != 0u32 {
+                    self.paste_id = 0u32;
+                    if number(&data, 4usize) == 0u32
+                        && self.clock.nanoseconds().unwrap() - self.paste_started < 5000000000usize {
+                        match std::str::from_utf8(&self.paste_bytes) {
+                            Ok(text) => self.clipboard_text = Some(text.to_string()),
+                            Err(_) => self.clipboard_text = None,
+                        }
+                    } else { self.clipboard_text = None; }
+                    self.paste_bytes.clear();
+                }
+            } else { return Err("Wayland: unknown descriptor bridge record".to_string()); }
+            consumed += size;
+        }
+        if consumed != 0usize { self.incoming = { let rest = self.incoming[consumed..].to_vec(); rest }; }
+        Ok(())
     }
     fn dispatch(&mut self, object: u32, opcode: u32, data: &[u8], events: &mut Vec<Event>) -> Result<(), String> {
         if object == 1u32 && opcode == 0u32 {
@@ -245,7 +604,12 @@ impl Wayland {
             }
             return Err(format!("Wayland protocol error {} on object {}: {}", code, id, message));
         }
+        if object == 1u32 && opcode == 1u32 && data.len() == 4usize {
+            self.deleted_source(number(data, 0usize));
+        }
         if object == self.sync && opcode == 0u32 { self.synced = true; }
+        if self.copy_sync != 0u32 && object == self.copy_sync && opcode == 0u32 { self.copy_synced = true; }
+        self.clipboard_event(object, opcode, data)?;
         if object == self.registry && opcode == 0u32 {
             let global = number(data, 0usize);
             let n = number(data, 4usize) as usize;
@@ -261,8 +625,15 @@ impl Wayland {
                 self.shm = self.bind(global, "wl_shm", 1u32)?;
             } else if name == "xdg_wm_base" && self.wm == 0u32 {
                 self.wm = self.bind(global, "xdg_wm_base", 1u32)?;
+            } else if name == "wl_data_device_manager" && self.data_manager == 0u32 {
+                self.data_manager = self.bind(global, "wl_data_device_manager", 1u32)?;
             } else if name == "wl_seat" && self.seat == 0u32 {
                 self.seat = self.bind(global, "wl_seat", if version > 5u32 { 5u32 } else { version })?;
+            }
+            if self.data_manager != 0u32 && self.seat != 0u32 && self.data_device == 0u32 {
+                self.data_device = self.allocate();
+                let manager = self.data_manager; let device = self.data_device; let seat = self.seat;
+                self.request(manager, 1u32, vec![device, seat], false)?;
             }
         }
         if object == self.wm && opcode == 0u32 {
@@ -289,7 +660,9 @@ impl Wayland {
                 let id = self.pointer;
                 self.request(object, 0u32, vec![id], false)?;
             }
-            if caps & 2u32 == 0u32 && self.keyboard != 0u32 { modifiers_up(events); }
+            if caps & 2u32 == 0u32 && self.keyboard != 0u32 {
+                modifiers_up(events); self.clipboard_focus_lost()?;
+            }
             if caps & 2u32 != 0u32 && self.keyboard == 0u32 {
                 self.keyboard = self.allocate();
                 let id = self.keyboard;
@@ -312,6 +685,7 @@ impl Wayland {
                 if number(data, 8usize) == 272u32 {
                     if number(data, 12usize) == 1u32 {
                         self.press_serial = number(data, 0usize);
+                        self.selection_serial = self.press_serial;
                         events.push(Event::Click(self.px, self.py));
                     } else { events.push(Event::Release(self.px, self.py)); }
                 }
@@ -321,7 +695,14 @@ impl Wayland {
                 }
             }
         }
+        if object == self.keyboard && opcode == 0u32 {
+            // The current physical-key map does not inspect the compositor keymap.
+            let descriptor = self.take_descriptor();
+            self.close_descriptor(descriptor)?;
+        }
         if object == self.keyboard && (opcode == 1u32 || opcode == 2u32) {
+            self.keyboard_focused = opcode == 1u32 && number(data, 4usize) == self.surface;
+            if !self.keyboard_focused { self.clipboard_focus_lost()?; }
             // Enter/leave describe focus state, not fresh ordinary key presses.
             // Restore modifiers without retyping held letters or firing shortcuts.
             modifiers_up(events);
@@ -334,7 +715,7 @@ impl Wayland {
                 let mut at = 12usize;
                 while at < 12usize + n {
                     let key = number(data, at);
-                    if key == 42u32 || key == 54u32 || key == 29u32 || key == 97u32 {
+                    if key == 42u32 || key == 54u32 || key == 29u32 || key == 97u32 || key == 56u32 || key == 100u32 {
                         events.push(Event::Key(key, true));
                     }
                     at += 4usize;
@@ -342,6 +723,7 @@ impl Wayland {
             }
         }
         if object == self.keyboard && opcode == 3u32 && data.len() >= 16usize {
+            self.selection_serial = number(data, 0usize);
             events.push(Event::Key(number(data, 8usize), number(data, 12usize) != 0u32));
         }
         Ok(())

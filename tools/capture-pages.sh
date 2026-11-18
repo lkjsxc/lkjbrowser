@@ -3,6 +3,7 @@
 # compare compositor pixels, retain per-page logs, and reap all owned processes.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. ./tools/wayland-auth.sh
 root=$PWD
 binary=target/lkjbrowser
 manifest=docs/pages/pages.tsv
@@ -35,6 +36,7 @@ proof="$root/docs/pages/wayland-$round.log"
 weston_pid= bridge_pid= browser_pid= shooter_pid=
 cleanup() {
  local status=$?
+ wayland_auth_close
  trap - EXIT HUP INT TERM
  set +e
  for owned in "$shooter_pid" "$browser_pid" "$bridge_pid" "$weston_pid"; do
@@ -66,7 +68,7 @@ start_compositor() {
  --shell="$root/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so" --socket=pages \
  --idle-time=0 --no-config --debug --log="$run/weston.log" >"$run/weston-stdio.log" 2>&1 &
 weston_pid=$!
-for ((i=0;i<150;i++)); do [[ -S "$run/r/pages" ]] && break; kill -0 "$weston_pid"; sleep .02; done
+for ((i=0;i<150;i++)); do [[ -S "$run/r/pages" ]] && break; kill -0 "$weston_pid"; sleep .02 8<&- 9<&-; done
 [[ -S "$run/r/pages" ]]
 }
 count=0
@@ -79,25 +81,28 @@ while IFS=$'\t' read -r name url scroll extra || [[ -n "${name:-}${url:-}" ]]; d
  start_compositor
  dir="$run/$name"; mkdir -p "$dir"
  truncate -s 6082304 "$dir/frame.bgra"
- target/byte-descriptor-bridge "$run/r/pages" "$dir/frame.bgra" >"$dir/port" 2>"$dir/bridge.log" &
+ wayland_auth_prepare
+ target/byte-descriptor-bridge "$run/r/pages" "$dir/frame.bgra" >"$dir/port" 2>"$dir/bridge.log" <&8 8<&- 9<&- &
  bridge_pid=$!
- for ((i=0;i<150;i++)); do [[ -s "$dir/port" ]] && break; kill -0 "$bridge_pid"; sleep .02; done
+ exec 8<&-
+ for ((i=0;i<150;i++)); do [[ -s "$dir/port" ]] && break; kill -0 "$bridge_pid"; sleep .02 8<&- 9<&-; done
  [[ -s "$dir/port" ]]
- "$run/lkjbrowser" --wayland "$(cat "$dir/port")" --frame-file "$dir/frame.bgra" --max-ms 1800 \
-  --scroll "$scroll" --screenshot "$dir/program.png" --layout "$dir/page.layout" "$url" >"$dir/browser.log" 2>&1 &
+ "$run/lkjbrowser" --wayland "$(cat "$dir/port" 8<&- 9<&-)" --frame-file "$dir/frame.bgra" --max-ms 1800 \
+  --scroll "$scroll" --screenshot "$dir/program.png" --layout "$dir/page.layout" "$url" >"$dir/browser.log" 2>&1 <&9 8<&- 9<&- &
  browser_pid=$!
+ wayland_auth_close
  painted=0
  for ((i=0;i<2000;i++)); do
   if [[ -s "$dir/program.png" ]] && grep -q '^PAINT wayland-submit ' "$dir/browser.log"; then painted=1; break; fi
   kill -0 "$browser_pid" 2>/dev/null || break
-  sleep .02
+  sleep .02 8<&- 9<&-
  done
  if [[ "$painted" != 1 ]]; then cat "$dir/browser.log" >&2; echo "No presented frame for $name" >&2; exit 1; fi
- sleep .2
+ sleep .2 8<&- 9<&-
  cp "$dir/program.png" "$dir/frozen-program.png"
  (cd "$dir"; exec "$root/.deps/root/usr/bin/weston-screenshooter") >"$dir/shooter.log" 2>"$dir/shooter.err" &
  shooter_pid=$!
- for ((i=0;i<250;i++)); do kill -0 "$shooter_pid" 2>/dev/null || break; sleep .02; done
+ for ((i=0;i<250;i++)); do kill -0 "$shooter_pid" 2>/dev/null || break; sleep .02 8<&- 9<&-; done
  wait "$shooter_pid"; shooter_pid=
  captures=("$dir"/wayland-screenshot-*.png)
  [[ ${#captures[@]} = 1 ]]

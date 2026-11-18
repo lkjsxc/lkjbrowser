@@ -13,6 +13,8 @@ sh tools/build.sh
 .toolchain/lkjscript test . --engine native --jobs 1
 sh tools/probe-gaps.sh
 sh tools/wayland-test.sh
+sh tools/descriptor-bridge-test.sh
+sh tools/wayland-clipboard-test.sh
 .toolchain/lkjscript build src/fixture_server.lkj -o target/fixture-server
 font_dir=${LKJBROWSER_FONT_DIR:-/usr/share/fonts/truetype/liberation}
 if ! test -f "$font_dir/LiberationSans-Regular.ttf"; then font_dir=/usr/share/fonts/truetype/liberation2; fi

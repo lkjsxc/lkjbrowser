@@ -1,0 +1,195 @@
+//! Authenticated framed clipboard lifecycle peer. Test-only synthetic compositor/bridge records.
+fn push(v: &mut Vec<u8>, n: u32) {
+    v.push((n & 255u32) as u8); v.push(((n >> 8u32) & 255u32) as u8);
+    v.push(((n >> 16u32) & 255u32) as u8); v.push((n >> 24u32) as u8);
+}
+fn num(v: &[u8], at: usize) -> u32 {
+    assert!(at + 4usize <= v.len());
+    v[at] as u32 | ((v[at+1usize] as u32) << 8u32) |
+        ((v[at+2usize] as u32) << 16u32) | ((v[at+3usize] as u32) << 24u32)
+}
+fn string(v: &mut Vec<u8>, value: &str) {
+    push(v, (value.len()+1usize) as u32); v.extend_from_slice(value.as_bytes()); v.push(0u8);
+    while v.len()%4usize != 0usize { v.push(0u8); }
+}
+fn read_string(v: &[u8]) -> String {
+    let n = num(v,0usize) as usize;
+    assert!(n > 0usize && n <= v.len()-4usize && v[3usize+n] == 0u8);
+    std::str::from_utf8(&v[4usize..3usize+n]).unwrap().to_string()
+}
+fn exact(s: &mut File, v: &mut [u8]) -> bool {
+    let mut at=0usize;
+    while at<v.len() { let n=s.read(&mut v[at..]).unwrap(); if n==0usize{return false;} at+=n; }
+    true
+}
+fn record(s: &mut File, kind: u32, payload: &[u8]) {
+    let size=(payload.len()+11usize)/4usize*4usize;
+    let mut bytes=Vec::new();push(&mut bytes,0u32);push(&mut bytes,((size as u32)<<16u32)|kind);
+    bytes.extend_from_slice(payload);while bytes.len()<size{bytes.push(0u8);}
+    s.write_all(&bytes).unwrap();
+}
+fn event(s: &mut File, object: u32, opcode: u32, payload: &[u8], tokens: &[u32]) {
+    let mut wire=Vec::new();push(&mut wire,object);
+    push(&mut wire,(((payload.len()+8usize) as u32)<<16u32)|opcode);wire.extend_from_slice(payload);
+    let mut bytes=Vec::new();push(&mut bytes,wire.len() as u32);push(&mut bytes,tokens.len() as u32);
+    for token in tokens{push(&mut bytes,*token);}bytes.extend_from_slice(&wire);record(s,4u32,&bytes);
+}
+fn ints(s: &mut File, object: u32, opcode: u32, args: &[u32]) {
+    let mut bytes=Vec::new();for a in args{push(&mut bytes,*a);}event(s,object,opcode,&bytes,&[0u32;0]);
+}
+fn global(s: &mut File, registry: u32, name: u32, label: &str, version: u32) {
+    let mut bytes=Vec::new();push(&mut bytes,name);string(&mut bytes,label);push(&mut bytes,version);
+    event(s,registry,0u32,&bytes,&[0u32;0]);
+}
+fn mime(s: &mut File, object: u32, name: &str) {
+    let mut bytes=Vec::new();string(&mut bytes,name);event(s,object,0u32,&bytes,&[0u32;0]);
+}
+fn selection(s: &mut File, device: u32, offer: u32, marker: &str) {
+    ints(s,device,0u32,&[offer]);mime(s,offer,"text/plain;charset=utf-8");mime(s,offer,"text/plain");
+    if !marker.is_empty(){mime(s,offer,marker);}
+    ints(s,device,5u32,&[offer]);
+}
+fn source_send(s: &mut File, source: u32, token: u32) {
+    let mut bytes=Vec::new();string(&mut bytes,"text/plain;charset=utf-8");
+    event(s,source,1u32,&bytes,&[token]);
+}
+fn complete(s: &mut File, token: u32, text: &str) {
+    let mut bytes=Vec::new();push(&mut bytes,token);push(&mut bytes,text.len() as u32);
+    bytes.extend_from_slice(text.as_bytes());record(s,1u32,&bytes);
+    let mut done=Vec::new();push(&mut done,token);push(&mut done,0u32);record(s,2u32,&done);
+}
+fn ack(s: &mut File, top: u32) {ints(s,top,0u32,&[321u32,241u32,0u32]);}
+fn put(kinds: &mut Vec<u32>, object: u32, kind: u32) {
+    while kinds.len()<=object as usize{kinds.push(0u32);}kinds[object as usize]=kind;
+}
+pub fn main(mut world: World) {
+    let mut listener=world.listen("127.0.0.1",0u16).unwrap();
+    world.stdout().write(format!("{}\n",listener.port().unwrap()).as_bytes());
+    let mut stream=listener.accept_nodelay().unwrap();
+    let mut authentication=[0u8;32];assert!(exact(&mut stream,&mut authentication));
+    assert!(authentication[..]==b"0123456789abcdef0123456789abcdef"[..]);
+    let mut version=Vec::new();push(&mut version,1u32);record(&mut stream,3u32,&version);
+    let mut kinds=vec![0u32,1u32];let mut keyboard=0u32;let mut surface=0u32;
+    let mut xdg=0u32;let mut top=0u32;let mut device=0u32;
+    let mut configured=false;let mut focused=false;
+    let mut stage=String::new();let mut marker=String::new();let mut newest_source=0u32;
+    let mut live_source=0u32;let mut retired_source=0u32;let mut current_offer=0u32;
+    let mut next_offer=0xff000100u32;let mut pending_transfer=0u32;
+    let mut late_closed=false;let mut live_written=false;let mut dnd_destroyed=false;
+    let mut focus_destroyed=false;let mut expired_sent=false;let mut deferred_sent=false;
+    let dnd_offer=0xff001001u32;let mut focus_offer=0u32;
+    let mut clock=world.clock();let mut timer=world.readiness().unwrap();
+    loop {
+        let mut header=[0u8;8];if !exact(&mut stream,&mut header){break;}
+        let size=num(&header,0usize) as usize;let operation=num(&header,4usize);
+        assert!(size>0usize && size<=1048592usize);
+        let mut bytes=vec![0u8;size];assert!(exact(&mut stream,&mut bytes));
+        if operation==4u32 {
+            assert_eq!(size,4usize);let token=num(&bytes,0usize);
+            if token==101u32{late_closed=true;}else{assert!(token>=0x80000000u32);}
+            continue;
+        }
+        if operation==3u32 {
+            let token=num(&bytes,0usize);assert_eq!(token,102u32);
+            assert!(bytes[4usize..]==b"kept-source"[..]);live_written=true;continue;
+        }
+        if operation==2u32 {
+            let token=num(&bytes,0usize);assert!(token>=0x80000000u32);
+            assert_eq!(num(&bytes,4usize),current_offer);
+            assert_eq!(num(&bytes,8usize)&65535u32,1u32);
+            if stage=="late-eof" {
+                let deadline=clock.nanoseconds().unwrap()+5150000000usize;
+                timer.wait(&mut clock,deadline).unwrap();
+                complete(&mut stream,token,"expired");expired_sent=true;ack(&mut stream,top);
+            }else if stage=="deferred-paste"{pending_transfer=token;}
+            else{panic!("unexpected transfer stage");}
+            continue;
+        }
+        assert!(operation<=1u32 && size>=8usize);
+        let object=num(&bytes,0usize);let opcode=num(&bytes,4usize)&65535u32;
+        assert_eq!((num(&bytes,4usize)>>16u32) as usize,size);
+        let data=&bytes[8usize..];
+        let kind=if object>=0xff000000u32{18u32}else{
+            assert!((object as usize)<kinds.len());kinds[object as usize]
+        };
+        if kind==1u32 && opcode==1u32 {
+            let registry=num(data,0usize);put(&mut kinds,registry,2u32);
+            global(&mut stream,registry,1u32,"wl_compositor",4u32);
+            global(&mut stream,registry,2u32,"wl_shm",1u32);
+            global(&mut stream,registry,3u32,"xdg_wm_base",1u32);
+            global(&mut stream,registry,4u32,"wl_seat",5u32);
+            global(&mut stream,registry,5u32,"wl_data_device_manager",1u32);
+        }else if kind==1u32 && opcode==0u32 {
+            let callback=num(data,0usize);put(&mut kinds,callback,14u32);
+            if stage=="deferred-paste" && pending_transfer!=0u32 {
+                ints(&mut stream,keyboard,3u32,&[500u32,1u32,106u32,1u32]);
+                complete(&mut stream,pending_transfer,"queued");pending_transfer=0u32;deferred_sent=true;
+            }
+            ints(&mut stream,callback,0u32,&[1u32]);ints(&mut stream,1u32,1u32,&[callback]);
+        }else if kind==2u32 && opcode==0u32 {
+            let name=num(data,0usize);let n=num(data,4usize) as usize;
+            let at=8usize+(n+3usize)/4usize*4usize;let new=num(data,at+4usize);
+            let k=match name{1u32=>3u32,2u32=>4u32,3u32=>5u32,4u32=>6u32,5u32=>15u32,_=>panic!("unknown global")};
+            put(&mut kinds,new,k);if k==6u32{ints(&mut stream,new,0u32,&[2u32]);}
+        }else if kind==3u32 && opcode==0u32{put(&mut kinds,num(data,0usize),7u32);}
+        else if kind==5u32 && opcode==2u32{
+            xdg=num(data,0usize);surface=num(data,4usize);put(&mut kinds,xdg,8u32);
+        }else if kind==8u32 && opcode==1u32{top=num(data,0usize);put(&mut kinds,top,9u32);}
+        else if kind==4u32 && opcode==0u32{assert_eq!(operation,1u32);put(&mut kinds,num(data,0usize),10u32);}
+        else if kind==10u32 && opcode==0u32{put(&mut kinds,num(data,0usize),11u32);}
+        else if kind==6u32 && opcode==1u32{keyboard=num(data,0usize);put(&mut kinds,keyboard,13u32);}
+        else if kind==15u32 && opcode==1u32{device=num(data,0usize);put(&mut kinds,device,16u32);}
+        else if kind==15u32 && opcode==0u32{
+            newest_source=num(data,0usize);put(&mut kinds,newest_source,17u32);marker.clear();
+        }else if kind==17u32 && opcode==0u32{
+            let value=read_string(data);if value.starts_with("application/x-lkjbrowser-clipboard-"){marker=value;}
+        }else if kind==17u32 && opcode==1u32{
+            if stage=="copy-rejected"{retired_source=object;}
+            else{ints(&mut stream,1u32,1u32,&[object]);}
+        }else if kind==16u32 && opcode==1u32{
+            assert_eq!(num(data,0usize),newest_source);assert!(num(data,4usize)!=0u32);
+            if stage!="copy-rejected"{
+                assert!(!marker.is_empty());
+                if live_source!=0u32{ints(&mut stream,live_source,2u32,&[0u32;0]);}
+                live_source=newest_source;current_offer=next_offer;next_offer+=1u32;
+                selection(&mut stream,device,current_offer,marker.as_str());
+            }
+        }else if kind==18u32 && opcode==2u32{
+            if object==dnd_offer{dnd_destroyed=true;}
+            if object==focus_offer{focus_destroyed=true;}
+        }else if kind==7u32 && object==surface && opcode==6u32 && !configured{
+            ints(&mut stream,top,0u32,&[1000u32,760u32,0u32]);ints(&mut stream,xdg,0u32,&[11u32]);configured=true;
+        }else if kind==9u32 && opcode==2u32{
+            stage=read_string(data);
+            if stage=="ready"{ack(&mut stream,top);}
+            else if stage=="late-source-fd"{
+                assert!(retired_source!=0u32 && live_source!=0u32);
+                source_send(&mut stream,retired_source,101u32);source_send(&mut stream,live_source,102u32);
+                ints(&mut stream,1u32,1u32,&[retired_source]);ack(&mut stream,top);
+            }else if stage=="assert-late-source-fd"{
+                assert!(late_closed && live_written);ack(&mut stream,top);
+            }else if stage=="dnd"{
+                ints(&mut stream,device,0u32,&[dnd_offer]);mime(&mut stream,dnd_offer,"text/plain");
+                ints(&mut stream,device,1u32,&[600u32,surface,10u32*256u32,20u32*256u32,dnd_offer]);ack(&mut stream,top);
+            }else if stage=="assert-dnd"{assert!(dnd_destroyed);ack(&mut stream,top);}
+            else if stage=="focus-leave"{
+                focus_offer=current_offer;ints(&mut stream,keyboard,2u32,&[601u32,surface]);ack(&mut stream,top);
+            }else if stage=="assert-focus"{assert!(focus_destroyed);ack(&mut stream,top);}
+            else if stage=="focus-enter"{
+                ints(&mut stream,keyboard,1u32,&[602u32,surface,0u32]);
+                ints(&mut stream,keyboard,3u32,&[603u32,1u32,30u32,0u32]);
+                current_offer=next_offer;next_offer+=1u32;selection(&mut stream,device,current_offer,"");ack(&mut stream,top);
+            }else if stage=="finish"{
+                assert!(late_closed && live_written && dnd_destroyed && focus_destroyed && expired_sent && deferred_sent);
+                ack(&mut stream,top);
+                world.stdout().write(b"peer PASS authenticated=true late_source_fd=closed live_source_fd=correct dnd_offer=destroyed focus_offer=destroyed late_eof=sent deferred_input=sent\n");
+                return;
+            }
+        }
+        if configured && keyboard!=0u32 && device!=0u32 && !focused{
+            ints(&mut stream,keyboard,1u32,&[90u32,surface,0u32]);
+            ints(&mut stream,keyboard,3u32,&[91u32,1u32,30u32,0u32]);focused=true;
+        }
+    }
+    panic!("clipboard peer ended before lifecycle obligations");
+}

@@ -31,7 +31,9 @@ sh tools/wayland-run.sh 'https://www.rfc-editor.org/rfc/rfc5869.html'
 
 The launcher runs `target/lkjbrowser` on the desktop selected by `XDG_RUNTIME_DIR`
 and `WAYLAND_DISPLAY`. It creates an owned frame file, starts the byte/descriptor
-bridge on a fresh loopback port, and cleans up that bridge.
+bridge on a fresh loopback port, and cleans up that bridge. The launcher authenticates the browser's private bridge
+connection using a fresh 32-byte credential passed through inherited stdin handles;
+the credential is never a command-line argument, environment value or log entry.
 
 The address line accepts `https://`, `http://`, `file://` and bare hostnames.
 Bare hostnames select HTTPS. A local document can be opened with:
@@ -59,21 +61,35 @@ Local TLS tests supply their test root through this option.
 
 | Action | Input |
 | --- | --- |
-| Edit or replace the entire address | Click the address field or Ctrl+L, type, Enter |
+| Edit the address | Click the address field, Ctrl+L, Alt+D or F6; Enter navigates |
 | Follow a link | Left click |
 | Scroll | Wheel, drag the scrollbar, Up/Down, Page Up/Page Down, Space |
 | Beginning / end | Home / End |
-| Back | The back arrow, or Ctrl+Left |
-| Forward | The forward arrow |
+| Back / forward | Toolbar arrows or Alt+Left / Alt+Right, including while editing |
 | Reload | The reload button, or Ctrl+R |
-| Cancel address editing | Escape |
+| Restore / leave address editing | Escape restores changed text and selects it; Escape again leaves editing |
 | Close | The cross, compositor close, Ctrl+Q or Ctrl+W |
 | Move the window | Drag empty toolbar |
 
-The minimal address editor appends text and supports Backspace and whole-address
-selection. Keyboard text uses the US physical-key layout; focus transitions and both
-left/right modifiers are tracked. Clipboard, IME, keymap parsing and caret movement
-remain future work. The window advertises a fixed size selected at launch.
+The address editor moves by UTF-8 scalar or Unicode word boundaries, supports
+anchored Shift selection, Home/End, Backspace/Delete and their Ctrl word variants.
+Typing replaces the selection. Click places the caret, double-click selects a word,
+triple-click selects all, and dragging selects text with horizontal scrolling.
+The caret is steady; long edited text is clipped and scrolled without an ellipsis.
+Clicking outside discards the edit and restores the page address.
+
+Ctrl+C, Ctrl+X and Ctrl+V use the compositor's plain-text clipboard through
+`wl_data_device`. Cut removes text only after compositor ownership is confirmed.
+Paste removes line breaks, turns tabs into spaces, and trims surrounding whitespace.
+Unavailable clipboard authority leaves text unchanged; there is no internal clipboard
+substitute. Transfers are limited to one MiB and five seconds, and invalid UTF-8,
+failed, incomplete or stale transfers do not insert partial text.
+[The interaction and visual contract](docs/address-editing.md) records the exact behavior.
+
+Keyboard text still uses the US physical-key layout; both left/right Shift, Ctrl
+and Alt are tracked across focus changes. XKB layout parsing, IME, grapheme-cluster
+movement and key-repeat scheduling are not implemented. The window advertises a
+fixed size selected at launch.
 
 The toolbar is the only permanent chrome. The address field shows a lock for verified
 HTTPS, a "Not secure" chip for plain HTTP and a document for local files; the host or
@@ -280,6 +296,7 @@ and deployments are separate from these commands.
 | --- | --- |
 | `src/main.lkj` | Application state, origin policy, input, navigation and page painting |
 | `src/chrome.lkj` | Toolbar, address field, link bubble and overlay scrollbar: painting and hit testing |
+| `src/address.lkj`, `address_words.lkj` | UTF-8 editor state, measured caret/selection scrolling and Unicode word boundaries |
 | `src/net.lkj` | URLs, regular files, DNS, HTTP framing and TLS adaptation |
 | `src/resources.lkj` | Same-executable stylesheet fetch worker and parent deadline/cleanup |
 | `src/crypto/` | HKDF, X25519, AES-GCM, bigint/signatures, SHA-384/512, DER/X.509, TLS records/handshake/transport |
@@ -296,12 +313,14 @@ reports its authority and reachable effects.
 
 `bridge/byte_descriptor_bridge.c` is the existing small freestanding, syscall-only
 transport, compiled without libc or a dynamic loader. It connects the explicit Unix
-socket, forwards opaque bytes and attaches the supplied frame-file descriptor.
-It performs no Wayland interpretation, cryptography, certificate validation, HTTP,
-parsing, layout, text or pixels. It has not grown for HTTPS.
+socket, forwards opaque bytes, attaches the supplied frame-file descriptor, and
+transfers bytes through descriptor-owned pipes. Clipboard protocol, selection
+ownership and MIME choices remain in lkjscript; the bridge has no Wayland interpretation,
+cryptography, certificate validation, HTTP, parsing, layout, text or pixels. [The clipboard transport](docs/clipboard-transport.md)
+documents ownership checks, descriptor lifetime and failure handling.
 
 The pin lacks Unix-path stream connection and descriptor send/receive operations;
 those capabilities remove the bridge. Writable mapping is optional because ordinary
-file writes already work. Incoming descriptors are closed, so full keymap processing
-still needs descriptor receive. [GAPS.md](GAPS.md) separates runtime capabilities,
+file writes already work. The browser still closes unused keymap descriptors and uses
+its documented physical-key subset. [GAPS.md](GAPS.md) separates runtime capabilities,
 source forms and source libraries, with exact probes and supported workarounds.

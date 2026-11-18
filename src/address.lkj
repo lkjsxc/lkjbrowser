@@ -1,0 +1,415 @@
+//! Address editor. Offsets are always UTF-8 scalar boundaries, independent of glyph widths.
+use crate::font::Font;
+use crate::address_words;
+
+pub const TEXT_SIZE: i32 = 15i32;
+
+pub struct Editor {
+    pub text: String,
+    pub caret: usize,
+    pub anchor: usize,
+    pub offset: i32,
+    pub revision: usize,
+    direction: i32,
+    pub dragging: bool,
+    drag_moved: bool,
+    press_at: usize,
+    pointer_x: i32,
+    pointer_y: i32,
+    press_x: i32,
+    press_y: i32,
+    last_click_ms: usize,
+    clicks: u8,
+}
+
+pub fn previous(text: &str, at: usize) -> usize {
+    if at == 0usize { return 0usize; }
+    let bytes = text.as_bytes();
+    let mut index = at - 1usize;
+    while index > 0usize && bytes[index] & 192u8 == 128u8 { index -= 1usize; }
+    index
+}
+pub fn next(text: &str, at: usize) -> usize {
+    let bytes = text.as_bytes();
+    if at >= bytes.len() { return bytes.len(); }
+    let mut index = at + 1usize;
+    while index < bytes.len() && bytes[index] & 192u8 == 128u8 { index += 1usize; }
+    index
+}
+fn word_at(text: &str, at: usize) -> bool {
+    if at >= text.len() { return false; }
+    address_words::is_word(text[at..].chars().next().unwrap())
+}
+pub fn word_left(text: &str, from: usize) -> usize {
+    let mut at = from;
+    while at > 0usize && !word_at(text, previous(text, at)) { at = previous(text, at); }
+    while at > 0usize && word_at(text, previous(text, at)) { at = previous(text, at); }
+    at
+}
+pub fn word_right(text: &str, from: usize) -> usize {
+    let mut at = from;
+    while at < text.len() && !word_at(text, at) { at = next(text, at); }
+    while at < text.len() && word_at(text, at) { at = next(text, at); }
+    at
+}
+fn whitespace(c: char) -> bool {
+    let n = c as u32;
+    n == 32u32 || (n >= 9u32 && n <= 13u32) || n == 133u32 || n == 160u32 ||
+        n == 5760u32 || (n >= 8192u32 && n <= 8202u32) || n == 8232u32 ||
+        n == 8233u32 || n == 8239u32 || n == 8287u32 || n == 12288u32
+}
+pub fn clean_paste(text: &str) -> String {
+    let mut result = String::new();
+    for c in text.chars() {
+        let n = c as u32;
+        if n == 10u32 || n == 13u32 || n == 11u32 || n == 12u32 || n == 133u32 || n == 8232u32 || n == 8233u32 { continue; }
+        result.push(if c == '\t' { ' ' } else { c });
+    }
+    let mut start = 0usize; let mut end = 0usize; let mut at = 0usize;
+    let mut found = false;
+    for c in result.as_str().chars() {
+        if !whitespace(c) {
+            if !found { start = at; found = true; }
+            end = at + c.len_utf8();
+        }
+        at += c.len_utf8();
+    }
+    if found { result.as_str()[start..end].to_string() } else { String::new() }
+}
+impl Editor {
+    pub fn new() -> Editor {
+        Editor { text: String::new(), caret: 0usize, anchor: 0usize, offset: 0i32,
+            revision: 0usize, direction: 1i32, dragging: false, drag_moved: false,
+            press_at: 0usize, pointer_x: 0i32, pointer_y: 0i32, press_x: 0i32, press_y: 0i32,
+            last_click_ms: 0usize, clicks: 0u8 }
+    }
+    pub fn reset(&mut self, text: &str, selected: bool) {
+        self.text = text.to_string(); self.caret = self.text.len();
+        self.anchor = if selected { 0usize } else { self.caret };
+        self.offset = 0i32; self.direction = 1i32; self.cancel_pointer();
+        self.revision += 1usize;
+    }
+    pub fn selection(&self) -> (usize, usize) { (self.anchor.min(self.caret), self.anchor.max(self.caret)) }
+    pub fn selected(&self) -> String {
+        let (start, end) = self.selection();
+        self.text.as_str()[start..end].to_string()
+    }
+    pub fn has_selection(&self) -> bool { self.caret != self.anchor }
+    pub fn select_all(&mut self) {
+        self.anchor = 0usize; self.caret = self.text.len(); self.direction = 1i32; self.revision += 1usize;
+    }
+    fn position(&mut self, at: usize, extend: bool) {
+        self.direction = if at < self.caret { -1i32 } else { 1i32 };
+        self.caret = at;
+        if !extend { self.anchor = at; }
+        self.revision += 1usize;
+    }
+    pub fn left(&mut self, word: bool, extend: bool) {
+        let (start, _) = self.selection();
+        let at = if !extend && self.has_selection() { start }
+            else if word { word_left(self.text.as_str(), self.caret) }
+            else { previous(self.text.as_str(), self.caret) };
+        self.position(at, extend);
+    }
+    pub fn right(&mut self, word: bool, extend: bool) {
+        let (_, end) = self.selection();
+        let at = if !extend && self.has_selection() { end }
+            else if word { word_right(self.text.as_str(), self.caret) }
+            else { next(self.text.as_str(), self.caret) };
+        self.position(at, extend);
+    }
+    pub fn home(&mut self, extend: bool) { self.position(0usize, extend); }
+    pub fn end(&mut self, extend: bool) { let end = self.text.len(); self.position(end, extend); }
+    pub fn insert(&mut self, inserted: &str) {
+        let (start, end) = self.selection();
+        let replacement = format!("{}{}{}", &self.text.as_str()[..start], inserted, &self.text.as_str()[end..]);
+        self.text = replacement;
+        self.caret = start + inserted.len(); self.anchor = self.caret;
+        // A held pointer's anchor refers to the old text. Never reuse it after replacement.
+        self.cancel_pointer(); self.direction = 1i32; self.revision += 1usize;
+    }
+    pub fn remove_selection(&mut self) {
+        if self.has_selection() { self.insert(""); self.direction = -1i32; }
+    }
+    pub fn backspace(&mut self, word: bool) {
+        if !self.has_selection() {
+            self.anchor = if word { word_left(self.text.as_str(), self.caret) }
+                else { previous(self.text.as_str(), self.caret) };
+        }
+        self.remove_selection();
+    }
+    pub fn delete(&mut self, word: bool) {
+        if !self.has_selection() {
+            self.anchor = if word { word_right(self.text.as_str(), self.caret) }
+                else { next(self.text.as_str(), self.caret) };
+        }
+        self.remove_selection(); self.direction = 1i32;
+    }
+    pub fn paste(&mut self, text: &str) {
+        let cleaned = clean_paste(text); self.insert(cleaned.as_str());
+    }
+    pub fn caret_pixels(&self, font: &Font) -> i32 {
+        font.text_width(&self.text.as_str()[..self.caret], TEXT_SIZE)
+    }
+    pub fn ensure_visible(&mut self, font: &Font, room: i32) {
+        let total = font.text_width(self.text.as_str(), TEXT_SIZE);
+        let max = (total + 2i32 - room).max(0i32);
+        let caret = self.caret_pixels(font);
+        if self.caret == 0usize { self.offset = 0i32; }
+        else if self.caret == self.text.len() { self.offset = max; }
+        else {
+            let margin = 24i32.min((room - 2i32).max(0i32) / 2i32);
+            if caret - self.offset < 0i32 || (self.direction < 0i32 && caret - self.offset < margin) {
+                self.offset = caret - margin;
+            }
+            if caret - self.offset > room - 2i32 || (self.direction >= 0i32 && caret - self.offset > room - 2i32 - margin) {
+                self.offset = caret - (room - 2i32 - margin);
+            }
+            self.offset = self.offset.max(0i32).min(max);
+        }
+    }
+    /// Nearest advance boundary, not the byte or character count. Zero-width ties choose the later boundary.
+    pub fn boundary(&self, font: &Font, local_x: i32) -> usize {
+        let wanted = local_x + self.offset;
+        if wanted <= 0i32 { return 0usize; }
+        let mut pen = 0i32; let mut at = 0usize;
+        for c in self.text.as_str().chars() {
+            let width = font.advance(c as u32, TEXT_SIZE);
+            if wanted * 2i32 < (pen * 2i32 + width) { return at; }
+            pen += width; at += c.len_utf8();
+        }
+        self.text.len()
+    }
+    pub fn press(&mut self, font: &Font, start: i32, room: i32, x: i32, y: i32, now_ms: usize, entering: bool) {
+        let dx = x as i64 - self.press_x as i64; let dy = y as i64 - self.press_y as i64;
+        let nearby = dx >= -4i64 && dx <= 4i64 && dy >= -4i64 && dy <= 4i64;
+        self.clicks = if self.clicks > 0u8 && self.clicks < 3u8 && nearby && now_ms >= self.last_click_ms && now_ms - self.last_click_ms <= 400usize {
+            self.clicks + 1u8
+        } else { 1u8 };
+        self.last_click_ms = now_ms; self.press_x = x; self.press_y = y;
+        self.pointer_x = x; self.pointer_y = y;
+        self.press_at = self.boundary(font, (x - start).max(0i32).min(room - 2i32));
+        self.dragging = true; self.drag_moved = false;
+        if entering { self.select_all(); }
+        else if self.clicks == 3u8 { self.select_all(); }
+        else if self.clicks == 2u8 {
+            // Hit the character under the pointer, rather than the nearest boundary at its right half.
+            let wanted = (x - start + self.offset).max(0i32);
+            let mut at = 0usize; let mut pen = 0i32;
+            for c in self.text.as_str().chars() {
+                let width = font.advance(c as u32, TEXT_SIZE);
+                if pen + width > wanted { break; }
+                pen += width; at += c.len_utf8();
+            }
+            if at == self.text.len() && at > 0usize { at = previous(self.text.as_str(), at); }
+            let mut left = at; let mut right = next(self.text.as_str(), at);
+            if word_at(self.text.as_str(), at) {
+                while left > 0usize && word_at(self.text.as_str(), previous(self.text.as_str(), left)) { left = previous(self.text.as_str(), left); }
+                while right < self.text.len() && word_at(self.text.as_str(), right) { right = next(self.text.as_str(), right); }
+            }
+            self.anchor = left; self.caret = right; self.direction = 1i32; self.revision += 1usize;
+        } else { let at = self.press_at; self.position(at, false); }
+        self.ensure_visible(font, room);
+    }
+    fn drag_boundary(&self, font: &Font, room: i32, direction: i32, max: i32) -> usize {
+        let margin = 24i32.min((room - 2i32).max(0i32) / 2i32);
+        let edge = if direction < 0i32 { margin } else { room - 2i32 - margin };
+        let mut at = self.boundary(font, edge);
+        let pixels = font.text_width(&self.text.as_str()[..at], TEXT_SIZE) - self.offset;
+        if direction < 0i32 && pixels < edge { at = next(self.text.as_str(), at); }
+        if direction > 0i32 && pixels > edge { at = previous(self.text.as_str(), at); }
+        if direction < 0i32 && self.offset == 0i32 { at = 0usize; }
+        if direction > 0i32 && self.offset == max { at = self.text.len(); }
+        at
+    }
+    pub fn motion(&mut self, font: &Font, start: i32, room: i32, x: i32, y: i32) -> bool {
+        if !self.dragging { return false; }
+        if x == self.pointer_x && y == self.pointer_y { return false; }
+        self.pointer_x = x; self.pointer_y = y;
+        let outside = x < start || x >= start + room;
+        let at = if outside {
+            let max = (font.text_width(self.text.as_str(), TEXT_SIZE) + 2i32 - room).max(0i32);
+            self.drag_boundary(font, room, if x < start { -1i32 } else { 1i32 }, max)
+        } else { self.boundary(font, x - start) };
+        // Pointer jitter within the same scalar boundary is still a click, including entry select-all.
+        if !self.drag_moved && !outside && at == self.press_at { return false; }
+        self.drag_moved = true;
+        self.anchor = self.press_at; self.position(at, true);
+        // Outside motion records the destination only: the 50ms tick owns all auto-scroll.
+        if !outside { self.ensure_visible(font, room); }
+        true
+    }
+    pub fn drag_tick(&mut self, font: &Font, start: i32, room: i32) -> bool {
+        if !self.dragging || !self.drag_moved { return false; }
+        let distance = if self.pointer_x < start { self.pointer_x - start }
+            else if self.pointer_x >= start + room { self.pointer_x - (start + room - 1i32) }
+            else { 0i32 };
+        if distance == 0i32 { return false; }
+        let max = (font.text_width(self.text.as_str(), TEXT_SIZE) + 2i32 - room).max(0i32);
+        let magnitude = if distance < 0i32 { -distance } else { distance };
+        let speed = (magnitude / 2i32).max(4i32).min(32i32);
+        let offset = (self.offset + if distance < 0i32 { -speed } else { speed }).max(0i32).min(max);
+        if offset == self.offset { return false; }
+        self.offset = offset;
+        // Keep context by choosing the boundary, without adding another scroll jump.
+        let at = self.drag_boundary(font, room, distance, max);
+        self.anchor = self.press_at; self.position(at, true); true
+    }
+    pub fn release(&mut self) {
+        if self.drag_moved { self.clicks = 0u8; }
+        self.dragging = false; self.drag_moved = false;
+    }
+    pub fn cancel_pointer(&mut self) { self.release(); self.clicks = 0u8; }
+}
+
+#[test]
+fn scalar_movement_deletion_and_replacement_keep_utf8() {
+    let mut edit = Editor::new(); edit.reset("aé中🙂z", false);
+    edit.left(false, false); assert_eq!(edit.caret, 10usize);
+    edit.left(false, true); assert_eq!(edit.selected(), "🙂");
+    edit.insert("Ω"); assert_eq!(edit.text, "aé中Ωz");
+    edit.backspace(false); assert_eq!(edit.text, "aé中z");
+    edit.home(false); edit.right(false, false); edit.delete(false); assert_eq!(edit.text, "a中z");
+    edit.right(false, true); edit.insert("é"); assert_eq!(edit.text, "aéz");
+}
+#[test]
+fn selection_direction_and_word_boundaries() {
+    let mut edit = Editor::new(); edit.reset("https://a-b_é.日本?q=42", true);
+    edit.left(false, false); assert_eq!(edit.caret, 0usize); assert!(!edit.has_selection());
+    edit.right(true, false); assert_eq!(edit.selected(), ""); assert_eq!(edit.caret, 5usize);
+    edit.right(true, true); assert_eq!(edit.selected(), "://a");
+    edit.right(false, false); assert!(!edit.has_selection());
+    edit.home(false); edit.end(true); assert_eq!(edit.selected(), edit.text);
+    edit.left(false, true); assert_eq!(edit.selected(), "https://a-b_é.日本?q=4");
+    edit.home(false); edit.delete(true); assert_eq!(edit.text, "://a-b_é.日本?q=42");
+    edit.end(false); edit.backspace(true); assert_eq!(edit.text, "://a-b_é.日本?q=");
+}
+#[test]
+fn paste_is_single_line_and_trims_unicode_whitespace() {
+    assert_eq!(clean_paste(" \t https://exam\r\nple.test/\tpath\n  "), "https://example.test/ path");
+    assert_eq!(clean_paste("\u{3000}é\u{2028}中\u{a0}"), "é中");
+    let mut edit = Editor::new(); edit.reset("old", true); edit.paste(" a\nb "); assert_eq!(edit.text, "ab");
+}
+#[test]
+fn measured_viewport_keeps_start_end_and_active_caret() {
+    let font = crate::font::metric_test_font();
+    let mut edit = Editor::new(); edit.reset("https://example.test/one/two/three/four/five/six/seven", false);
+    edit.ensure_visible(&font, 120i32); assert!(edit.offset > 0i32);
+    edit.home(false); edit.ensure_visible(&font, 120i32); assert_eq!(edit.offset, 0i32);
+    let mut count = 0usize;
+    while count < 30usize { edit.right(false, false); edit.ensure_visible(&font, 120i32); count += 1usize; }
+    let x = edit.caret_pixels(&font) - edit.offset; assert!(x >= 0i32 && x <= 94i32);
+    assert_eq!(edit.boundary(&font, x), edit.caret);
+}
+
+#[test]
+fn all_url_separators_and_unicode_decimal_digits_are_word_boundaries() {
+    for separator in vec!["/".to_string(), ".".to_string(), ":".to_string(), "?".to_string(), "&".to_string(), "=".to_string(), "#".to_string(), "-".to_string(), "_".to_string(), "🙂".to_string(), "²".to_string(), "\u{301}".to_string()] {
+        let text = format!("é١{}日本９", separator);
+        assert_eq!(word_right(text.as_str(), 0usize), 4usize);
+        assert_eq!(word_right(text.as_str(), 4usize), text.len());
+        assert_eq!(word_left(text.as_str(), text.len()), 4usize + separator.len());
+        assert_eq!(word_left(text.as_str(), 4usize + separator.len()), 0usize);
+    }
+}
+#[test]
+fn pointer_chooses_nearest_scalar_boundary_and_word_under_pointer() {
+    let font = crate::font::metric_test_font();
+    let mut edit = Editor::new(); edit.reset("ab/é中９-xy", false);
+    // Each glyph in this metric fixture advances nine pixels.
+    assert_eq!(edit.boundary(&font, 4i32), 0usize);
+    assert_eq!(edit.boundary(&font, 5i32), 1usize);
+    assert_eq!(edit.boundary(&font, 31i32), 3usize);
+    assert_eq!(edit.boundary(&font, 32i32), 5usize);
+    edit.press(&font, 0i32, 300i32, 34i32, 26i32, 1000usize, false); edit.release();
+    assert_eq!(edit.caret, 5usize);
+    edit.press(&font, 0i32, 300i32, 34i32, 26i32, 1100usize, false); edit.release();
+    assert_eq!(edit.selected(), "é中９");
+    edit.press(&font, 0i32, 300i32, 34i32, 26i32, 1200usize, false); edit.release();
+    assert_eq!(edit.selected(), edit.text);
+    edit.press(&font, 0i32, 300i32, 34i32, 26i32, 1300usize, false); edit.release();
+    assert_eq!(edit.caret, 5usize); assert!(!edit.has_selection());
+    // A double click on the right half of slash still selects slash, not the following word.
+    edit.press(&font, 0i32, 300i32, 25i32, 26i32, 2000usize, false); edit.release();
+    edit.press(&font, 0i32, 300i32, 25i32, 26i32, 2200usize, false); edit.release();
+    assert_eq!(edit.selected(), "/");
+}
+#[test]
+fn multi_clicks_expire_on_time_distance_and_completed_drag() {
+    let font = crate::font::metric_test_font();
+    let mut edit = Editor::new(); edit.reset("one/two", false);
+    edit.press(&font, 0i32, 300i32, 8i32, 26i32, 1000usize, false); edit.release();
+    edit.press(&font, 0i32, 300i32, 8i32, 26i32, 1401usize, false); edit.release();
+    assert!(!edit.has_selection());
+    edit.press(&font, 0i32, 300i32, 13i32, 26i32, 1500usize, false); edit.release();
+    assert!(!edit.has_selection());
+    edit.press(&font, 0i32, 300i32, 13i32, 26i32, 2000usize, false);
+    edit.motion(&font, 0i32, 300i32, 50i32, 26i32); edit.release();
+    edit.press(&font, 0i32, 300i32, 13i32, 26i32, 2100usize, false); edit.release();
+    assert!(!edit.has_selection());
+}
+#[test]
+fn text_replacement_cancels_old_pointer_anchor() {
+    let font = crate::font::metric_test_font();
+    let mut edit = Editor::new(); edit.reset("abc/def", false);
+    edit.press(&font, 0i32, 300i32, 45i32, 26i32, 1000usize, false);
+    edit.select_all(); edit.insert("x");
+    assert!(!edit.dragging);
+    assert!(!edit.motion(&font, 0i32, 300i32, 30i32, 26i32));
+    assert_eq!(edit.selected(), "");
+    assert_eq!(edit.caret, 1usize);
+}
+#[test]
+fn held_drag_scrolls_at_bounded_speed_and_stops_after_release() {
+    let font = crate::font::metric_test_font();
+    let mut edit = Editor::new(); edit.reset("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", false);
+    edit.home(false); edit.ensure_visible(&font, 100i32);
+    edit.press(&font, 10i32, 100i32, 28i32, 26i32, 1000usize, false);
+    edit.motion(&font, 10i32, 100i32, 200i32, 26i32);
+    let before = edit.offset;
+    assert!(edit.drag_tick(&font, 10i32, 100i32)); assert_eq!(edit.offset - before, 32i32);
+    assert!(edit.caret_pixels(&font) - edit.offset + 2i32 + 24i32 <= 100i32);
+    let mut ticks = 0usize;
+    while edit.drag_tick(&font, 10i32, 100i32) { ticks += 1usize; assert!(ticks < 100usize); }
+    assert_eq!(edit.caret, edit.text.len());
+    assert_eq!(edit.anchor, 2usize);
+    edit.motion(&font, 10i32, 100i32, -100i32, 26i32);
+    ticks = 0usize;
+    while edit.drag_tick(&font, 10i32, 100i32) { ticks += 1usize; assert!(ticks < 100usize); }
+    assert_eq!(edit.caret, 0usize);
+    assert_eq!(edit.offset, 0i32);
+    assert_eq!(edit.anchor, 2usize);
+    edit.release(); assert!(!edit.drag_tick(&font, 10i32, 100i32));
+    assert!(!edit.motion(&font, 10i32, 100i32, 200i32, 26i32));
+}
+
+#[test]
+fn outside_motion_does_not_bypass_fifty_millisecond_scroll_ticks() {
+    let font = crate::font::metric_test_font();
+    let mut edit = Editor::new(); edit.reset("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", false);
+    edit.home(false); edit.ensure_visible(&font, 100i32);
+    edit.press(&font, 10i32, 100i32, 28i32, 26i32, 1000usize, false);
+    edit.motion(&font, 10i32, 100i32, 110i32, 26i32);
+    assert_eq!(edit.offset, 0i32);
+    assert!(edit.drag_tick(&font, 10i32, 100i32)); assert_eq!(edit.offset, 4i32);
+    edit.motion(&font, 10i32, 100i32, 111i32, 26i32);
+    edit.motion(&font, 10i32, 100i32, 200i32, 27i32);
+    assert_eq!(edit.offset, 4i32);
+    assert!(edit.drag_tick(&font, 10i32, 100i32)); assert_eq!(edit.offset, 36i32);
+    edit.motion(&font, 10i32, 100i32, 9i32, 26i32);
+    assert_eq!(edit.offset, 36i32);
+    assert!(edit.drag_tick(&font, 10i32, 100i32)); assert_eq!(edit.offset, 32i32);
+    assert!(edit.caret_pixels(&font) - edit.offset >= 24i32);
+}
+
+#[test]
+fn pointer_jitter_within_boundary_preserves_click_and_entry_selection() {
+    let font = crate::font::metric_test_font();
+    let mut edit = Editor::new(); edit.reset("one/two", true);
+    edit.press(&font, 0i32, 300i32, 8i32, 26i32, 1000usize, true);
+    assert!(!edit.motion(&font, 0i32, 300i32, 9i32, 27i32));
+    assert_eq!(edit.selected(), "one/two");
+    edit.release();
+    edit.press(&font, 0i32, 300i32, 10i32, 26i32, 1200usize, false); edit.release();
+    assert_eq!(edit.selected(), "one");
+}

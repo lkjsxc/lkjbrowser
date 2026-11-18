@@ -2,6 +2,7 @@
 # Independent review: copy existing binaries, use a private compositor, capture its output.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+. ./tools/wayland-auth.sh
 root=$PWD
 proof="$root/review/weston-proof"
 mkdir -p "$proof"
@@ -29,6 +30,7 @@ export LD_LIBRARY_PATH="$root/.deps/root/usr/lib/x86_64-linux-gnu:$root/.deps/ro
 export WESTON_MODULE_MAP="headless-backend.so=$root/.deps/root/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so;kiosk-shell.so=$root/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so"
 weston_pid= server_pid= bridge_pid= client_pid=
 cleanup() {
+ wayland_auth_close
     set +e
     for owned_pid in "$client_pid" "$bridge_pid" "$server_pid" "$weston_pid"; do
         if test -n "$owned_pid"; then
@@ -46,7 +48,7 @@ weston_pid=$!
 for ((attempt=0; attempt<100; attempt++)); do
     test -S "$run/runtime/$WAYLAND_DISPLAY" && break
     kill -0 "$weston_pid"
-    sleep 0.05
+    sleep 0.05 8<&- 9<&-
 done
 test -S "$run/runtime/$WAYLAND_DISPLAY"
 "$run/fixture-server" "$root/fixtures" "$run/http-port" >"$proof/http-server.log" 2>&1 &
@@ -54,10 +56,10 @@ server_pid=$!
 for ((attempt=0; attempt<100; attempt++)); do
     test -s "$run/http-port" && break
     kill -0 "$server_pid"
-    sleep 0.05
+    sleep 0.05 8<&- 9<&-
 done
-port=$(cat "$run/http-port")
-closed_port=$(cat "$run/http-port.closed")
+port=$(cat "$run/http-port" 8<&- 9<&-)
+closed_port=$(cat "$run/http-port.closed" 8<&- 9<&-)
 printf '%s\n' "$port" >"$proof/http-port.txt"
 printf '%s\n' "$closed_port" >"$proof/unreachable-port.txt"
 capture() {
@@ -65,19 +67,22 @@ capture() {
     local page="$run/$name"
     mkdir -p "$page" "$proof/$name"
     truncate -s 6082304 "$page/frame.bgra"
-    "$run/byte-descriptor-bridge" "$run/runtime/$WAYLAND_DISPLAY" "$page/frame.bgra" >"$page/bridge-port" 2>"$proof/$name/bridge.log" &
+    wayland_auth_prepare
+    "$run/byte-descriptor-bridge" "$run/runtime/$WAYLAND_DISPLAY" "$page/frame.bgra" >"$page/bridge-port" 2>"$proof/$name/bridge.log" <&8 8<&- 9<&- &
     bridge_pid=$!
+    exec 8<&-
     for ((attempt=0; attempt<100; attempt++)); do
         test -s "$page/bridge-port" && break
         kill -0 "$bridge_pid"
-        sleep 0.05
+        sleep 0.05 8<&- 9<&-
     done
     local bridge_port
-    bridge_port=$(cat "$page/bridge-port")
+    bridge_port=$(cat "$page/bridge-port" 8<&- 9<&-)
     printf '%s\n' "$url" >"$proof/$name/url.txt"
-    "$run/lkjbrowser" --wayland "$bridge_port" --frame-file "$page/frame.bgra" --font-dir "$font_dir" --max-ms 6500 "$url" >"$proof/$name/browser.log" 2>"$proof/$name/browser.err" &
+    "$run/lkjbrowser" --wayland "$bridge_port" --frame-file "$page/frame.bgra" --font-dir "$font_dir" --max-ms 6500 "$url" >"$proof/$name/browser.log" 2>"$proof/$name/browser.err" <&9 8<&- 9<&- &
     client_pid=$!
-    sleep 2
+    wayland_auth_close
+    sleep 2 8<&- 9<&-
     kill -0 "$client_pid"
     (cd "$proof/$name"; timeout 10 "$root/.deps/root/usr/bin/weston-screenshooter") >"$proof/$name/capture.log" 2>"$proof/$name/capture.err"
     local captures=("$proof/$name"/wayland-screenshot-*.png)
