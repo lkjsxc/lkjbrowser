@@ -1,0 +1,9 @@
+focus
+wait 180
+key 29 1
+tap 38
+key 29 0
+key 29 1
+tap 47
+key 29 0
+wait 350

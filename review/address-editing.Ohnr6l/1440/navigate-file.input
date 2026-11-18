@@ -1,0 +1,11 @@
+key 29 1
+tap 38
+key 29 0
+text file:///home/coder/workspace/lkjbrowser-address-editing-20261118/fixtures/article.html
+tap 28
+wait 450
+key 29 1
+tap 38
+tap 46
+key 29 0
+wait 180

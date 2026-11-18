@@ -1,0 +1,17 @@
+PASS paste-exact bytes=31
+PASS pointer-word bytes=5
+PASS pointer-all bytes=216
+PASS pointer-drag-all bytes=216
+PASS pointer-insert bytes=217
+PASS cut-exact bytes=217
+PASS self-paste-exact bytes=217
+PASS shift-ctrl-word bytes=5
+PASS delete-words bytes=7
+PASS enter-navigated bytes=86
+PASS alt-back bytes=13
+PASS alt-forward bytes=86
+PASS escape-restored-selected bytes=86
+PASS escape-left-and-f6 bytes=86
+PASS alt-d-selects bytes=86
+PASS outside-discards bytes=86
+PASS published launcher presented and exited cleanly

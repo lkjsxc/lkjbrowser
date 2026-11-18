@@ -1,0 +1,9 @@
+text discarded.invalid
+move 455 710
+button 1 1
+button 1 0
+tap 64
+key 29 1
+tap 46
+key 29 0
+wait 180

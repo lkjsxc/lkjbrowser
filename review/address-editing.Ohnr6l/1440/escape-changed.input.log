@@ -1,0 +1,6 @@
+INPUT text discarded.invalid
+INPUT tap 1
+INPUT key 29 1
+INPUT tap 46
+INPUT key 29 0
+INPUT wait 180

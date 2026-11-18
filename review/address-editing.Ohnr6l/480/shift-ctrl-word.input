@@ -1,0 +1,13 @@
+key 29 1
+tap 38
+key 29 0
+text alpha.beta/gamma?delta
+tap 102
+key 29 1
+tap 106
+key 42 1
+tap 106
+key 42 0
+tap 46
+key 29 0
+wait 180

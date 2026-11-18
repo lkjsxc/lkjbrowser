@@ -1,0 +1,9 @@
+key 56 1
+tap 106
+key 56 0
+wait 350
+key 29 1
+tap 38
+tap 46
+key 29 0
+wait 180

@@ -1,0 +1,14 @@
+INPUT wait 600
+INPUT move 320 26
+INPUT button 1 1
+INPUT button 1 0
+INPUT wait 80
+INPUT button 1 1
+INPUT button 1 0
+INPUT wait 80
+INPUT button 1 1
+INPUT button 1 0
+INPUT key 29 1
+INPUT tap 46
+INPUT key 29 0
+INPUT wait 180

@@ -1,0 +1,34 @@
+Date: 2026-11-18 UTC
+[17:37:49.311] weston 13.0.0
+               https://wayland.freedesktop.org
+               Bug reports to: https://gitlab.freedesktop.org/wayland/weston/issues/
+               Build: 13.0.0
+[17:37:49.311] Command line: /home/coder/workspace/lkjbrowser/.deps/root/usr/bin/weston --backend=x11 --renderer=pixman --width=480 --height=760 --shell=/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so --socket=wl --idle-time=0 --no-config --debug --log=/home/coder/workspace/lkjbrowser-address-editing-20261118/review/address-editing.Ohnr6l/480/weston.log
+[17:37:49.311] OS: Linux, 7.3.4-arch1-1, #1 SMP PREEMPT_DYNAMIC Wed, 11 Nov 2026 19:02:39 +0000, x86_64
+[17:37:49.311] Flight recorder: enabled
+[17:37:49.311] Starting with no config file.
+[17:37:49.311] Output repaint window is 7 ms maximum.
+[17:37:49.311] Loading module '/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/libweston-13/x11-backend.so'
+[17:37:49.312] Using Pixman renderer
+[17:37:49.313] Registered plugin API 'weston_windowed_output_api_v2' of size 16
+[17:37:49.313] Color manager: no-op
+[17:37:49.313] Output 'screen0' attempts EOTF mode: SDR
+[17:37:49.313] Output 'screen0' using color profile: stock sRGB color profile
+[17:37:49.313] Found visual, bits per value: 8, red_mask: 00ff0000, green_mask: 0000ff00, blue_mask: 000000ff
+[17:37:49.313] Visual depth is 24
+[17:37:49.313] Found format for depth 24, bpp: 32
+[17:37:49.313] Will use x8r8g8b8 format for SHM surfaces
+[17:37:49.313] x11 output 480x760, window id 2097157
+[17:37:49.314] Output 'screen0' enabled with head(s) screen0
+[17:37:49.314] Compositor capabilities:
+               arbitrary surface rotation: yes
+               screen capture uses y-flip: no
+               cursor planes: no
+               arbitrary resolutions: no
+               view mask clipping: yes
+               explicit sync: no
+               color operations: no
+               presentation clock: CLOCK_MONOTONIC_RAW, id 4
+               presentation clock resolution: 0.000000001 s
+[17:37:49.314] Loading module '/home/coder/workspace/lkjbrowser/.deps/root/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so'
+[17:38:24.951] caught signal 15

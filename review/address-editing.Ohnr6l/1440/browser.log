@@ -1,0 +1,7 @@
+PAINT wayland-submit elapsed_us=61124 url=about:welcome
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser-address-editing-20261118/fixtures/article.html
+PAINT wayland-submit elapsed_us=47818 url=file:///home/coder/workspace/lkjbrowser-address-editing-20261118/fixtures/article.html
+PAINT wayland-submit elapsed_us=21804 url=about:welcome
+HTTP_RESPONSE status=200 bytes=5118 url=file:///home/coder/workspace/lkjbrowser-address-editing-20261118/fixtures/article.html
+PAINT wayland-submit elapsed_us=38422 url=file:///home/coder/workspace/lkjbrowser-address-editing-20261118/fixtures/article.html
+Wayland: sent 1726 messages, received 2277, presented 504 frames

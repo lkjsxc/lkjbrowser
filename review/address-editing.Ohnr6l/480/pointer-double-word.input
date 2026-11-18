@@ -1,0 +1,10 @@
+move 154 26
+button 1 1
+button 1 0
+wait 80
+button 1 1
+button 1 0
+key 29 1
+tap 46
+key 29 0
+wait 180

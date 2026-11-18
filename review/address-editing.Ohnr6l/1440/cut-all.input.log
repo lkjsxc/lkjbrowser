@@ -1,0 +1,4 @@
+INPUT key 29 1
+INPUT tap 45
+INPUT key 29 0
+INPUT wait 200

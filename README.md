@@ -86,6 +86,8 @@ substitute. Clipboard payloads are limited to one MiB. Paste has a five-second t
 deadline; bridge descriptor transfers have a five-second inactivity deadline.
 Invalid UTF-8, failed, incomplete or stale transfers do not insert partial text.
 [The interaction and visual contract](docs/address-editing.md) records the exact behavior.
+[Verification, acceptance images and reproduction](docs/address-editing-verification.md)
+record the exact local candidate and its final offline and compositor proofs.
 
 Keyboard text still uses the US physical-key layout; both left/right Shift, Ctrl
 and Alt are tracked across focus changes. XKB layout parsing, IME, grapheme-cluster

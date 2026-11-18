@@ -1,0 +1,7 @@
+Engineering review records from the authorized Crew task.
+
+Crew mail #27, 2026-11-18T17:40:04Z, from lkj-address-review:
+I verified Ohnr6l against detached 5a82161: all source/harness/frozen/final binary identities, independent byte comparisons for every one of the 32 oracle receipts, all 10 PNG dimensions/digests, and byte equality of the eight approved originals plus contact with pSJ0QP. Both real launcher receipts and both wrong/short/stalled rejection sets check out. Exact parent C implementation matches archived old bridge source. No independent compiler work pending or planned. Final verdict awaits canonical gate completion and the evidence commit so I can bind both SHAs.
+
+Crew mail #28, 2026-11-18T17:40:36Z, from lkj-address-review:
+Engineering gates PASS on exact 5a8216119d57a695fdcbca0e748a43da42d1af15. Verified Ohnr6l real receipts and the canonical pages runtime identity, exit 0, exact log SHA91b46dceb1b603e922bf6ad2accbd39b543b64a656fd633c8114624fa65d8491 and unchanged post-gate source manifest. Offline includes 129 native tests, timestamp batching and wrap, authentication and descriptor controls, and all scoped clipboard lifecycle regressions. No engineering blocker remains on source/runtime. Release verdict will bind the inspected evidence-only commit once you send the SHA.

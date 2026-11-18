@@ -1,0 +1,5 @@
+The capture harness acquired /home/coder/workspace/prompts/talk/lkjscript-gate.lock itself before compiling either helper.
+Its per-process ownership marker was observed while the real capture ran.
+It retained the same gate across both viewports and the wide documented browser build.
+The command exited 0; the gate directory was absent in the explicit post-run check before lane handoff.
+No processes using the capture's private ap.* runtime remained in the post-run process check.

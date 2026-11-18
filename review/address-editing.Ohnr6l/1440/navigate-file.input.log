@@ -1,0 +1,11 @@
+INPUT key 29 1
+INPUT tap 38
+INPUT key 29 0
+INPUT text file:///home/coder/workspace/lkjbrowser-address-editing-20261118/fixtures/article.html
+INPUT tap 28
+INPUT wait 450
+INPUT key 29 1
+INPUT tap 38
+INPUT tap 46
+INPUT key 29 0
+INPUT wait 180

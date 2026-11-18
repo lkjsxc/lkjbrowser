@@ -1,0 +1,7 @@
+tap 1
+text X
+tap 64
+key 29 1
+tap 46
+key 29 0
+wait 180

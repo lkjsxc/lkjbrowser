@@ -1,0 +1,2 @@
+WARNING: debug protocol has been enabled. This is a potential denial-of-service attack vector and information leak.
+/usr/share/weston/wayland.png: No such file or directory

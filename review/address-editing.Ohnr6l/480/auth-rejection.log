@@ -1,0 +1,4 @@
+PASS rejected wrong32 candidate; elapsed_ms=2
+PASS rejected short candidate; elapsed_ms=0
+PASS rejected stalled candidate; elapsed_ms=252
+PASS same bridge listener survived all unauthenticated candidates; legitimate launch follows

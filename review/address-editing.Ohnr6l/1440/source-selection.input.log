@@ -1,0 +1,5 @@
+INPUT focus
+FOCUS Weston X11 window=2097157
+INPUT move 720 380
+INPUT tap 57
+INPUT wait 100

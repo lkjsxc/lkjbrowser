@@ -1,0 +1,14 @@
+INPUT key 29 1
+INPUT tap 14
+INPUT key 29 0
+INPUT tap 102
+INPUT key 29 1
+INPUT tap 111
+INPUT key 29 0
+INPUT tap 107
+INPUT key 29 1
+INPUT tap 14
+INPUT tap 30
+INPUT tap 46
+INPUT key 29 0
+INPUT wait 180

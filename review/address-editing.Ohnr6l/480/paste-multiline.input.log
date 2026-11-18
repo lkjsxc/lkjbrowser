@@ -1,0 +1,10 @@
+INPUT focus
+FOCUS Weston X11 window=2097157
+INPUT wait 180
+INPUT key 29 1
+INPUT tap 38
+INPUT key 29 0
+INPUT key 29 1
+INPUT tap 47
+INPUT key 29 0
+INPUT wait 350

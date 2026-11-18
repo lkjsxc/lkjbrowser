@@ -1,0 +1,5 @@
+MAPPED synthetic clipboard sink
+KEYBOARD_ENTER serial=1413
+SELECTION_OFFER id=4278190080
+RECEIVE offer=4278190080 mime=text/plain;charset=utf-8
+RECEIVED bytes=86

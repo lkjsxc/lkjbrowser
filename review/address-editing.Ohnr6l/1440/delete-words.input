@@ -1,0 +1,14 @@
+key 29 1
+tap 14
+key 29 0
+tap 102
+key 29 1
+tap 111
+key 29 0
+tap 107
+key 29 1
+tap 14
+tap 30
+tap 46
+key 29 0
+wait 180

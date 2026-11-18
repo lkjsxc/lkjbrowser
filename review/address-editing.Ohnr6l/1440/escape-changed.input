@@ -1,0 +1,6 @@
+text discarded.invalid
+tap 1
+key 29 1
+tap 46
+key 29 0
+wait 180

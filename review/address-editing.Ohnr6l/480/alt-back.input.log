@@ -1,0 +1,10 @@
+INPUT text pending-edit
+INPUT key 56 1
+INPUT tap 105
+INPUT key 56 0
+INPUT wait 350
+INPUT key 29 1
+INPUT tap 38
+INPUT tap 46
+INPUT key 29 0
+INPUT wait 180

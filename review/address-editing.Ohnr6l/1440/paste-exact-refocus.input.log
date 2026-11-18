@@ -1,0 +1,3 @@
+INPUT focus
+FOCUS Weston X11 window=2097157
+INPUT wait 140

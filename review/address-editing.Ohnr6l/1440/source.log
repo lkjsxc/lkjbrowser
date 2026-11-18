@@ -1,0 +1,21 @@
+MAPPED synthetic clipboard source
+KEYBOARD_ENTER serial=2
+SELECTION_OFFER id=0
+KEYBOARD_LEAVE
+KEYBOARD_ENTER serial=7
+KEY serial=8 key=57 state=1
+SELECTION_SET bytes=38 serial=8
+SELECTION_OFFER id=4278190080
+SEND mime=text/plain;charset=utf-8 bytes=38 complete=yes
+KEY serial=9 key=57 state=0
+KEYBOARD_LEAVE
+SEND mime=text/plain;charset=utf-8 bytes=38 complete=yes
+SOURCE_CANCELLED
+KEYBOARD_ENTER serial=1482
+SELECTION_OFFER id=4278190081
+SELECTION_OFFER id=0
+SELECTION_OFFER id=4278190082
+KEY serial=1485 key=29 state=0
+KEYBOARD_LEAVE
+KEYBOARD_ENTER serial=1494
+SELECTION_OFFER id=4278190083
