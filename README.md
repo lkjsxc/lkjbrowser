@@ -5,9 +5,15 @@ builds an HTML tree, computes a small CSS subset, wraps text using runtime TrueT
 metrics, rasterizes outlines, paints pixels, and speaks the Wayland wire protocol itself.
 
 The same executable opens **authenticated HTTPS, plain HTTP and local files**, displays
-text and PNG images, follows links, scrolls and goes back. TLS 1.3, cryptography,
+text and PNG, JPEG and GIF images, follows links, scrolls and goes back. TLS 1.3, cryptography,
 certificate parsing and validation are lkjscript source in `src/crypto/`.
 JavaScript is not implemented.
+
+[The ten-page comparison](docs/pages/verification.md) records real Weston before/after
+captures of documentation, an encyclopedia article, a standards page, project sites,
+a blog, a news index and a mailing-list archive. The page engine handles intrinsic
+image sizes, list numbering, table spans, bounded stylesheet imports and compressed
+HTTP. Code examples use real monospace typefaces.
 
 [The completed HTTPS proof](docs/tls/verification.md) records five authenticated public
 pages, Enter-to-first-frame timings, unchanged offline goldens and the current real
@@ -119,28 +125,41 @@ See [the exact protocol profile](docs/tls-protocol-profile.md),
 | Layer | Implementation |
 | --- | --- |
 | Wayland | Registry, wl_compositor, wl_shm, xdg-shell, pointer/keyboard input, cursor and two release-tracked buffers |
-| Networking | IPv4 TCP, DNS A queries over TCP, HTTP/1.1 framing, chunked bodies/trailers, redirects and identity encoding |
-| Documents | Indexed owned HTML tree, attributes, entities, selected optional close tags, raw style/title/script handling |
-| CSS | Supported selectors/cascade, block/inline/none, margins/padding, colors/backgrounds/borders, font shorthand, viewport lengths, alignment, line height and bounded screen/width media queries |
-| Layout | Block and inline text, wrapping across style nodes, common baselines, lists, anchors, text/image hit tests and basic table rows/columns with a narrow-view stacked fallback |
-| Fonts | Runtime TrueType cmap/metrics/glyf parsing, simple/compound outlines, quadratic curves and cached coverage masks |
-| Images | Source PNG decoder/encoder with stored/fixed/dynamic DEFLATE and the supported 8-bit color types |
+| Networking | IPv4 TCP, DNS A queries over TCP, HTTP/1.1 framing, chunks/trailers, redirects, bounded gzip and zlib-wrapped deflate |
+| Documents | Owned HTML tree, selected optional table/paragraph closes, entities, UTF-8/UTF-16/windows-1252 decoding, native details disclosure and raw style/title/script handling |
+| CSS | Indexed static selectors/cascade, percentage boxes, root-relative lengths, font/list hints, visibility, observed clipping/clearance and screen-width media; documented finite flex/float fallback |
+| Layout | Wrapped inline runs, intrinsic image sizes, visible list markers, anchors and hit tests; table row/column spans and intrinsic widths; nonoverlapping readable fallback for crowded flex rows |
+| Fonts | Runtime TrueType outlines and cached coverage masks; four Sans and four Mono faces share measurement and painting metrics |
+| Images | Native PNG, baseline/progressive JPEG and GIF first-frame decoders; SVG metadata reserves dimensions for an explicit alt placeholder |
 | UI | Address line, history, scrolling, links and ordinary error pages |
 
-Linked stylesheets use the same HTTP/HTTPS and authentication rules. The browser accepts
-at most four distinct stylesheet URLs and one MiB per sheet, with a four-MiB aggregate
-CSS limit. Cached repeated links are applied in document source order. Supported link
-media conditions and nested screen/width queries filter the applicable rules. A
-same-executable lkjscript child fetches each optional sheet into anonymous storage. The parent enforces **one shared three-second budget for the stylesheet batch**
-and kills/reaps an unfinished child; unavailable sheets leave the document readable
-with the remaining styles. No curl, foreign TLS helper or named temporary response file
-is involved.
+Linked and imported stylesheets use the same HTTP/HTTPS authentication rules. The browser
+accepts at most four distinct stylesheet URLs across the whole batch, one MiB per sheet
+and four MiB of expanded CSS. Legal leading `@import` statements resolve against the
+owning sheet's final URL after redirects, preserve source order and obey supported media
+conditions. Cached repeats replay in source order; cycles stop and expansion work is
+bounded to 1,024 occurrences. Remote sheets cannot acquire local-file authority through
+a local parent document.
 
-Media-query support covers screen/all, min/max-width in px/em/rem, comma alternatives
-and nesting to eight levels. Unsupported conditions and print styles are skipped.
-There are no imported stylesheets or downloadable fonts. Table layout supports intrinsic
-columns, bold headers and bounded colspan; rowspan, collapsed borders and the full CSS
-table algorithm remain absent.
+A same-executable lkjscript child fetches each optional sheet into anonymous storage.
+The parent enforces **one shared three-second budget for the entire batch**, including
+imports, and kills/reaps an unfinished child. Missing sheets leave the document readable
+with the remaining styles. No curl or foreign TLS helper is used by the browser.
+
+Media queries cover screen/all, min/max-width in px/em/rem, comma alternatives and
+bounded nesting. Unsupported conditions and print styles are skipped. Imported layers,
+`supports()`, escaped URL tokens and downloadable fonts remain unsupported.
+Tables retain a 64-column policy and readable narrow fallback; row spans, column spans,
+legacy spacing/padding, group boundaries and footer placement now work. Complete CSS
+table sizing, collapsed borders and CSS `vertical-align` are not implemented.
+
+Visible raster images are decoded before the corresponding paint. Their intrinsic sizes
+then reflow the page using the cached document and computed styles, avoiding another
+whole-page selector pass. Image-driven reflow keeps the first visible text fragment at
+its screen position, including when the same image source also occurs above the
+viewport; initial navigation stays at scroll zero. Off-screen resources remain deferred. GIFs show their first
+composited frame; CMYK JPEG, SVG painting, non-8-bit/Adam7 PNG, orientation metadata and
+color-profile management are outside the implemented image subset.
 
 This deadline isolation applies to **stylesheets only**. Main-document and image fetches
 remain synchronous. Their six-second I/O deadline begins after TCP connect; the pinned
@@ -157,18 +176,22 @@ A separate trusted-configuration reader handles OS-owned configuration paths.
 
 Unsupported content is not delegated to another browser. There is no JavaScript,
 complete HTML5 recovery, complete CSS/flex/grid/table/SVG layout, forms, cookies,
-compression, IPv6 or Unicode-to-IDNA conversion. Text has no shaping, bidi,
-fallback-font selection or kerning. CFF outlines and non-8-bit/Adam7 PNGs are absent.
+Brotli, every legacy character encoding, IPv6 or Unicode-to-IDNA conversion. Text has no
+shaping, bidi, per-glyph fallback-font selection or kerning. CFF outlines and non-8-bit/Adam7 PNGs are absent.
 The precise subsets and resource policies are in [HTML/CSS](docs/html.md),
-[fonts](docs/font.md), [PNG](docs/png.md) and [Wayland](docs/wayland.md).
+[fonts](docs/font.md), [typefaces](docs/typefaces.md), [images](docs/images.md),
+[content decoding](docs/content-decoding.md), [tables](docs/tables.md) and [Wayland](docs/wayland.md).
 
 ## Reproducible verification
 
 The combined deterministic offline gate is:
 
 ~~~sh
-sh tools/https-test.sh
+sh tools/pages-test.sh
 ~~~
+
+This includes the existing `sh tools/https-test.sh` gate plus the image, compressed-content
+and stylesheet-import cases. Public-network captures remain separate.
 
 After the pinned toolchain is present, this requires no public network. It includes
 the original browser fixtures and visual goldens, exact language probes, the public
@@ -184,7 +207,9 @@ servers; the browser never executes them.
 The browser's existing narrower gate remains available as `sh tools/test.sh`.
 Its layout/pixel comparisons cover file/HTTP framing, PNG, scroll/link/back/address
 events, malformed responses, and local-file origin/special-file policies. The five
-visual goldens use fixed font hashes in `tests/fonts.sha256`.
+visual goldens use fixed Sans/Mono font hashes in `tests/fonts.sha256`. The pages slice
+preserved all five complete fixture PNGs byte for byte; only the new monospace flag was
+added to their layout metadata.
 Set `LKJBROWSER_FONT_DIR` if the recorded Liberation Sans files live elsewhere.
 To deliberately accept reviewed visual changes, run
 `sh tools/test.sh --update-goldens`, then `sh tools/test.sh`; do not refresh
@@ -259,8 +284,9 @@ and deployments are separate from these commands.
 | `src/resources.lkj` | Same-executable stylesheet fetch worker and parent deadline/cleanup |
 | `src/crypto/` | HKDF, X25519, AES-GCM, bigint/signatures, SHA-384/512, DER/X.509, TLS records/handshake/transport |
 | `src/html.lkj`, `css.lkj`, `layout.lkj` | Tree, supported styles, boxes and inline runs |
-| `src/font.lkj`, `paint.lkj` | Font parsing, outlines, glyph masks, pixel canvas and anti-aliased shapes |
-| `src/png.lkj` | PNG/DEFLATE and native PNG output |
+| `src/font.lkj`, `typefaces.lkj`, `paint.lkj` | TrueType parsing, Sans/Mono faces, glyph masks, pixel canvas and anti-aliased shapes |
+| `src/png.lkj`, `jpeg.lkj`, `gif.lkj`, `images.lkj` | Native image decoding, SVG dimension metadata and PNG output |
+| `src/net/content.lkj`, `src/layout/table.lkj` | Bounded HTTP/text decoding and table-grid geometry |
 | `src/wayland.lkj` | Wayland object state, wire messages, buffers and input |
 
 The crypto directory has no browser dependency and is organized for later reuse.

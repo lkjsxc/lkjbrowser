@@ -1,0 +1,5 @@
+TLS en.wikipedia.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=146048
+HTTP_RESPONSE status=200 bytes=625733 url=https://en.wikipedia.org/wiki/Tim_Berners-Lee
+TLS en.wikipedia.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=141898
+TLS en.wikipedia.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=148188
+PAINT wayland-submit elapsed_us=12437850 url=https://en.wikipedia.org/wiki/Tim_Berners-Lee

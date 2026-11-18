@@ -1,0 +1,7 @@
+TLS news.ycombinator.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=207421
+HTTP_RESPONSE status=200 bytes=33946 url=https://news.ycombinator.com/
+TLS news.ycombinator.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=213875
+IMAGE unavailable Image format is not supported; expected PNG, JPEG or GIF url=https://news.ycombinator.com/y18.svg
+TLS news.ycombinator.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=211302
+IMAGE decoded width=1 height=1 url=https://news.ycombinator.com/s.gif
+PAINT wayland-submit elapsed_us=3157595 url=https://news.ycombinator.com/

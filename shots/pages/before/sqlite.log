@@ -1,0 +1,4 @@
+TLS www.sqlite.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=387212
+HTTP_RESPONSE status=200 bytes=9204 url=https://www.sqlite.org/about.html
+TLS www.sqlite.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=378755
+PAINT wayland-submit elapsed_us=3037057 url=https://www.sqlite.org/about.html

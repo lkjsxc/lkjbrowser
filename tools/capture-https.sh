@@ -86,7 +86,8 @@ trap 'exit 130' HUP INT TERM
  sha256sum target/lkjbrowser target/byte-descriptor-bridge target/pixel-compare target/animate \
   .toolchain/lkjscript-x86_64-linux "$trust" .deps/root/usr/bin/weston .deps/root/usr/bin/weston-screenshooter
  printf '\nSource hashes:\n'
- sha256sum src/*.lkj src/crypto/*.lkj program.lkj
+ while IFS= read -r source_file; do sha256sum "$source_file"; done < <(rg --files src -g '*.lkj' | sort)
+ sha256sum program.lkj
 } >"$proof"
 expected_browser=$(sha256sum target/lkjbrowser | cut -d' ' -f1)
 # Frozen copies ensure all five pages and the motion use one exact executable.

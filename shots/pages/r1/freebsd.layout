@@ -1,0 +1,611 @@
+URL https://www.freebsd.org/about/
+VIEW 1000 760 SCROLL 0
+TITLE About FreeBSD |
+    The FreeBSD Project
+IMAGES 0
+page width=1000 height=3718 background=ffffffff title="About FreeBSD |\n    The FreeBSD Project"
+box node=0 tag=#document x=0 y=0 w=1000 h=3718
+box node=2 tag=html x=0 y=0 w=1000 h=3718
+box node=57 tag=body x=0 y=0 w=1000 h=3718
+box node=59 tag=input x=0 y=0 w=1 h=1
+box node=61 tag=div x=0 y=1 w=1000 h=3717
+box node=63 tag=header x=0 y=1 w=1000 h=86
+box node=65 tag=div x=36 y=10 w=928 h=68
+box node=67 tag=div x=36 y=10 w=928 h=68
+box node=69 tag=a x=36 y=19 w=32 h=50
+box node=71 tag=img x=36 y=19 w=32 h=50
+box node=74 tag=label x=86 y=19 w=36 h=36
+box node=76 tag=span x=86 y=19 w=32 h=0
+box node=82 tag=nav x=36 y=78 w=928 h=0
+box node=451 tag=main x=0 y=87 w=1000 h=1785
+box node=453 tag=div x=0 y=87 w=1000 h=1785
+box node=455 tag=aside x=18 y=123 w=350 h=423
+box node=457 tag=div x=18 y=123 w=200 h=423
+box node=459 tag=ul x=36 y=141 w=164 h=387
+box node=461 tag=li x=36 y=150 w=164 h=0
+box node=464 tag=li x=36 y=168 w=164 h=0
+box node=467 tag=li x=36 y=186 w=164 h=27
+box node=471 tag=li x=36 y=231 w=164 h=27
+box node=475 tag=li x=36 y=276 w=164 h=27
+box node=479 tag=li x=36 y=321 w=164 h=0
+box node=482 tag=li x=36 y=339 w=164 h=27
+box node=486 tag=li x=36 y=384 w=164 h=27
+box node=490 tag=li x=36 y=429 w=164 h=27
+box node=494 tag=li x=36 y=474 w=164 h=0
+box node=497 tag=li x=36 y=492 w=164 h=27
+box node=504 tag=div x=404 y=123 w=578 h=1713
+box node=506 tag=h1 x=404 y=123 w=578 h=70
+box node=509 tag=div x=404 y=193 w=578 h=166
+box node=511 tag=h2 x=404 y=193 w=578 h=40
+box node=514 tag=div x=404 y=233 w=578 h=126
+box node=516 tag=div x=404 y=233 w=578 h=126
+box node=518 tag=p x=404 y=233 w=578 h=108
+box node=530 tag=div x=404 y=359 w=578 h=139
+box node=532 tag=h2 x=404 y=359 w=578 h=40
+box node=535 tag=div x=404 y=399 w=578 h=99
+box node=537 tag=div x=404 y=399 w=578 h=99
+box node=539 tag=p x=404 y=399 w=578 h=81
+box node=548 tag=div x=404 y=498 w=578 h=166
+box node=550 tag=h2 x=404 y=498 w=578 h=40
+box node=553 tag=div x=404 y=538 w=578 h=126
+box node=555 tag=div x=404 y=538 w=578 h=126
+box node=557 tag=p x=404 y=538 w=578 h=108
+box node=563 tag=div x=404 y=664 w=578 h=301
+box node=565 tag=h2 x=404 y=664 w=578 h=40
+box node=568 tag=div x=404 y=704 w=578 h=261
+box node=570 tag=div x=404 y=704 w=578 h=261
+box node=572 tag=p x=404 y=704 w=578 h=243
+box node=578 tag=div x=404 y=965 w=578 h=139
+box node=580 tag=h2 x=404 y=965 w=578 h=40
+box node=583 tag=div x=404 y=1005 w=578 h=99
+box node=585 tag=div x=404 y=1005 w=578 h=99
+box node=587 tag=p x=404 y=1005 w=578 h=81
+box node=596 tag=div x=404 y=1104 w=578 h=139
+box node=598 tag=h2 x=404 y=1104 w=578 h=40
+box node=601 tag=div x=404 y=1144 w=578 h=99
+box node=603 tag=div x=404 y=1144 w=578 h=99
+box node=605 tag=p x=404 y=1144 w=578 h=81
+box node=614 tag=div x=404 y=1243 w=578 h=166
+box node=616 tag=h2 x=404 y=1243 w=578 h=40
+box node=621 tag=div x=404 y=1283 w=578 h=126
+box node=623 tag=div x=950 y=1283 w=32 h=58
+box node=625 tag=p x=950 y=1283 w=32 h=40
+box node=630 tag=div x=404 y=1283 w=546 h=126
+box node=632 tag=p x=404 y=1283 w=546 h=108
+box node=644 tag=div x=404 y=1409 w=578 h=346
+box node=646 tag=h2 x=404 y=1409 w=578 h=40
+box node=649 tag=div x=404 y=1449 w=578 h=306
+box node=651 tag=div x=404 y=1449 w=578 h=180
+box node=653 tag=p x=404 y=1449 w=578 h=162
+box node=660 tag=div x=404 y=1629 w=578 h=126
+box node=662 tag=p x=404 y=1629 w=578 h=108
+box node=674 tag=hr x=404 y=1773 w=578 h=0
+box node=676 tag=div x=404 y=1791 w=578 h=45
+box node=678 tag=p x=404 y=1791 w=578 h=27
+box node=689 tag=footer x=0 y=1890 w=1000 h=1828
+box node=691 tag=div x=36 y=1926 w=928 h=1756
+box node=693 tag=div x=36 y=1926 w=928 h=281
+box node=697 tag=div x=36 y=2180 w=928 h=27
+box node=711 tag=div x=36 y=2207 w=928 h=349
+box node=713 tag=p x=36 y=2207 w=928 h=42
+box node=716 tag=ul x=36 y=2267 w=928 h=280
+box node=718 tag=li x=36 y=2279 w=928 h=36
+box node=724 tag=li x=36 y=2335 w=928 h=36
+box node=730 tag=li x=36 y=2391 w=928 h=36
+box node=736 tag=li x=36 y=2447 w=928 h=36
+box node=742 tag=li x=36 y=2503 w=928 h=36
+box node=750 tag=div x=36 y=2556 w=928 h=349
+box node=752 tag=p x=36 y=2556 w=928 h=42
+box node=755 tag=ul x=36 y=2616 w=928 h=280
+box node=757 tag=li x=36 y=2628 w=928 h=36
+box node=763 tag=li x=36 y=2684 w=928 h=36
+box node=769 tag=li x=36 y=2740 w=928 h=36
+box node=775 tag=li x=36 y=2796 w=928 h=36
+box node=781 tag=li x=36 y=2852 w=928 h=36
+box node=789 tag=div x=36 y=2905 w=928 h=349
+box node=791 tag=p x=36 y=2905 w=928 h=42
+box node=794 tag=ul x=36 y=2965 w=928 h=280
+box node=796 tag=li x=36 y=2977 w=928 h=36
+box node=802 tag=li x=36 y=3033 w=928 h=36
+box node=808 tag=li x=36 y=3089 w=928 h=36
+box node=814 tag=li x=36 y=3145 w=928 h=36
+box node=820 tag=li x=36 y=3201 w=928 h=36
+box node=828 tag=div x=36 y=3254 w=928 h=349
+box node=830 tag=p x=36 y=3254 w=928 h=42
+box node=833 tag=ul x=36 y=3314 w=928 h=280
+box node=835 tag=li x=36 y=3326 w=928 h=36
+box node=841 tag=li x=36 y=3382 w=928 h=36
+box node=847 tag=li x=36 y=3438 w=928 h=36
+box node=853 tag=li x=36 y=3494 w=928 h=36
+box node=859 tag=li x=36 y=3550 w=928 h=36
+box node=867 tag=div x=36 y=3603 w=928 h=79
+box node=869 tag=p x=36 y=3621 w=928 h=18
+image node=71 x=36 y=19 w=32 h=10 src="/images/FreeBSD-monochromatic.svg" alt="FreeBSD logo" href="/"
+text node=469 x=36 baseline=206 top=189 w=97 h=21 size=18 bold=false italic=false color=ff1769a4 href="/applications/" value="Applications"
+text node=473 x=36 baseline=251 top=234 w=114 h=21 size=18 bold=false italic=false color=ff1769a4 href="/administration/" value="Administration"
+text node=477 x=36 baseline=296 top=279 w=45 h=21 size=18 bold=false italic=false color=ff1769a4 href="/news/" value="News"
+text node=484 x=36 baseline=359 top=342 w=46 h=21 size=18 bold=false italic=false color=ff1769a4 href="/press" value="Press"
+text node=488 x=36 baseline=404 top=387 w=61 h=21 size=18 bold=false italic=false color=ff1769a4 href="/art" value="Artwork"
+text node=492 x=36 baseline=449 top=432 w=81 h=21 size=18 bold=false italic=false color=ff1769a4 href="/donations" value="Donations"
+text node=499 x=36 baseline=512 top=495 w=59 h=21 size=18 bold=false italic=false color=ff1769a4 href="/privacy" value="Privacy"
+text node=499 x=100 baseline=512 top=495 w=48 h=21 size=18 bold=false italic=false color=ff1769a4 href="/privacy" value="Policy"
+text node=507 x=404 baseline=160 top=125 w=109 h=44 size=38 bold=true italic=false color=ff263342 href="" value="About"
+text node=507 x=524 baseline=160 top=125 w=159 h=44 size=38 bold=true italic=false color=ff263342 href="" value="FreeBSD"
+text node=512 x=404 baseline=220 top=195 w=65 h=31 size=27 bold=true italic=false color=ff263342 href="" value="What"
+text node=512 x=477 baseline=220 top=195 w=23 h=31 size=27 bold=true italic=false color=ff263342 href="" value="is"
+text node=512 x=508 baseline=220 top=195 w=129 h=31 size=27 bold=true italic=false color=ff263342 href="" value="FreeBSD?"
+text node=519 x=404 baseline=253 top=236 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=519 x=483 baseline=253 top=236 w=13 h=21 size=18 bold=false italic=false color=ff263342 href="" value="is"
+text node=519 x=501 baseline=253 top=236 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="an"
+text node=519 x=526 baseline=253 top=236 w=75 h=21 size=18 bold=false italic=false color=ff263342 href="" value="operating"
+text node=519 x=606 baseline=253 top=236 w=57 h=21 size=18 bold=false italic=false color=ff263342 href="" value="system"
+text node=519 x=668 baseline=253 top=236 w=21 h=21 size=18 bold=false italic=false color=ff263342 href="" value="for"
+text node=519 x=694 baseline=253 top=236 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=521 x=709 baseline=253 top=236 w=53 h=21 size=18 bold=false italic=false color=ff1769a4 href="../platforms" value="variety"
+text node=521 x=767 baseline=253 top=236 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="../platforms" value="of"
+text node=521 x=787 baseline=253 top=236 w=74 h=21 size=18 bold=false italic=false color=ff1769a4 href="../platforms" value="platforms"
+text node=522 x=866 baseline=253 top=236 w=46 h=21 size=18 bold=false italic=false color=ff263342 href="" value="which"
+text node=522 x=917 baseline=253 top=236 w=62 h=21 size=18 bold=false italic=false color=ff263342 href="" value="focuses"
+text node=522 x=404 baseline=280 top=263 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="on"
+text node=522 x=429 baseline=280 top=263 w=70 h=21 size=18 bold=false italic=false color=ff263342 href="" value="features,"
+text node=522 x=504 baseline=280 top=263 w=54 h=21 size=18 bold=false italic=false color=ff263342 href="" value="speed,"
+text node=522 x=563 baseline=280 top=263 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=522 x=598 baseline=280 top=263 w=65 h=21 size=18 bold=false italic=false color=ff263342 href="" value="stability."
+text node=522 x=668 baseline=280 top=263 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="It"
+text node=522 x=683 baseline=280 top=263 w=13 h=21 size=18 bold=false italic=false color=ff263342 href="" value="is"
+text node=522 x=701 baseline=280 top=263 w=59 h=21 size=18 bold=false italic=false color=ff263342 href="" value="derived"
+text node=522 x=765 baseline=280 top=263 w=36 h=21 size=18 bold=false italic=false color=ff263342 href="" value="from"
+text node=522 x=806 baseline=280 top=263 w=42 h=21 size=18 bold=false italic=false color=ff263342 href="" value="BSD,"
+text node=522 x=853 baseline=280 top=263 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=522 x=883 baseline=280 top=263 w=58 h=21 size=18 bold=false italic=false color=ff263342 href="" value="version"
+text node=522 x=946 baseline=280 top=263 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="of"
+text node=522 x=404 baseline=307 top=290 w=56 h=21 size=18 bold=false italic=false color=ff263342 href="" value="UNIX®"
+text node=522 x=465 baseline=307 top=290 w=83 h=21 size=18 bold=false italic=false color=ff263342 href="" value="developed"
+text node=522 x=553 baseline=307 top=290 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="at"
+text node=522 x=573 baseline=307 top=290 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=522 x=603 baseline=307 top=290 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="University"
+text node=522 x=687 baseline=307 top=290 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="of"
+text node=522 x=707 baseline=307 top=290 w=81 h=21 size=18 bold=false italic=false color=ff263342 href="" value="California,"
+text node=522 x=793 baseline=307 top=290 w=75 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Berkeley."
+text node=522 x=873 baseline=307 top=290 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="It"
+text node=522 x=888 baseline=307 top=290 w=13 h=21 size=18 bold=false italic=false color=ff263342 href="" value="is"
+text node=522 x=404 baseline=334 top=317 w=83 h=21 size=18 bold=false italic=false color=ff263342 href="" value="developed"
+text node=522 x=492 baseline=334 top=317 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=522 x=527 baseline=334 top=317 w=88 h=21 size=18 bold=false italic=false color=ff263342 href="" value="maintained"
+text node=522 x=620 baseline=334 top=317 w=19 h=21 size=18 bold=false italic=false color=ff263342 href="" value="by"
+text node=524 x=644 baseline=334 top=317 w=10 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/articles/contributors/#staff-committers" value="a"
+text node=524 x=659 baseline=334 top=317 w=40 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/articles/contributors/#staff-committers" value="large"
+text node=524 x=704 baseline=334 top=317 w=87 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/articles/contributors/#staff-committers" value="community"
+text node=525 x=791 baseline=334 top=317 w=5 h=21 size=18 bold=false italic=false color=ff263342 href="" value="."
+text node=533 x=404 baseline=386 top=361 w=93 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Cutting"
+text node=533 x=505 baseline=386 top=361 w=62 h=31 size=27 bold=true italic=false color=ff263342 href="" value="edge"
+text node=533 x=575 baseline=386 top=361 w=105 h=31 size=27 bold=true italic=false color=ff263342 href="" value="features"
+text node=540 x=404 baseline=419 top=402 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=540 x=483 baseline=419 top=402 w=45 h=21 size=18 bold=false italic=false color=ff263342 href="" value="offers"
+text node=540 x=533 baseline=419 top=402 w=78 h=21 size=18 bold=false italic=false color=ff263342 href="" value="advanced"
+text node=540 x=616 baseline=419 top=402 w=92 h=21 size=18 bold=false italic=false color=ff263342 href="" value="networking,"
+text node=540 x=713 baseline=419 top=402 w=106 h=21 size=18 bold=false italic=false color=ff263342 href="" value="performance,"
+text node=540 x=824 baseline=419 top=402 w=62 h=21 size=18 bold=false italic=false color=ff263342 href="" value="security"
+text node=540 x=891 baseline=419 top=402 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=540 x=404 baseline=446 top=429 w=99 h=21 size=18 bold=false italic=false color=ff263342 href="" value="compatibility"
+text node=542 x=508 baseline=446 top=429 w=65 h=21 size=18 bold=false italic=false color=ff1769a4 href="../features" value="features"
+text node=543 x=578 baseline=446 top=429 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="today"
+text node=543 x=627 baseline=446 top=429 w=46 h=21 size=18 bold=false italic=false color=ff263342 href="" value="which"
+text node=543 x=678 baseline=446 top=429 w=26 h=21 size=18 bold=false italic=false color=ff263342 href="" value="are"
+text node=543 x=709 baseline=446 top=429 w=26 h=21 size=18 bold=false italic=false color=ff263342 href="" value="still"
+text node=543 x=740 baseline=446 top=429 w=61 h=21 size=18 bold=false italic=false color=ff263342 href="" value="missing"
+text node=543 x=806 baseline=446 top=429 w=14 h=21 size=18 bold=false italic=false color=ff263342 href="" value="in"
+text node=543 x=825 baseline=446 top=429 w=41 h=21 size=18 bold=false italic=false color=ff263342 href="" value="other"
+text node=543 x=871 baseline=446 top=429 w=75 h=21 size=18 bold=false italic=false color=ff263342 href="" value="operating"
+text node=543 x=404 baseline=473 top=456 w=71 h=21 size=18 bold=false italic=false color=ff263342 href="" value="systems,"
+text node=543 x=480 baseline=473 top=456 w=39 h=21 size=18 bold=false italic=false color=ff263342 href="" value="even"
+text node=543 x=524 baseline=473 top=456 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="some"
+text node=543 x=573 baseline=473 top=456 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="of"
+text node=543 x=593 baseline=473 top=456 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=543 x=623 baseline=473 top=456 w=34 h=21 size=18 bold=false italic=false color=ff263342 href="" value="best"
+text node=543 x=662 baseline=473 top=456 w=92 h=21 size=18 bold=false italic=false color=ff263342 href="" value="commercial"
+text node=543 x=759 baseline=473 top=456 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="ones."
+text node=551 x=404 baseline=525 top=500 w=114 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Powerful"
+text node=551 x=526 baseline=525 top=500 w=99 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Internet"
+text node=551 x=633 baseline=525 top=500 w=119 h=31 size=27 bold=true italic=false color=ff263342 href="" value="solutions"
+text node=558 x=404 baseline=558 top=541 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=558 x=483 baseline=558 top=541 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="makes"
+text node=558 x=541 baseline=558 top=541 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="an"
+text node=558 x=566 baseline=558 top=541 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="ideal"
+text node=558 x=609 baseline=558 top=541 w=61 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Internet"
+text node=558 x=675 baseline=558 top=541 w=16 h=21 size=18 bold=false italic=false color=ff263342 href="" value="or"
+text node=558 x=696 baseline=558 top=541 w=61 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Intranet"
+text node=558 x=762 baseline=558 top=541 w=55 h=21 size=18 bold=false italic=false color=ff263342 href="" value="server."
+text node=558 x=822 baseline=558 top=541 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="It"
+text node=558 x=837 baseline=558 top=541 w=68 h=21 size=18 bold=false italic=false color=ff263342 href="" value="provides"
+text node=558 x=910 baseline=558 top=541 w=50 h=21 size=18 bold=false italic=false color=ff263342 href="" value="robust"
+text node=558 x=404 baseline=585 top=568 w=63 h=21 size=18 bold=false italic=false color=ff263342 href="" value="network"
+text node=558 x=472 baseline=585 top=568 w=66 h=21 size=18 bold=false italic=false color=ff263342 href="" value="services"
+text node=558 x=543 baseline=585 top=568 w=46 h=21 size=18 bold=false italic=false color=ff263342 href="" value="under"
+text node=558 x=594 baseline=585 top=568 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=558 x=624 baseline=585 top=568 w=67 h=21 size=18 bold=false italic=false color=ff263342 href="" value="heaviest"
+text node=558 x=696 baseline=585 top=568 w=43 h=21 size=18 bold=false italic=false color=ff263342 href="" value="loads"
+text node=558 x=744 baseline=585 top=568 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=558 x=779 baseline=585 top=568 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="uses"
+text node=558 x=822 baseline=585 top=568 w=65 h=21 size=18 bold=false italic=false color=ff263342 href="" value="memory"
+text node=558 x=892 baseline=585 top=568 w=75 h=21 size=18 bold=false italic=false color=ff263342 href="" value="efficiently"
+text node=558 x=404 baseline=612 top=595 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=558 x=424 baseline=612 top=595 w=68 h=21 size=18 bold=false italic=false color=ff263342 href="" value="maintain"
+text node=558 x=497 baseline=612 top=595 w=40 h=21 size=18 bold=false italic=false color=ff263342 href="" value="good"
+text node=558 x=542 baseline=612 top=595 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="response"
+text node=558 x=621 baseline=612 top=595 w=43 h=21 size=18 bold=false italic=false color=ff263342 href="" value="times"
+text node=558 x=669 baseline=612 top=595 w=21 h=21 size=18 bold=false italic=false color=ff263342 href="" value="for"
+text node=558 x=695 baseline=612 top=595 w=83 h=21 size=18 bold=false italic=false color=ff263342 href="" value="thousands"
+text node=558 x=783 baseline=612 top=595 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="of"
+text node=558 x=803 baseline=612 top=595 w=106 h=21 size=18 bold=false italic=false color=ff263342 href="" value="simultaneous"
+text node=558 x=914 baseline=612 top=595 w=35 h=21 size=18 bold=false italic=false color=ff263342 href="" value="user"
+text node=558 x=404 baseline=639 top=622 w=87 h=21 size=18 bold=false italic=false color=ff263342 href="" value="processes."
+text node=566 x=404 baseline=691 top=666 w=127 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Advanced"
+text node=566 x=539 baseline=691 top=666 w=136 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Embedded"
+text node=566 x=683 baseline=691 top=666 w=110 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Platform"
+text node=573 x=404 baseline=724 top=707 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=573 x=483 baseline=724 top=707 w=49 h=21 size=18 bold=false italic=false color=ff263342 href="" value="brings"
+text node=573 x=537 baseline=724 top=707 w=78 h=21 size=18 bold=false italic=false color=ff263342 href="" value="advanced"
+text node=573 x=620 baseline=724 top=707 w=63 h=21 size=18 bold=false italic=false color=ff263342 href="" value="network"
+text node=573 x=688 baseline=724 top=707 w=75 h=21 size=18 bold=false italic=false color=ff263342 href="" value="operating"
+text node=573 x=768 baseline=724 top=707 w=57 h=21 size=18 bold=false italic=false color=ff263342 href="" value="system"
+text node=573 x=830 baseline=724 top=707 w=65 h=21 size=18 bold=false italic=false color=ff263342 href="" value="features"
+text node=573 x=900 baseline=724 top=707 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=573 x=404 baseline=751 top=734 w=77 h=21 size=18 bold=false italic=false color=ff263342 href="" value="appliance"
+text node=573 x=486 baseline=751 top=734 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=573 x=521 baseline=751 top=734 w=85 h=21 size=18 bold=false italic=false color=ff263342 href="" value="embedded"
+text node=573 x=611 baseline=751 top=734 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="platforms,"
+text node=573 x=695 baseline=751 top=734 w=36 h=21 size=18 bold=false italic=false color=ff263342 href="" value="from"
+text node=573 x=736 baseline=751 top=734 w=86 h=21 size=18 bold=false italic=false color=ff263342 href="" value="higher-end"
+text node=573 x=827 baseline=751 top=734 w=89 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Intel-based"
+text node=573 x=404 baseline=778 top=761 w=86 h=21 size=18 bold=false italic=false color=ff263342 href="" value="appliances"
+text node=573 x=495 baseline=778 top=761 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=573 x=515 baseline=778 top=761 w=45 h=21 size=18 bold=false italic=false color=ff263342 href="" value="ARM,"
+text node=573 x=565 baseline=778 top=761 w=81 h=21 size=18 bold=false italic=false color=ff263342 href="" value="PowerPC,"
+text node=573 x=651 baseline=778 top=761 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=573 x=686 baseline=778 top=761 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="MIPS"
+text node=573 x=735 baseline=778 top=761 w=75 h=21 size=18 bold=false italic=false color=ff263342 href="" value="hardware"
+text node=573 x=815 baseline=778 top=761 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="platforms."
+text node=573 x=899 baseline=778 top=761 w=42 h=21 size=18 bold=false italic=false color=ff263342 href="" value="From"
+text node=573 x=946 baseline=778 top=761 w=33 h=21 size=18 bold=false italic=false color=ff263342 href="" value="mail"
+text node=573 x=404 baseline=805 top=788 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=573 x=439 baseline=805 top=788 w=33 h=21 size=18 bold=false italic=false color=ff263342 href="" value="web"
+text node=573 x=477 baseline=805 top=788 w=86 h=21 size=18 bold=false italic=false color=ff263342 href="" value="appliances"
+text node=573 x=568 baseline=805 top=788 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=573 x=588 baseline=805 top=788 w=61 h=21 size=18 bold=false italic=false color=ff263342 href="" value="routers,"
+text node=573 x=654 baseline=805 top=788 w=34 h=21 size=18 bold=false italic=false color=ff263342 href="" value="time"
+text node=573 x=693 baseline=805 top=788 w=64 h=21 size=18 bold=false italic=false color=ff263342 href="" value="servers,"
+text node=573 x=762 baseline=805 top=788 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=573 x=797 baseline=805 top=788 w=65 h=21 size=18 bold=false italic=false color=ff263342 href="" value="wireless"
+text node=573 x=867 baseline=805 top=788 w=56 h=21 size=18 bold=false italic=false color=ff263342 href="" value="access"
+text node=573 x=928 baseline=805 top=788 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="points,"
+text node=573 x=404 baseline=832 top=815 w=64 h=21 size=18 bold=false italic=false color=ff263342 href="" value="vendors"
+text node=573 x=473 baseline=832 top=815 w=56 h=21 size=18 bold=false italic=false color=ff263342 href="" value="around"
+text node=573 x=534 baseline=832 top=815 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=573 x=564 baseline=832 top=815 w=43 h=21 size=18 bold=false italic=false color=ff263342 href="" value="world"
+text node=573 x=612 baseline=832 top=815 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="rely"
+text node=573 x=646 baseline=832 top=815 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="on"
+text node=573 x=671 baseline=832 top=815 w=87 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD’s"
+text node=573 x=763 baseline=832 top=815 w=80 h=21 size=18 bold=false italic=false color=ff263342 href="" value="integrated"
+text node=573 x=848 baseline=832 top=815 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="build"
+text node=573 x=891 baseline=832 top=815 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=573 x=404 baseline=859 top=842 w=87 h=21 size=18 bold=false italic=false color=ff263342 href="" value="cross-build"
+text node=573 x=496 baseline=859 top=842 w=108 h=21 size=18 bold=false italic=false color=ff263342 href="" value="environments"
+text node=573 x=609 baseline=859 top=842 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=573 x=644 baseline=859 top=842 w=78 h=21 size=18 bold=false italic=false color=ff263342 href="" value="advanced"
+text node=573 x=727 baseline=859 top=842 w=65 h=21 size=18 bold=false italic=false color=ff263342 href="" value="features"
+text node=573 x=797 baseline=859 top=842 w=19 h=21 size=18 bold=false italic=false color=ff263342 href="" value="as"
+text node=573 x=821 baseline=859 top=842 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=573 x=851 baseline=859 top=842 w=84 h=21 size=18 bold=false italic=false color=ff263342 href="" value="foundation"
+text node=573 x=940 baseline=859 top=842 w=21 h=21 size=18 bold=false italic=false color=ff263342 href="" value="for"
+text node=573 x=404 baseline=886 top=869 w=35 h=21 size=18 bold=false italic=false color=ff263342 href="" value="their"
+text node=573 x=444 baseline=886 top=869 w=85 h=21 size=18 bold=false italic=false color=ff263342 href="" value="embedded"
+text node=573 x=534 baseline=886 top=869 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="products."
+text node=573 x=613 baseline=886 top=869 w=32 h=21 size=18 bold=false italic=false color=ff263342 href="" value="And"
+text node=573 x=650 baseline=886 top=869 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=573 x=680 baseline=886 top=869 w=70 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Berkeley"
+text node=573 x=755 baseline=886 top=869 w=40 h=21 size=18 bold=false italic=false color=ff263342 href="" value="open"
+text node=573 x=800 baseline=886 top=869 w=54 h=21 size=18 bold=false italic=false color=ff263342 href="" value="source"
+text node=573 x=859 baseline=886 top=869 w=56 h=21 size=18 bold=false italic=false color=ff263342 href="" value="license"
+text node=573 x=920 baseline=886 top=869 w=28 h=21 size=18 bold=false italic=false color=ff263342 href="" value="lets"
+text node=573 x=404 baseline=913 top=896 w=40 h=21 size=18 bold=false italic=false color=ff263342 href="" value="them"
+text node=573 x=449 baseline=913 top=896 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="decide"
+text node=573 x=507 baseline=913 top=896 w=33 h=21 size=18 bold=false italic=false color=ff263342 href="" value="how"
+text node=573 x=545 baseline=913 top=896 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="many"
+text node=573 x=594 baseline=913 top=896 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="of"
+text node=573 x=614 baseline=913 top=896 w=35 h=21 size=18 bold=false italic=false color=ff263342 href="" value="their"
+text node=573 x=654 baseline=913 top=896 w=37 h=21 size=18 bold=false italic=false color=ff263342 href="" value="local"
+text node=573 x=696 baseline=913 top=896 w=68 h=21 size=18 bold=false italic=false color=ff263342 href="" value="changes"
+text node=573 x=769 baseline=913 top=896 w=34 h=21 size=18 bold=false italic=false color=ff263342 href="" value="they"
+text node=573 x=808 baseline=913 top=896 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="want"
+text node=573 x=851 baseline=913 top=896 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=573 x=871 baseline=913 top=896 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="contribute"
+text node=573 x=404 baseline=940 top=923 w=43 h=21 size=18 bold=false italic=false color=ff263342 href="" value="back."
+text node=581 x=404 baseline=992 top=967 w=51 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Run"
+text node=581 x=463 baseline=992 top=967 w=15 h=31 size=27 bold=true italic=false color=ff263342 href="" value="a"
+text node=581 x=486 baseline=992 top=967 w=63 h=31 size=27 bold=true italic=false color=ff263342 href="" value="huge"
+text node=581 x=557 baseline=992 top=967 w=98 h=31 size=27 bold=true italic=false color=ff263342 href="" value="number"
+text node=581 x=663 baseline=992 top=967 w=25 h=31 size=27 bold=true italic=false color=ff263342 href="" value="of"
+text node=581 x=696 baseline=992 top=967 w=157 h=31 size=27 bold=true italic=false color=ff263342 href="" value="applications"
+text node=588 x=404 baseline=1025 top=1008 w=36 h=21 size=18 bold=false italic=false color=ff263342 href="" value="With"
+text node=588 x=445 baseline=1025 top=1008 w=35 h=21 size=18 bold=false italic=false color=ff263342 href="" value="over"
+text node=588 x=485 baseline=1025 top=1008 w=50 h=21 size=18 bold=false italic=false color=ff263342 href="" value="37000"
+text node=588 x=540 baseline=1025 top=1008 w=51 h=21 size=18 bold=false italic=false color=ff263342 href="" value="ported"
+text node=588 x=596 baseline=1025 top=1008 w=63 h=21 size=18 bold=false italic=false color=ff263342 href="" value="libraries"
+text node=588 x=664 baseline=1025 top=1008 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=590 x=699 baseline=1025 top=1008 w=95 h=21 size=18 bold=false italic=false color=ff1769a4 href="../applications" value="applications"
+text node=591 x=794 baseline=1025 top=1008 w=5 h=21 size=18 bold=false italic=false color=ff263342 href="" value=","
+text node=591 x=804 baseline=1025 top=1008 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=591 x=883 baseline=1025 top=1008 w=69 h=21 size=18 bold=false italic=false color=ff263342 href="" value="supports"
+text node=591 x=404 baseline=1052 top=1035 w=95 h=21 size=18 bold=false italic=false color=ff263342 href="" value="applications"
+text node=591 x=504 baseline=1052 top=1035 w=21 h=21 size=18 bold=false italic=false color=ff263342 href="" value="for"
+text node=591 x=530 baseline=1052 top=1035 w=68 h=21 size=18 bold=false italic=false color=ff263342 href="" value="desktop,"
+text node=591 x=603 baseline=1052 top=1035 w=55 h=21 size=18 bold=false italic=false color=ff263342 href="" value="server,"
+text node=591 x=663 baseline=1052 top=1035 w=82 h=21 size=18 bold=false italic=false color=ff263342 href="" value="appliance,"
+text node=591 x=750 baseline=1052 top=1035 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=591 x=785 baseline=1052 top=1035 w=85 h=21 size=18 bold=false italic=false color=ff263342 href="" value="embedded"
+text node=591 x=404 baseline=1079 top=1062 w=113 h=21 size=18 bold=false italic=false color=ff263342 href="" value="environments."
+text node=599 x=404 baseline=1131 top=1106 w=63 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Easy"
+text node=599 x=475 baseline=1131 top=1106 w=25 h=31 size=27 bold=true italic=false color=ff263342 href="" value="to"
+text node=599 x=508 baseline=1131 top=1106 w=79 h=31 size=27 bold=true italic=false color=ff263342 href="" value="install"
+text node=606 x=404 baseline=1164 top=1147 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=606 x=483 baseline=1164 top=1147 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="can"
+text node=606 x=517 baseline=1164 top=1147 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="be"
+text node=606 x=542 baseline=1164 top=1147 w=66 h=21 size=18 bold=false italic=false color=ff263342 href="" value="installed"
+text node=606 x=613 baseline=1164 top=1147 w=36 h=21 size=18 bold=false italic=false color=ff263342 href="" value="from"
+text node=606 x=654 baseline=1164 top=1147 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=606 x=669 baseline=1164 top=1147 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="variety"
+text node=606 x=727 baseline=1164 top=1147 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="of"
+text node=606 x=747 baseline=1164 top=1147 w=49 h=21 size=18 bold=false italic=false color=ff263342 href="" value="media"
+text node=606 x=801 baseline=1164 top=1147 w=71 h=21 size=18 bold=false italic=false color=ff263342 href="" value="including"
+text node=606 x=877 baseline=1164 top=1147 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="CD-ROM,"
+text node=606 x=404 baseline=1191 top=1174 w=43 h=21 size=18 bold=false italic=false color=ff263342 href="" value="DVD,"
+text node=606 x=452 baseline=1191 top=1174 w=16 h=21 size=18 bold=false italic=false color=ff263342 href="" value="or"
+text node=606 x=473 baseline=1191 top=1174 w=57 h=21 size=18 bold=false italic=false color=ff263342 href="" value="directly"
+text node=606 x=535 baseline=1191 top=1174 w=35 h=21 size=18 bold=false italic=false color=ff263342 href="" value="over"
+text node=606 x=575 baseline=1191 top=1174 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=606 x=605 baseline=1191 top=1174 w=63 h=21 size=18 bold=false italic=false color=ff263342 href="" value="network"
+text node=606 x=673 baseline=1191 top=1174 w=43 h=21 size=18 bold=false italic=false color=ff263342 href="" value="using"
+text node=606 x=721 baseline=1191 top=1174 w=34 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FTP"
+text node=606 x=760 baseline=1191 top=1174 w=16 h=21 size=18 bold=false italic=false color=ff263342 href="" value="or"
+text node=606 x=781 baseline=1191 top=1174 w=41 h=21 size=18 bold=false italic=false color=ff263342 href="" value="NFS."
+text node=606 x=827 baseline=1191 top=1174 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="All"
+text node=606 x=852 baseline=1191 top=1174 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="you"
+text node=606 x=886 baseline=1191 top=1174 w=40 h=21 size=18 bold=false italic=false color=ff263342 href="" value="need"
+text node=606 x=931 baseline=1191 top=1174 w=26 h=21 size=18 bold=false italic=false color=ff263342 href="" value="are"
+text node=608 x=404 baseline=1218 top=1201 w=44 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/books/handbook/bsdinstall" value="these"
+text node=608 x=453 baseline=1218 top=1201 w=77 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/books/handbook/bsdinstall" value="directions"
+text node=609 x=530 baseline=1218 top=1201 w=5 h=21 size=18 bold=false italic=false color=ff263342 href="" value="."
+text node=617 x=404 baseline=1270 top=1245 w=113 h=31 size=27 bold=true italic=false color=ff263342 href="" value="FreeBSD"
+text node=617 x=525 baseline=1270 top=1245 w=23 h=31 size=27 bold=true italic=false color=ff263342 href="" value="is"
+text node=619 x=556 baseline=1270 top=1245 w=50 h=31 size=27 bold=true italic=true color=ff263342 href="" value="free"
+image node=627 x=950 y=1283 w=32 h=36 src="../gifs/dae_up3.gif" alt="The BSD Daemon" href=""
+text node=633 x=404 baseline=1303 top=1286 w=45 h=21 size=18 bold=false italic=false color=ff263342 href="" value="While"
+text node=633 x=454 baseline=1303 top=1286 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="you"
+text node=633 x=488 baseline=1303 top=1286 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="might"
+text node=633 x=537 baseline=1303 top=1286 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="expect"
+text node=633 x=595 baseline=1303 top=1286 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="an"
+text node=633 x=620 baseline=1303 top=1286 w=75 h=21 size=18 bold=false italic=false color=ff263342 href="" value="operating"
+text node=633 x=700 baseline=1303 top=1286 w=57 h=21 size=18 bold=false italic=false color=ff263342 href="" value="system"
+text node=633 x=762 baseline=1303 top=1286 w=32 h=21 size=18 bold=false italic=false color=ff263342 href="" value="with"
+text node=633 x=799 baseline=1303 top=1286 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="these"
+text node=633 x=848 baseline=1303 top=1286 w=65 h=21 size=18 bold=false italic=false color=ff263342 href="" value="features"
+text node=633 x=918 baseline=1303 top=1286 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=633 x=404 baseline=1330 top=1313 w=27 h=21 size=18 bold=false italic=false color=ff263342 href="" value="sell"
+text node=633 x=436 baseline=1330 top=1313 w=21 h=21 size=18 bold=false italic=false color=ff263342 href="" value="for"
+text node=633 x=462 baseline=1330 top=1313 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=633 x=477 baseline=1330 top=1313 w=34 h=21 size=18 bold=false italic=false color=ff263342 href="" value="high"
+text node=633 x=516 baseline=1330 top=1313 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="price,"
+text node=633 x=565 baseline=1330 top=1313 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=633 x=644 baseline=1330 top=1313 w=13 h=21 size=18 bold=false italic=false color=ff263342 href="" value="is"
+text node=633 x=662 baseline=1330 top=1313 w=71 h=21 size=18 bold=false italic=false color=ff263342 href="" value="available"
+text node=635 x=738 baseline=1330 top=1313 w=31 h=21 size=18 bold=false italic=false color=ff1769a4 href="../copyright" value="free"
+text node=635 x=774 baseline=1330 top=1313 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="../copyright" value="of"
+text node=635 x=794 baseline=1330 top=1313 w=55 h=21 size=18 bold=false italic=false color=ff1769a4 href="../copyright" value="charge"
+text node=636 x=854 baseline=1330 top=1313 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=636 x=889 baseline=1330 top=1313 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="comes"
+text node=636 x=404 baseline=1357 top=1340 w=32 h=21 size=18 bold=false italic=false color=ff263342 href="" value="with"
+text node=636 x=441 baseline=1357 top=1340 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=636 x=471 baseline=1357 top=1340 w=54 h=21 size=18 bold=false italic=false color=ff263342 href="" value="source"
+text node=636 x=530 baseline=1357 top=1340 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="code."
+text node=636 x=579 baseline=1357 top=1340 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="If"
+text node=636 x=594 baseline=1357 top=1340 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="you"
+text node=636 x=628 baseline=1357 top=1340 w=47 h=21 size=18 bold=false italic=false color=ff263342 href="" value="would"
+text node=636 x=680 baseline=1357 top=1340 w=27 h=21 size=18 bold=false italic=false color=ff263342 href="" value="like"
+text node=636 x=712 baseline=1357 top=1340 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=636 x=732 baseline=1357 top=1340 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="purchase"
+text node=636 x=811 baseline=1357 top=1340 w=16 h=21 size=18 bold=false italic=false color=ff263342 href="" value="or"
+text node=636 x=832 baseline=1357 top=1340 w=77 h=21 size=18 bold=false italic=false color=ff263342 href="" value="download"
+text node=636 x=914 baseline=1357 top=1340 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=636 x=404 baseline=1384 top=1367 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="copy"
+text node=636 x=447 baseline=1384 top=1367 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=636 x=467 baseline=1384 top=1367 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="try"
+text node=636 x=492 baseline=1384 top=1367 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="out,"
+text node=638 x=527 baseline=1384 top=1367 w=41 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/books/handbook/mirrors" value="more"
+text node=638 x=573 baseline=1384 top=1367 w=89 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/books/handbook/mirrors" value="information"
+text node=638 x=667 baseline=1384 top=1367 w=13 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/books/handbook/mirrors" value="is"
+text node=638 x=685 baseline=1384 top=1367 w=71 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/books/handbook/mirrors" value="available"
+text node=639 x=756 baseline=1384 top=1367 w=5 h=21 size=18 bold=false italic=false color=ff263342 href="" value="."
+text node=647 x=404 baseline=1436 top=1411 w=160 h=31 size=27 bold=true italic=false color=ff263342 href="" value="Contributing"
+text node=647 x=572 baseline=1436 top=1411 w=25 h=31 size=27 bold=true italic=false color=ff263342 href="" value="to"
+text node=647 x=605 baseline=1436 top=1411 w=113 h=31 size=27 bold=true italic=false color=ff263342 href="" value="FreeBSD"
+text node=654 x=404 baseline=1469 top=1452 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="It"
+text node=654 x=419 baseline=1469 top=1452 w=13 h=21 size=18 bold=false italic=false color=ff263342 href="" value="is"
+text node=654 x=437 baseline=1469 top=1452 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="easy"
+text node=654 x=480 baseline=1469 top=1452 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=654 x=500 baseline=1469 top=1452 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="contribute"
+text node=654 x=584 baseline=1469 top=1452 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=654 x=604 baseline=1469 top=1452 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD."
+text node=654 x=688 baseline=1469 top=1452 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="All"
+text node=654 x=713 baseline=1469 top=1452 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="you"
+text node=654 x=747 baseline=1469 top=1452 w=40 h=21 size=18 bold=false italic=false color=ff263342 href="" value="need"
+text node=654 x=792 baseline=1469 top=1452 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=654 x=812 baseline=1469 top=1452 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="do"
+text node=654 x=837 baseline=1469 top=1452 w=13 h=21 size=18 bold=false italic=false color=ff263342 href="" value="is"
+text node=654 x=855 baseline=1469 top=1452 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="find"
+text node=654 x=889 baseline=1469 top=1452 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=654 x=904 baseline=1469 top=1452 w=31 h=21 size=18 bold=false italic=false color=ff263342 href="" value="part"
+text node=654 x=940 baseline=1469 top=1452 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="of"
+text node=654 x=404 baseline=1496 top=1479 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=654 x=483 baseline=1496 top=1479 w=46 h=21 size=18 bold=false italic=false color=ff263342 href="" value="which"
+text node=654 x=534 baseline=1496 top=1479 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="you"
+text node=654 x=568 baseline=1496 top=1479 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="think"
+text node=654 x=611 baseline=1496 top=1479 w=43 h=21 size=18 bold=false italic=false color=ff263342 href="" value="could"
+text node=654 x=659 baseline=1496 top=1479 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="be"
+text node=654 x=684 baseline=1496 top=1479 w=74 h=21 size=18 bold=false italic=false color=ff263342 href="" value="improved"
+text node=654 x=763 baseline=1496 top=1479 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=654 x=798 baseline=1496 top=1479 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="make"
+text node=654 x=847 baseline=1496 top=1479 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="those"
+text node=654 x=896 baseline=1496 top=1479 w=68 h=21 size=18 bold=false italic=false color=ff263342 href="" value="changes"
+text node=654 x=404 baseline=1523 top=1506 w=73 h=21 size=18 bold=false italic=false color=ff263342 href="" value="(carefully"
+text node=654 x=482 baseline=1523 top=1506 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=654 x=517 baseline=1523 top=1506 w=62 h=21 size=18 bold=false italic=false color=ff263342 href="" value="cleanly)"
+text node=654 x=584 baseline=1523 top=1506 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="and"
+text node=654 x=619 baseline=1523 top=1506 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="submit"
+text node=654 x=677 baseline=1523 top=1506 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="that"
+text node=654 x=712 baseline=1523 top=1506 w=38 h=21 size=18 bold=false italic=false color=ff263342 href="" value="back"
+text node=654 x=755 baseline=1523 top=1506 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=654 x=775 baseline=1523 top=1506 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=654 x=805 baseline=1523 top=1506 w=56 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Project"
+text node=654 x=866 baseline=1523 top=1506 w=19 h=21 size=18 bold=false italic=false color=ff263342 href="" value="by"
+text node=654 x=890 baseline=1523 top=1506 w=54 h=21 size=18 bold=false italic=false color=ff263342 href="" value="means"
+text node=654 x=949 baseline=1523 top=1506 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="of"
+text node=654 x=969 baseline=1523 top=1506 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=654 x=404 baseline=1550 top=1533 w=30 h=21 size=18 bold=false italic=false color=ff263342 href="" value="bug"
+text node=654 x=439 baseline=1550 top=1533 w=47 h=21 size=18 bold=false italic=false color=ff263342 href="" value="report"
+text node=654 x=491 baseline=1550 top=1533 w=16 h=21 size=18 bold=false italic=false color=ff263342 href="" value="or"
+text node=654 x=512 baseline=1550 top=1533 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=654 x=527 baseline=1550 top=1533 w=84 h=21 size=18 bold=false italic=false color=ff263342 href="" value="committer,"
+text node=654 x=616 baseline=1550 top=1533 w=9 h=21 size=18 bold=false italic=false color=ff263342 href="" value="if"
+text node=654 x=630 baseline=1550 top=1533 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="you"
+text node=654 x=664 baseline=1550 top=1533 w=42 h=21 size=18 bold=false italic=false color=ff263342 href="" value="know"
+text node=654 x=711 baseline=1550 top=1533 w=35 h=21 size=18 bold=false italic=false color=ff263342 href="" value="one."
+text node=654 x=751 baseline=1550 top=1533 w=34 h=21 size=18 bold=false italic=false color=ff263342 href="" value="This"
+text node=654 x=790 baseline=1550 top=1533 w=43 h=21 size=18 bold=false italic=false color=ff263342 href="" value="could"
+text node=654 x=838 baseline=1550 top=1533 w=20 h=21 size=18 bold=false italic=false color=ff263342 href="" value="be"
+text node=654 x=863 baseline=1550 top=1533 w=68 h=21 size=18 bold=false italic=false color=ff263342 href="" value="anything"
+text node=654 x=936 baseline=1550 top=1533 w=36 h=21 size=18 bold=false italic=false color=ff263342 href="" value="from"
+text node=654 x=404 baseline=1577 top=1560 w=118 h=21 size=18 bold=false italic=false color=ff263342 href="" value="documentation"
+text node=654 x=527 baseline=1577 top=1560 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=654 x=547 baseline=1577 top=1560 w=59 h=21 size=18 bold=false italic=false color=ff263342 href="" value="artwork"
+text node=654 x=611 baseline=1577 top=1560 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=654 x=631 baseline=1577 top=1560 w=54 h=21 size=18 bold=false italic=false color=ff263342 href="" value="source"
+text node=654 x=690 baseline=1577 top=1560 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="code."
+text node=654 x=739 baseline=1577 top=1560 w=32 h=21 size=18 bold=false italic=false color=ff263342 href="" value="See"
+text node=654 x=776 baseline=1577 top=1560 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=656 x=806 baseline=1577 top=1560 w=97 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/articles/contributing/" value="Contributing"
+text node=656 x=908 baseline=1577 top=1560 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/articles/contributing/" value="to"
+text node=656 x=404 baseline=1604 top=1587 w=74 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org/en/articles/contributing/" value="FreeBSD"
+text node=657 x=483 baseline=1604 top=1587 w=48 h=21 size=18 bold=false italic=false color=ff263342 href="" value="article"
+text node=657 x=536 baseline=1604 top=1587 w=21 h=21 size=18 bold=false italic=false color=ff263342 href="" value="for"
+text node=657 x=562 baseline=1604 top=1587 w=41 h=21 size=18 bold=false italic=false color=ff263342 href="" value="more"
+text node=657 x=608 baseline=1604 top=1587 w=94 h=21 size=18 bold=false italic=false color=ff263342 href="" value="information."
+text node=663 x=404 baseline=1649 top=1632 w=41 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Even"
+text node=663 x=450 baseline=1649 top=1632 w=9 h=21 size=18 bold=false italic=false color=ff263342 href="" value="if"
+text node=663 x=464 baseline=1649 top=1632 w=29 h=21 size=18 bold=false italic=false color=ff263342 href="" value="you"
+text node=663 x=498 baseline=1649 top=1632 w=26 h=21 size=18 bold=false italic=false color=ff263342 href="" value="are"
+text node=663 x=529 baseline=1649 top=1632 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="not"
+text node=663 x=559 baseline=1649 top=1632 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=663 x=574 baseline=1649 top=1632 w=103 h=21 size=18 bold=false italic=false color=ff263342 href="" value="programmer,"
+text node=663 x=682 baseline=1649 top=1632 w=41 h=21 size=18 bold=false italic=false color=ff263342 href="" value="there"
+text node=663 x=728 baseline=1649 top=1632 w=26 h=21 size=18 bold=false italic=false color=ff263342 href="" value="are"
+text node=663 x=759 baseline=1649 top=1632 w=41 h=21 size=18 bold=false italic=false color=ff263342 href="" value="other"
+text node=663 x=805 baseline=1649 top=1632 w=41 h=21 size=18 bold=false italic=false color=ff263342 href="" value="ways"
+text node=663 x=851 baseline=1649 top=1632 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=663 x=871 baseline=1649 top=1632 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="contribute"
+text node=663 x=955 baseline=1649 top=1632 w=15 h=21 size=18 bold=false italic=false color=ff263342 href="" value="to"
+text node=663 x=404 baseline=1676 top=1659 w=79 h=21 size=18 bold=false italic=false color=ff263342 href="" value="FreeBSD."
+text node=663 x=488 baseline=1676 top=1659 w=31 h=21 size=18 bold=false italic=false color=ff263342 href="" value="The"
+text node=665 x=524 baseline=1676 top=1659 w=74 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://www.freebsdfoundation.org" value="FreeBSD"
+text node=665 x=603 baseline=1676 top=1659 w=90 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://www.freebsdfoundation.org" value="Foundation"
+text node=666 x=698 baseline=1676 top=1659 w=13 h=21 size=18 bold=false italic=false color=ff263342 href="" value="is"
+text node=666 x=716 baseline=1676 top=1659 w=10 h=21 size=18 bold=false italic=false color=ff263342 href="" value="a"
+text node=666 x=731 baseline=1676 top=1659 w=76 h=21 size=18 bold=false italic=false color=ff263342 href="" value="non-profit"
+text node=666 x=812 baseline=1676 top=1659 w=98 h=21 size=18 bold=false italic=false color=ff263342 href="" value="organization"
+text node=666 x=915 baseline=1676 top=1659 w=21 h=21 size=18 bold=false italic=false color=ff263342 href="" value="for"
+text node=666 x=404 baseline=1703 top=1686 w=46 h=21 size=18 bold=false italic=false color=ff263342 href="" value="which"
+text node=666 x=455 baseline=1703 top=1686 w=44 h=21 size=18 bold=false italic=false color=ff263342 href="" value="direct"
+text node=666 x=504 baseline=1703 top=1686 w=102 h=21 size=18 bold=false italic=false color=ff263342 href="" value="contributions"
+text node=666 x=611 baseline=1703 top=1686 w=26 h=21 size=18 bold=false italic=false color=ff263342 href="" value="are"
+text node=666 x=642 baseline=1703 top=1686 w=32 h=21 size=18 bold=false italic=false color=ff263342 href="" value="fully"
+text node=666 x=679 baseline=1703 top=1686 w=24 h=21 size=18 bold=false italic=false color=ff263342 href="" value="tax"
+text node=666 x=708 baseline=1703 top=1686 w=87 h=21 size=18 bold=false italic=false color=ff263342 href="" value="deductible."
+text node=666 x=800 baseline=1703 top=1686 w=55 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Please"
+text node=666 x=860 baseline=1703 top=1686 w=31 h=21 size=18 bold=false italic=false color=ff263342 href="" value="visit"
+text node=666 x=896 baseline=1703 top=1686 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="the"
+text node=668 x=404 baseline=1730 top=1713 w=62 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://freebsdfoundation.org/about-us/contact-us/" value="Contact"
+text node=668 x=471 baseline=1730 top=1713 w=22 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://freebsdfoundation.org/about-us/contact-us/" value="Us"
+text node=669 x=498 baseline=1730 top=1713 w=40 h=21 size=18 bold=false italic=false color=ff263342 href="" value="page"
+text node=669 x=543 baseline=1730 top=1713 w=21 h=21 size=18 bold=false italic=false color=ff263342 href="" value="for"
+text node=669 x=569 baseline=1730 top=1713 w=41 h=21 size=18 bold=false italic=false color=ff263342 href="" value="more"
+text node=669 x=615 baseline=1730 top=1713 w=94 h=21 size=18 bold=false italic=false color=ff263342 href="" value="information."
+text node=680 x=404 baseline=1811 top=1794 w=37 h=21 size=18 bold=true italic=false color=ff263342 href="" value="Last"
+text node=680 x=446 baseline=1811 top=1794 w=75 h=21 size=18 bold=true italic=false color=ff263342 href="" value="modified"
+text node=680 x=526 baseline=1811 top=1794 w=22 h=21 size=18 bold=true italic=false color=ff263342 href="" value="on"
+text node=681 x=548 baseline=1811 top=1794 w=5 h=21 size=18 bold=false italic=false color=ff263342 href="" value=":"
+text node=681 x=558 baseline=1811 top=1794 w=83 h=21 size=18 bold=false italic=false color=ff263342 href="" value="December"
+text node=681 x=646 baseline=1811 top=1794 w=25 h=21 size=18 bold=false italic=false color=ff263342 href="" value="21,"
+text node=681 x=676 baseline=1811 top=1794 w=40 h=21 size=18 bold=false italic=false color=ff263342 href="" value="2025"
+text node=681 x=721 baseline=1811 top=1794 w=19 h=21 size=18 bold=false italic=false color=ff263342 href="" value="by"
+text node=683 x=745 baseline=1811 top=1794 w=81 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://cgit.freebsd.org/doc/commit/?id=2b7c860b53" value="Alexander"
+text node=683 x=831 baseline=1811 top=1794 w=45 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://cgit.freebsd.org/doc/commit/?id=2b7c860b53" value="Ziaee"
+image node=695 x=36 y=1926 w=160 h=250 src="/images/beastie-right.svg" alt="FreeBSD logo" href=""
+text node=702 x=36 baseline=2200 top=2183 w=53 h=21 size=18 bold=false italic=false color=ff263342 href="" value="Switch"
+text node=702 x=94 baseline=2200 top=2183 w=39 h=21 size=18 bold=false italic=false color=ff263342 href="" value="color"
+text node=702 x=138 baseline=2200 top=2183 w=50 h=21 size=18 bold=false italic=false color=ff263342 href="" value="theme"
+text node=714 x=36 baseline=2239 top=2222 w=52 h=21 size=18 bold=true italic=false color=ff263342 href="" value="About"
+text node=721 x=36 baseline=2303 top=2286 w=74 h=21 size=18 bold=false italic=false color=ff1769a4 href="/about" value="FreeBSD"
+text node=727 x=36 baseline=2359 top=2342 w=74 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://freebsdfoundation.org/" value="FreeBSD"
+text node=727 x=115 baseline=2359 top=2342 w=90 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://freebsdfoundation.org/" value="Foundation"
+text node=733 x=36 baseline=2415 top=2398 w=74 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://freebsdfoundation.org/our-work/journal/" value="FreeBSD"
+text node=733 x=115 baseline=2415 top=2398 w=59 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://freebsdfoundation.org/our-work/journal/" value="Journal"
+text node=739 x=36 baseline=2471 top=2454 w=29 h=21 size=18 bold=false italic=false color=ff1769a4 href="/where" value="Get"
+text node=739 x=70 baseline=2471 top=2454 w=74 h=21 size=18 bold=false italic=false color=ff1769a4 href="/where" value="FreeBSD"
+text node=745 x=36 baseline=2527 top=2510 w=65 h=21 size=18 bold=false italic=false color=ff1769a4 href="/security" value="Security"
+text node=745 x=106 baseline=2527 top=2510 w=83 h=21 size=18 bold=false italic=false color=ff1769a4 href="/security" value="Advisories"
+text node=753 x=36 baseline=2588 top=2571 w=131 h=21 size=18 bold=true italic=false color=ff263342 href="" value="Documentation"
+text node=760 x=36 baseline=2652 top=2635 w=121 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org" value="Documentation"
+text node=760 x=162 baseline=2652 top=2635 w=45 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.freebsd.org" value="portal"
+text node=766 x=36 baseline=2708 top=2691 w=59 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://man.FreeBSD.org" value="Manual"
+text node=766 x=100 baseline=2708 top=2691 w=49 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://man.FreeBSD.org" value="pages"
+text node=772 x=36 baseline=2764 top=2747 w=53 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://ports.freebsd.org" value="Ported"
+text node=772 x=94 baseline=2764 top=2747 w=97 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://ports.freebsd.org" value="Applications"
+text node=778 x=36 baseline=2820 top=2803 w=110 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://papers.FreeBSD.org" value="Presentations"
+text node=778 x=151 baseline=2820 top=2803 w=30 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://papers.FreeBSD.org" value="and"
+text node=778 x=186 baseline=2820 top=2803 w=55 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://papers.FreeBSD.org" value="papers"
+text node=784 x=36 baseline=2876 top=2859 w=34 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://wiki.freebsd.org/" value="Wiki"
+text node=792 x=36 baseline=2937 top=2920 w=99 h=21 size=18 bold=true italic=false color=ff263342 href="" value="Community"
+text node=799 x=36 baseline=3001 top=2984 w=29 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.FreeBSD.org/en/articles/contributing" value="Get"
+text node=799 x=70 baseline=3001 top=2984 w=66 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://docs.FreeBSD.org/en/articles/contributing" value="involved"
+text node=805 x=36 baseline=3057 top=3040 w=91 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://forums.freebsd.org/" value="Community"
+text node=805 x=132 baseline=3057 top=3040 w=46 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://forums.freebsd.org/" value="forum"
+text node=811 x=36 baseline=3113 top=3096 w=57 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://lists.freebsd.org/" value="Mailing"
+text node=811 x=98 baseline=3113 top=3096 w=31 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://lists.freebsd.org/" value="lists"
+text node=817 x=36 baseline=3169 top=3152 w=31 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://wiki.freebsd.org/IRC/Channels" value="IRC"
+text node=817 x=72 baseline=3169 top=3152 w=76 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://wiki.freebsd.org/IRC/Channels" value="Channels"
+text node=823 x=36 baseline=3225 top=3208 w=32 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://bugs.freebsd.org/bugzilla/" value="Bug"
+text node=823 x=73 baseline=3225 top=3208 w=61 h=21 size=18 bold=false italic=false color=ff1769a4 href="https://bugs.freebsd.org/bugzilla/" value="Tracker"
+text node=831 x=36 baseline=3286 top=3269 w=47 h=21 size=18 bold=true italic=false color=ff263342 href="" value="Legal"
+text node=838 x=36 baseline=3350 top=3333 w=62 h=21 size=18 bold=false italic=false color=ff1769a4 href="/contact" value="Contact"
+text node=844 x=36 baseline=3406 top=3389 w=81 h=21 size=18 bold=false italic=false color=ff1769a4 href="/donations" value="Donations"
+text node=850 x=36 baseline=3462 top=3445 w=76 h=21 size=18 bold=false italic=false color=ff1769a4 href="/copyright" value="Licensing"
+text node=856 x=36 baseline=3518 top=3501 w=59 h=21 size=18 bold=false italic=false color=ff1769a4 href="/privacy" value="Privacy"
+text node=856 x=100 baseline=3518 top=3501 w=48 h=21 size=18 bold=false italic=false color=ff1769a4 href="/privacy" value="Policy"
+text node=862 x=36 baseline=3574 top=3557 w=43 h=21 size=18 bold=false italic=false color=ff1769a4 href="/internal/code-of-conduct" value="Code"
+text node=862 x=84 baseline=3574 top=3557 w=15 h=21 size=18 bold=false italic=false color=ff1769a4 href="/internal/code-of-conduct" value="of"
+text node=862 x=104 baseline=3574 top=3557 w=67 h=21 size=18 bold=false italic=false color=ff1769a4 href="/internal/code-of-conduct" value="Conduct"
+text node=870 x=36 baseline=3635 top=3622 w=10 h=16 size=14 bold=false italic=false color=ff263342 href="" value="©"
+text node=870 x=50 baseline=3635 top=3622 w=69 h=16 size=14 bold=false italic=false color=ff263342 href="" value="1994-2026"
+text node=870 x=123 baseline=3635 top=3622 w=25 h=16 size=14 bold=false italic=false color=ff263342 href="" value="The"
+text node=870 x=152 baseline=3635 top=3622 w=58 h=16 size=14 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=870 x=214 baseline=3635 top=3622 w=48 h=16 size=14 bold=false italic=false color=ff263342 href="" value="Project."
+text node=870 x=266 baseline=3635 top=3622 w=15 h=16 size=14 bold=false italic=false color=ff263342 href="" value="All"
+text node=870 x=285 baseline=3635 top=3622 w=35 h=16 size=14 bold=false italic=false color=ff263342 href="" value="rights"
+text node=870 x=324 baseline=3635 top=3622 w=56 h=16 size=14 bold=false italic=false color=ff263342 href="" value="reserved"
+text node=873 x=36 baseline=3677 top=3664 w=36 h=16 size=14 bold=false italic=false color=ff263342 href="" value="Made"
+text node=873 x=76 baseline=3677 top=3664 w=25 h=16 size=14 bold=false italic=false color=ff263342 href="" value="with"
+text node=875 x=107 baseline=3677 top=3657 w=32 h=25 size=21 bold=false italic=false color=ffe38582 href="" value="❤️"
+text node=876 x=143 baseline=3677 top=3664 w=15 h=16 size=14 bold=false italic=false color=ff263342 href="" value="by"
+text node=876 x=162 baseline=3677 top=3664 w=20 h=16 size=14 bold=false italic=false color=ff263342 href="" value="the"
+text node=876 x=186 baseline=3677 top=3664 w=58 h=16 size=14 bold=false italic=false color=ff263342 href="" value="FreeBSD"
+text node=876 x=248 baseline=3677 top=3664 w=72 h=16 size=14 bold=false italic=false color=ff263342 href="" value="Community"

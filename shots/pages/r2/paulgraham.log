@@ -1,0 +1,11 @@
+TLS paulgraham.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=216937
+HTTP_RESPONSE status=200 bytes=79767 url=https://paulgraham.com/greatwork.html
+TLS s.turbifycdn.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=34665
+IMAGE decoded width=69 height=357 url=https://s.turbifycdn.com/aah/paulgraham/bel-7.gif
+TLS sep.turbifycdn.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=34540
+IMAGE decoded width=1 height=1 url=https://sep.turbifycdn.com/ca/Img/trans_1x1.gif
+TLS s.turbifycdn.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=36280
+IMAGE decoded width=410 height=45 url=https://s.turbifycdn.com/aah/paulgraham/bel-8.gif
+TLS s.turbifycdn.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=35488
+IMAGE decoded width=185 height=18 url=https://s.turbifycdn.com/aah/paulgraham/how-to-do-great-work-2.gif
+PAINT wayland-submit elapsed_us=1997429 url=https://paulgraham.com/greatwork.html

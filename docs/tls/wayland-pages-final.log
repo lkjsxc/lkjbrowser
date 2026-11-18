@@ -1,0 +1,187 @@
+Actual Weston 13 pixman capture, 1000x760.
+Started UTC: 2026-11-18T06:16:59Z
+Round: pages-final
+Run: /home/coder/workspace/lkjbrowser/target/https-capture.f006WjSj
+
+Toolchain pin:
+tag=2026.11.17-e6d13590b
+commit=e6d13590b7bb2d665d668727f1a8d1ee4f76c33d
+sha256=60149069984ecfe491e322eba406238555c13acc90375c5468e5d5d4954a83ca
+asset=lkjscript-x86_64-linux
+repository=lkjsxc/lkjscript
+
+Source and runtime inputs:
+b6b9ea6f957c16b5838e051c31e8b50e8b5185e439add47426e6c69ab2b75eba  target/lkjbrowser
+920053745748113f112fdec592c351f85fd8462abdca244cab67b5f55e455c15  target/byte-descriptor-bridge
+e4c2cfc43e693c7630884d785ea8a38715c71d2d568be0fe8f59e2dd97f41c3d  target/pixel-compare
+dc2e347ede47bc714c0a75095d1db6bfa70473e1ea565c9c17c9f65d97ecf941  target/animate
+60149069984ecfe491e322eba406238555c13acc90375c5468e5d5d4954a83ca  .toolchain/lkjscript-x86_64-linux
+ecd9dc38bc3efb7dbd6431f57e29d2f8d6a0f0d211e1464b3fef2cbfe266fcd2  /etc/ssl/certs/ca-certificates.crt
+be7d74f7df64e70954b24c4af922d84ab7ed1145ca3ce11fa519d251bcb74987  .deps/root/usr/bin/weston
+f692de17679e1104e8cfa705f1689180bd911e068574240e744b70bdab09483f  .deps/root/usr/bin/weston-screenshooter
+
+Source hashes:
+d21d110fa8c2508fe8f55aa33775b99e9fb5fbff7147273b413fb59e0d41aa7f  src/animate.lkj
+9d9085cab0c785d0e7d86c603bea3d9c4acf81861c369ee3af3befaa606e0414  src/chrome.lkj
+4669735d31c4e35be797631263f70fe3582bb46c221994f8092c4b2998ec3155  src/config_probe.lkj
+201ba05ba296394eb2786fcece8519d1aee0c0a34da07ab3ee46581fe6edc97b  src/content_probe.lkj
+ee96c825462d3f0123c63523706aed57e11b618815e4902c4293a385b58da789  src/crypto/aesgcm.lkj
+dca8e149cf92c2dd4e680e5f7841db6b37e7f209ee460b64ef5fd350e4037403  src/crypto/bigint.lkj
+f6dac557edbc8d7c7c7ccd297eb07429bdeeb0b7f4a2f2010f8c459caf692a8c  src/crypto/der.lkj
+dc174fceacab75e7b9b4a9123cbee1bdf8e5c1e95b4efbde610f111b9b848551  src/crypto/handshake.lkj
+77914819ee6f2a3ac640cbe3de45d24eb72e0c91e00a67c02d14e880f2a8a86c  src/crypto/hkdf.lkj
+848fb1c120a47bff754f23407567fddd438fc6db3eb02dab4e04468f0a73f93b  src/crypto/mod.lkj
+a422cba94dcd22b4b76b672f1a014419b27491ac4c7822fb1b5c43756d72f078  src/crypto/primitive_bench.lkj
+bcd923cb33e4e8fa6854907f8a7d7e730ba97ce54a80a69a06772853b848ea8c  src/crypto/primitive_tests.lkj
+8e3927463e69874b9b3b1f00c7865586bea4717d54a572243b8a1479c8e39136  src/crypto/protocol_tests.lkj
+08828dc3bbd9f156c8642722635ee9ae202bc12eceff17828e2d360d9b7250a3  src/crypto/protocol_trace_tests.lkj
+e2bc8c364051839fb282c33ef3b540768abcf8a1a132c884f698888939695c2d  src/crypto/record.lkj
+1b0248d564af2364862c7c73052eafeb8b2e35fffa6ea7e6c92cfd49223b23f4  src/crypto/sha512.lkj
+dcbcc0ebc432163432088a5d14db1df735c2080cd8e93bd28efdce430f61cbca  src/crypto/signature_bench.lkj
+880e94427b910b75fb7b20b8272e79e6b312cc860c10deda6f826d2f7c7851d2  src/crypto/signature.lkj
+5c0e9a1c95251c04b0f446234d81bcebe41d06616c92504b241ca7c72ce7905b  src/crypto/signature_test.lkj
+41ae03f3de1d8e2597404c8b99ce1846fc0701bb1e4e5f4c80ed973210f82728  src/crypto/signature_vectors.lkj
+d4c6d5eb8fadd82dcc4f4514c9d95b74a7dc2b9b6200752c5b83dd7026b5e080  src/crypto/tls.lkj
+3e3bb9999b5a61cbe792e6e9e46eb654fe0a2e760fe06c7703df6b292cef97f1  src/crypto/trace_tests.lkj
+de10eb7bcb0895665f9f58e941fc71601fc293ce83019d6ab47ad5b8fc1e3717  src/crypto/transport.lkj
+7cacff894ecbbe377b6aae42169840cea30ff3606ba577ca5ff67fafea7f15fe  src/crypto/x25519.lkj
+837cbab767f31fb73aa684e905fc02d50d0fe18ddbeadc6fd93f5940a0aa4e32  src/crypto/x509.lkj
+a05db737469ff9fced2e7f1ff03f1765883ddf3115729d18428352468aa192ec  src/crypto/x509_test.lkj
+c2344affbfee37bf7c34044b8a4dfd700eb792622f99147dba59b4c9a845e965  src/css.lkj
+a954edc4b9852109dada876aea6cfc33b7930b50a91f3ad047a51bbbe07768a5  src/dns_probe.lkj
+0c3996a3fb13408b22d93036e1403764cb6604f650d49e843a8a79a076f3d902  src/fetch_probe.lkj
+e65743bb921ff0079149acd22735ff24ba444d7a7d6c8cc29ce903d246d86d6b  src/fixture_server.lkj
+8f2f4241b81383adc4bd54fd7ad2dc5f1a23bfed4a79a9c1ec2104965abba950  src/font.lkj
+2bc2820a084ab79d4b73be947683068e484e77372fd47b6f985c2285c10eb21a  src/font_probe.lkj
+9f42360974e61de6aa3a68e09636f5931f7960644a5aa7dd3e897b74cc3c9ee9  src/gif.lkj
+34f463f7fe10de7cf90ce90f374115e817f666a8e11c57f63ba597c1e9d856d7  src/gif_probe.lkj
+cc916b558c67ac42e4627bcb05107c9df6aa5b9c95ab9a7eb9cfac0bb619961c  src/html.lkj
+55361b0a64b43569ba8d6eb9a88806ca8a9a7245b0c83ebf753d682ae66f220c  src/images.lkj
+45f24cc02eeeeecd0d50c502abdeb7ce01800a8b7aaf9b78307d82b619352ecd  src/image_test.lkj
+25cba6de3d2b22cc4100ba6dae960d0dee54ff824ea4ae50445efc18ac905689  src/jpeg.lkj
+f1359b677d4ba96e7d74e0312f70a6d3291d99cd6a2a820cdd0b48f0c757dfdc  src/jpeg_probe.lkj
+32388ce44b31a49055b4bce39511193d7abfcb8dd5646f0c1a5d8c188dce7c9a  src/layout.lkj
+6a7a98b821c03b7bf2cea84b5046b16da38c43a1be832d9b9d688d225dbb2dea  src/layout_public_probe.lkj
+5493fecc7561c4299f4fa06a8e5cf0d771a48011d4e5cb37a253daaba829d34d  src/layout/table.lkj
+05bd0f1a0ef23ae1720d79d08f217f8ebf5ab939bec77330ea4543beb409dd8f  src/main.lkj
+1fba99504b6dd10448cf48ed5c24641d8db13b695d114818f93b05e48a77202d  src/net/content.lkj
+eb8710c3289a5a4d8407e9ab4516edafcddd93dd8d1ef97d121674beb5493510  src/net.lkj
+28fe4aa249716f7b0b7339c5578593a96bf78e67da7c3e8ef430338be788c413  src/paint.lkj
+5d502688edab412f96439fc1f929f096757e67e5b7bc3de822e5a0aeae0eeb7e  src/pixel_compare.lkj
+c3cd481910b37831400d7e10954d71a10431b3dafc75be39411febfb093da704  src/png.lkj
+6b54a37e5d96d5533bed49c05e1bd729300fc3f6ecead690388434a9ebdd7d20  src/png_probe.lkj
+85afb85755dd7b795815d1527323846e3f436c4394ecad9c3b07b9ceabe097a9  src/resources.lkj
+3809acce31f79d5eb8f1f7c6304c3e253a10c4133b1bdf90623f92bb6a11c23e  src/shot_tool.lkj
+47e2b37741b6726711c1122178aecdb7e70f43e82ab0c66b71502ad1fd3bb6fc  src/styles_probe.lkj
+1bc7ae67178a3f62b9c4138d8dbef49c17e107383cb88e2cb7180f6d810f5e60  src/typefaces.lkj
+f9c2b3ff79849eae22378b6127e0e3627b652e64eada66e091999c72e588ced4  src/wayland_input_probe.lkj
+026490c4ca6a0d81ed60922cb54d697dd93329c0561ee07e790311c175e09f2a  src/wayland.lkj
+5d47567bdf7b89655b6584df6fbccff7e58b311f5a00fd0a01026d4b3148d903  src/wayland_peer.lkj
+787738f19683a93b2d81573d804b8055db463c1513947fb5b73815318ef9760e  src/wayland_smoke.lkj
+0e628999c2151e6588bb9a7e8cbd67b951789c59d9da57da93ed896ee589456b  program.lkj
+
+Frozen browser SHA256: b6b9ea6f957c16b5838e051c31e8b50e8b5185e439add47426e6c69ab2b75eba
+ea4390ae8f725d4b957637b0ad6c0465e19143c02086ec080a24bb879c25a35c  /home/coder/workspace/lkjbrowser/target/https-capture.f006WjSj/events.live
+pixel comparison 1000x760: 0 differing pixels
+
+MOTION: one continuous native browser process; actual compositor pixels.
+Input: timestamped application-event replay, not physical hardware input.
+Nominal APNG delay: 400 ms; actual capture times: shots/https-motion-pages-final/frames.tsv
+PAINT wayland-submit elapsed_us=116963 url=about:welcome
+Script 400ms: down 29
+Script 420ms: key 38
+Script 440ms: up 29
+Script 600ms: key 35
+Script 670ms: key 20
+Script 740ms: key 20
+Script 810ms: key 25
+Script 880ms: key 31
+Script 940ms: down 42
+Script 950ms: key 39
+Script 970ms: up 42
+Script 1020ms: key 53
+Script 1090ms: key 53
+Script 1160ms: key 17
+Script 1230ms: key 17
+Script 1300ms: key 17
+Script 1370ms: key 52
+Script 1440ms: key 37
+Script 1510ms: key 18
+Script 1580ms: key 19
+Script 1650ms: key 49
+Script 1720ms: key 18
+Script 1790ms: key 38
+Script 1860ms: key 52
+Script 1930ms: key 24
+Script 2000ms: key 19
+Script 2070ms: key 34
+Script 2140ms: key 53
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=53727
+HTTP_RESPONSE status=200 bytes=20436 url=https://www.kernel.org/
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41559
+IMAGE decoded width=48 height=48 url=https://www.kernel.org/theme/images/icons/downloadarrow_small.png
+Script 2500ms: key 28
+PAINT wayland-submit elapsed_us=485305 url=https://www.kernel.org/
+Script 4500ms: scroll 480
+Script 5400ms: scroll 480
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41204
+IMAGE decoded width=135 height=55 url=https://www.kernel.org/theme/images/logos/akamai.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41365
+IMAGE decoded width=193 height=21 url=https://www.kernel.org/theme/images/logos/constellix-green-logo.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41153
+IMAGE decoded width=91 height=35 url=https://www.kernel.org/theme/images/logos/fastly-logo.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=42387
+IMAGE unavailable Image format is not supported; expected PNG, JPEG or GIF url=https://www.kernel.org/theme/images/logos/serverscom.svg
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=42232
+IMAGE decoded width=128 height=42 url=https://www.kernel.org/theme/images/logos/google.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41345
+IMAGE decoded width=150 height=36 url=https://www.kernel.org/theme/images/logos/redhat-community.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=40556
+IMAGE decoded width=137 height=45 url=https://www.kernel.org/theme/images/logos/thelinuxfoundation.png
+Script 7000ms: key 102
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=43069
+HTTP_RESPONSE status=200 bytes=15073 url=https://www.kernel.org/category/about.html
+Script 8000ms: click 310 218
+PAINT wayland-submit elapsed_us=364556 url=https://www.kernel.org/category/about.html
+Script 10000ms: scroll 420
+Wayland: sent 93 messages, received 56, presented 23 frames
+APNG shots/https-motion-pages-final.apng: 30 frames, 1000x760, 400 ms, 1678704 bytes; first-frame pixels verified (c0135c756e54ae6)
+2d52a98976da3b8e743db9b4b7e088d31b97a9fe6beb82c2cc1f288b8ba8e19a  shots/https-motion-pages-final/final.png
+6d323f51031dccf3884d0c4ca45f716cc0da787b7b662352f2935c485baa0351  shots/https-motion-pages-final/frame-000.png
+6e93b30040caef45a999aa518d5d6f3fd384c41342494f9b92c91574138a70fc  shots/https-motion-pages-final/frame-001.png
+55b95335cd481f8d2e1d2473c92ccad166a2b8b7c4777fe17a04680083212445  shots/https-motion-pages-final/frame-002.png
+4dd72eee5d62716fab2443836d9f34fd45960fa2a4590ab0b356a990c95a3f3b  shots/https-motion-pages-final/frame-003.png
+8d001df7bf5d4df648dd136588f14abeaca2c5af5d1f6954cd613f9d9637f5d0  shots/https-motion-pages-final/frame-004.png
+ce0bc3cbe2ccb9e28149bb623e2d4eed109ebb23fc0d192444a23ba679a648c7  shots/https-motion-pages-final/frame-005.png
+561826bf4ca39831a48972f87246991ba871be659f67294575fc11bb2ce8a7d6  shots/https-motion-pages-final/frame-006.png
+dc5e35bdd441a5ccf2b52a6baeed980876e4abba622ab40613adf892e641556d  shots/https-motion-pages-final/frame-007.png
+dc5e35bdd441a5ccf2b52a6baeed980876e4abba622ab40613adf892e641556d  shots/https-motion-pages-final/frame-008.png
+dc5e35bdd441a5ccf2b52a6baeed980876e4abba622ab40613adf892e641556d  shots/https-motion-pages-final/frame-009.png
+dc5e35bdd441a5ccf2b52a6baeed980876e4abba622ab40613adf892e641556d  shots/https-motion-pages-final/frame-010.png
+dc5e35bdd441a5ccf2b52a6baeed980876e4abba622ab40613adf892e641556d  shots/https-motion-pages-final/frame-011.png
+fecf6878e2ab3433c562c46aae4dc1f43b49c9043c528e084c9102e7996660fd  shots/https-motion-pages-final/frame-012.png
+fecf6878e2ab3433c562c46aae4dc1f43b49c9043c528e084c9102e7996660fd  shots/https-motion-pages-final/frame-013.png
+fecf6878e2ab3433c562c46aae4dc1f43b49c9043c528e084c9102e7996660fd  shots/https-motion-pages-final/frame-014.png
+4b56146a7fb8cd736714534e36caf5cb018eaf50f1a0f4e59ac14d4338770312  shots/https-motion-pages-final/frame-015.png
+4b56146a7fb8cd736714534e36caf5cb018eaf50f1a0f4e59ac14d4338770312  shots/https-motion-pages-final/frame-016.png
+4b56146a7fb8cd736714534e36caf5cb018eaf50f1a0f4e59ac14d4338770312  shots/https-motion-pages-final/frame-017.png
+dc5e35bdd441a5ccf2b52a6baeed980876e4abba622ab40613adf892e641556d  shots/https-motion-pages-final/frame-018.png
+dc5e35bdd441a5ccf2b52a6baeed980876e4abba622ab40613adf892e641556d  shots/https-motion-pages-final/frame-019.png
+dc5e35bdd441a5ccf2b52a6baeed980876e4abba622ab40613adf892e641556d  shots/https-motion-pages-final/frame-020.png
+36b9db1b546b809e18334d9f5ac37dcad6ef99f67a5156e75a3c842a53753647  shots/https-motion-pages-final/frame-021.png
+36b9db1b546b809e18334d9f5ac37dcad6ef99f67a5156e75a3c842a53753647  shots/https-motion-pages-final/frame-022.png
+36b9db1b546b809e18334d9f5ac37dcad6ef99f67a5156e75a3c842a53753647  shots/https-motion-pages-final/frame-023.png
+36b9db1b546b809e18334d9f5ac37dcad6ef99f67a5156e75a3c842a53753647  shots/https-motion-pages-final/frame-024.png
+2d52a98976da3b8e743db9b4b7e088d31b97a9fe6beb82c2cc1f288b8ba8e19a  shots/https-motion-pages-final/frame-025.png
+2d52a98976da3b8e743db9b4b7e088d31b97a9fe6beb82c2cc1f288b8ba8e19a  shots/https-motion-pages-final/frame-026.png
+2d52a98976da3b8e743db9b4b7e088d31b97a9fe6beb82c2cc1f288b8ba8e19a  shots/https-motion-pages-final/frame-027.png
+2d52a98976da3b8e743db9b4b7e088d31b97a9fe6beb82c2cc1f288b8ba8e19a  shots/https-motion-pages-final/frame-028.png
+2d52a98976da3b8e743db9b4b7e088d31b97a9fe6beb82c2cc1f288b8ba8e19a  shots/https-motion-pages-final/frame-029.png
+09bc16ef8764b2ad8b645b11beccb650ed47410774f01f945331ebe66f343c3b  shots/https-first.apng
+09bc16ef8764b2ad8b645b11beccb650ed47410774f01f945331ebe66f343c3b  shots/scroll-and-link.apng
+
+PASS: full compositor/native pixel comparison; original browser binary unchanged.
+
+Finished UTC: 2026-11-18T06:17:16Z
+Exit status: 0
+All capture-owned processes stopped and reaped; private runtime removed.

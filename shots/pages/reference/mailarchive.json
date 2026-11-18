@@ -1,0 +1,37 @@
+{
+  "title": "pgsql-hackers",
+  "url": "https://www.mail-archive.com/pgsql-hackers@postgresql.org/",
+  "height": 3231,
+  "samples": [
+    {
+      "tag": "H1",
+      "id": "",
+      "classes": "",
+      "text": "pgsql-hackers",
+      "x": 0,
+      "y": 0,
+      "w": 1000,
+      "h": 45,
+      "font": "monospace",
+      "fontSize": "26px",
+      "display": "block",
+      "float": "none",
+      "position": "static"
+    },
+    {
+      "tag": "H2",
+      "id": "",
+      "classes": "",
+      "text": "Messages by Thread",
+      "x": 48,
+      "y": 96,
+      "w": 936,
+      "h": 38.90625,
+      "font": "verdana, arial, sans-serif",
+      "fontSize": "17.92px",
+      "display": "block",
+      "float": "none",
+      "position": "static"
+    }
+  ]
+}

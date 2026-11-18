@@ -1,0 +1,49 @@
+URL https://www.openwall.com/lists/oss-security/2024/03/29/4
+VIEW 1000 760 SCROLL 0
+TITLE Unable to open this page
+IMAGES 0
+page width=1000 height=450 background=ffffffff title="Unable to open this page"
+box node=0 tag=#document x=0 y=0 w=1000 h=450
+box node=1 tag=html x=0 y=0 w=1000 h=450
+box node=7 tag=body x=0 y=0 w=1000 h=450
+box node=8 tag=div x=176 y=0 w=648 h=450
+box node=9 tag=p x=200 y=72 w=600 h=22
+box node=11 tag=h1 x=200 y=106 w=600 h=46
+box node=13 tag=p x=200 y=168 w=600 h=29
+box node=15 tag=div x=200 y=237 w=600 h=1
+box node=16 tag=div x=200 y=238 w=600 h=101
+box node=17 tag=h2 x=200 y=256 w=600 h=35
+box node=19 tag=p x=200 y=295 w=600 h=26
+box node=21 tag=div x=200 y=339 w=600 h=1
+box node=22 tag=div x=200 y=340 w=600 h=62
+box node=23 tag=p x=200 y=358 w=600 h=26
+rect x=0 y=0 w=1000 h=450 color=ffffffff
+text node=10 x=200 baseline=88 top=75 w=34 h=16 size=14 bold=true italic=false color=ffae422b href="" value="Page"
+text node=10 x=238 baseline=88 top=75 w=23 h=16 size=14 bold=true italic=false color=ffae422b href="" value="not"
+text node=10 x=265 baseline=88 top=75 w=52 h=16 size=14 bold=true italic=false color=ffae422b href="" value="opened"
+text node=12 x=200 baseline=143 top=106 w=81 h=46 size=40 bold=true italic=false color=ff1b2a32 href="" value="This"
+text node=12 x=292 baseline=143 top=106 w=92 h=46 size=40 bold=true italic=false color=ff1b2a32 href="" value="page"
+text node=12 x=395 baseline=143 top=106 w=105 h=46 size=40 bold=true italic=false color=ff1b2a32 href="" value="could"
+text node=12 x=511 baseline=143 top=106 w=61 h=46 size=40 bold=true italic=false color=ff1b2a32 href="" value="not"
+text node=12 x=583 baseline=143 top=106 w=46 h=46 size=40 bold=true italic=false color=ff1b2a32 href="" value="be"
+text node=12 x=640 baseline=143 top=106 w=151 h=46 size=40 bold=true italic=false color=ff1b2a32 href="" value="opened."
+text node=14 x=200 baseline=189 top=170 w=34 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="The"
+text node=14 x=240 baseline=189 top=170 w=56 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="server"
+text node=14 x=302 baseline=189 top=170 w=47 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="could"
+text node=14 x=355 baseline=189 top=170 w=28 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="not"
+text node=14 x=389 baseline=189 top=170 w=82 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="negotiate"
+text node=14 x=477 baseline=189 top=170 w=31 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="this"
+text node=14 x=514 baseline=189 top=170 w=85 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="browser's"
+text node=14 x=605 baseline=189 top=170 w=36 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="TLS"
+text node=14 x=647 baseline=189 top=170 w=92 h=24 size=20 bold=false italic=false color=ff5d717b href="" value="algorithms"
+rect x=200 y=237 w=600 h=1 color=ffd8e0e4
+text node=18 x=200 baseline=279 top=264 w=65 h=19 size=16 bold=true italic=false color=ff1b2a32 href="" value="Address"
+text node=20 x=200 baseline=314 top=298 w=430 h=20 size=17 bold=false italic=false color=ff5d717b href="" value="https://www.openwall.com/lists/oss-security/2024/03/29/4"
+rect x=200 y=339 w=600 h=1 color=ffd8e0e4
+text node=25 x=200 baseline=377 top=361 w=25 h=20 size=17 bold=false italic=false color=ff0b7a87 href="https://www.openwall.com/lists/oss-security/2024/03/29/4" value="Try"
+text node=25 x=230 baseline=377 top=361 w=40 h=20 size=17 bold=false italic=false color=ff0b7a87 href="https://www.openwall.com/lists/oss-security/2024/03/29/4" value="again"
+text node=26 x=275 baseline=377 top=361 w=16 h=20 size=17 bold=false italic=false color=ff1b2a32 href="" value=" · "
+text node=28 x=296 baseline=377 top=361 w=36 h=20 size=17 bold=false italic=false color=ff0b7a87 href="about:welcome" value="Start"
+text node=28 x=337 baseline=377 top=361 w=36 h=20 size=17 bold=false italic=false color=ff0b7a87 href="about:welcome" value="page"
+rect x=200 y=379 w=70 h=1 color=ff0b7a87
+rect x=296 y=379 w=77 h=1 color=ff0b7a87

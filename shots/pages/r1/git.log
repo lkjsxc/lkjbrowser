@@ -1,0 +1,5 @@
+TLS git-scm.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=149991
+HTTP_RESPONSE status=200 bytes=126743 url=https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
+TLS git-scm.com authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=158053
+IMAGE decoded width=220 height=92 url=https://git-scm.com/images/logo@2x.png
+PAINT wayland-submit elapsed_us=2537863 url=https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control

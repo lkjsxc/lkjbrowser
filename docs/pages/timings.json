@@ -1,0 +1,62 @@
+[
+  {
+    "name": "python",
+    "url": "https://docs.python.org/3/tutorial/introduction.html",
+    "before_us": 907517,
+    "after_us": 967382
+  },
+  {
+    "name": "sqlite",
+    "url": "https://www.sqlite.org/about.html",
+    "before_us": 3037057,
+    "after_us": 3383887
+  },
+  {
+    "name": "wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Tim_Berners-Lee",
+    "before_us": 12437850,
+    "after_us": 5597115
+  },
+  {
+    "name": "w3c",
+    "url": "https://www.w3.org/TR/html401/struct/tables.html",
+    "before_us": 2330019,
+    "after_us": 2126169
+  },
+  {
+    "name": "curl",
+    "url": "https://curl.se/docs/faq.html",
+    "before_us": 793842,
+    "after_us": 715157
+  },
+  {
+    "name": "git",
+    "url": "https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control",
+    "before_us": 2354358,
+    "after_us": 1976335
+  },
+  {
+    "name": "hn",
+    "url": "https://news.ycombinator.com/",
+    "before_us": 2584858,
+    "after_us": 3157595
+  },
+  {
+    "name": "paulgraham",
+    "url": "https://paulgraham.com/greatwork.html",
+    "before_us": 3253741,
+    "after_us": 1952645
+  },
+  {
+    "name": "mailarchive",
+    "url": "https://www.mail-archive.com/pgsql-hackers@postgresql.org/",
+    "before_us": 1723961,
+    "after_us": 1419882
+  },
+  {
+    "name": "freebsd",
+    "url": "https://www.freebsd.org/about/",
+    "before_us": 1411029,
+    "after_us": 1225235
+  }
+]

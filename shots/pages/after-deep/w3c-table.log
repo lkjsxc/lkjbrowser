@@ -1,0 +1,5 @@
+TLS www.w3.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=156130
+HTTP_RESPONSE status=200 bytes=130422 url=https://www.w3.org/TR/html401/struct/tables.html
+TLS www.w3.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=163136
+IMAGE decoded width=301 height=140 url=https://www.w3.org/TR/html401/images/mergedcells.gif
+PAINT wayland-submit elapsed_us=2740140 url=https://www.w3.org/TR/html401/struct/tables.html

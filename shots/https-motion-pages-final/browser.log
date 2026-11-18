@@ -1,0 +1,58 @@
+PAINT wayland-submit elapsed_us=116963 url=about:welcome
+Script 400ms: down 29
+Script 420ms: key 38
+Script 440ms: up 29
+Script 600ms: key 35
+Script 670ms: key 20
+Script 740ms: key 20
+Script 810ms: key 25
+Script 880ms: key 31
+Script 940ms: down 42
+Script 950ms: key 39
+Script 970ms: up 42
+Script 1020ms: key 53
+Script 1090ms: key 53
+Script 1160ms: key 17
+Script 1230ms: key 17
+Script 1300ms: key 17
+Script 1370ms: key 52
+Script 1440ms: key 37
+Script 1510ms: key 18
+Script 1580ms: key 19
+Script 1650ms: key 49
+Script 1720ms: key 18
+Script 1790ms: key 38
+Script 1860ms: key 52
+Script 1930ms: key 24
+Script 2000ms: key 19
+Script 2070ms: key 34
+Script 2140ms: key 53
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=53727
+HTTP_RESPONSE status=200 bytes=20436 url=https://www.kernel.org/
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41559
+IMAGE decoded width=48 height=48 url=https://www.kernel.org/theme/images/icons/downloadarrow_small.png
+Script 2500ms: key 28
+PAINT wayland-submit elapsed_us=485305 url=https://www.kernel.org/
+Script 4500ms: scroll 480
+Script 5400ms: scroll 480
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41204
+IMAGE decoded width=135 height=55 url=https://www.kernel.org/theme/images/logos/akamai.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41365
+IMAGE decoded width=193 height=21 url=https://www.kernel.org/theme/images/logos/constellix-green-logo.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41153
+IMAGE decoded width=91 height=35 url=https://www.kernel.org/theme/images/logos/fastly-logo.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=42387
+IMAGE unavailable Image format is not supported; expected PNG, JPEG or GIF url=https://www.kernel.org/theme/images/logos/serverscom.svg
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=42232
+IMAGE decoded width=128 height=42 url=https://www.kernel.org/theme/images/logos/google.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=41345
+IMAGE decoded width=150 height=36 url=https://www.kernel.org/theme/images/logos/redhat-community.png
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=40556
+IMAGE decoded width=137 height=45 url=https://www.kernel.org/theme/images/logos/thelinuxfoundation.png
+Script 7000ms: key 102
+TLS www.kernel.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=2052 handshake_us=43069
+HTTP_RESPONSE status=200 bytes=15073 url=https://www.kernel.org/category/about.html
+Script 8000ms: click 310 218
+PAINT wayland-submit elapsed_us=364556 url=https://www.kernel.org/category/about.html
+Script 10000ms: scroll 420
+Wayland: sent 93 messages, received 56, presented 23 frames

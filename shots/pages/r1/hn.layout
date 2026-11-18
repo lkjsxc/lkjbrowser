@@ -1,0 +1,1023 @@
+URL https://news.ycombinator.com/
+VIEW 1000 760 SCROLL 0
+TITLE Hacker News
+IMAGES 1
+page width=1000 height=2420 background=ffffffff title="Hacker News"
+box node=0 tag=#document x=0 y=0 w=1000 h=2420
+box node=1 tag=html x=0 y=0 w=1000 h=2420
+box node=10 tag=body x=40 y=28 w=920 h=2352
+box node=11 tag=center x=40 y=28 w=920 h=2352
+box node=12 tag=table x=40 y=28 w=782 h=2334
+box node=13 tag=tr x=40 y=28 w=782 h=64
+box node=14 tag=td x=40 y=28 w=782 h=64
+box node=15 tag=table x=40 y=32 w=782 h=38
+box node=16 tag=tr x=42 y=34 w=778 h=28
+box node=17 tag=td x=42 y=34 w=22 h=28
+box node=19 tag=img x=42 y=38 w=18 h=20
+box node=20 tag=td x=86 y=34 w=368 h=24
+box node=45 tag=td x=466 y=34 w=32 h=28
+box node=49 tag=tr x=40 y=98 w=782 h=0
+box node=50 tag=tr x=40 y=104 w=782 h=2106
+box node=51 tag=td x=40 y=104 w=782 h=2106
+box node=52 tag=table x=40 y=108 w=782 h=2080
+box node=53 tag=tr x=40 y=108 w=782 h=28
+box node=54 tag=td x=40 y=108 w=32 h=28
+box node=57 tag=td x=84 y=108 w=32 h=27
+box node=58 tag=center x=84 y=112 w=32 h=19
+box node=60 tag=div x=86 y=115 w=10 h=10
+box node=61 tag=td x=128 y=108 w=579 h=28
+box node=71 tag=tr x=40 y=142 w=782 h=22
+box node=72 tag=td x=40 y=142 w=76 h=8
+box node=73 tag=td x=128 y=142 w=579 h=22
+box node=92 tag=tr x=40 y=170 w=782 h=0
+box node=93 tag=tr x=40 y=176 w=782 h=28
+box node=94 tag=td x=40 y=176 w=32 h=28
+box node=97 tag=td x=84 y=176 w=32 h=27
+box node=98 tag=center x=84 y=180 w=32 h=19
+box node=100 tag=div x=86 y=183 w=10 h=10
+box node=101 tag=td x=128 y=176 w=579 h=28
+box node=111 tag=tr x=40 y=210 w=782 h=22
+box node=112 tag=td x=40 y=210 w=76 h=8
+box node=113 tag=td x=128 y=210 w=579 h=22
+box node=132 tag=tr x=40 y=238 w=782 h=0
+box node=133 tag=tr x=40 y=244 w=782 h=28
+box node=134 tag=td x=40 y=244 w=32 h=28
+box node=137 tag=td x=84 y=244 w=32 h=27
+box node=138 tag=center x=84 y=248 w=32 h=19
+box node=140 tag=div x=86 y=251 w=10 h=10
+box node=141 tag=td x=128 y=244 w=579 h=28
+box node=151 tag=tr x=40 y=278 w=782 h=22
+box node=152 tag=td x=40 y=278 w=76 h=8
+box node=153 tag=td x=128 y=278 w=579 h=22
+box node=172 tag=tr x=40 y=306 w=782 h=0
+box node=173 tag=tr x=40 y=312 w=782 h=28
+box node=174 tag=td x=40 y=312 w=32 h=28
+box node=177 tag=td x=84 y=312 w=32 h=27
+box node=178 tag=center x=84 y=316 w=32 h=19
+box node=180 tag=div x=86 y=319 w=10 h=10
+box node=181 tag=td x=128 y=312 w=579 h=28
+box node=191 tag=tr x=40 y=346 w=782 h=22
+box node=192 tag=td x=40 y=346 w=76 h=8
+box node=193 tag=td x=128 y=346 w=579 h=22
+box node=212 tag=tr x=40 y=374 w=782 h=0
+box node=213 tag=tr x=40 y=380 w=782 h=28
+box node=214 tag=td x=40 y=380 w=32 h=28
+box node=217 tag=td x=84 y=380 w=32 h=27
+box node=218 tag=center x=84 y=384 w=32 h=19
+box node=220 tag=div x=86 y=387 w=10 h=10
+box node=221 tag=td x=128 y=380 w=579 h=28
+box node=231 tag=tr x=40 y=414 w=782 h=22
+box node=232 tag=td x=40 y=414 w=76 h=8
+box node=233 tag=td x=128 y=414 w=579 h=22
+box node=252 tag=tr x=40 y=442 w=782 h=0
+box node=253 tag=tr x=40 y=448 w=782 h=28
+box node=254 tag=td x=40 y=448 w=32 h=28
+box node=257 tag=td x=84 y=448 w=32 h=27
+box node=258 tag=center x=84 y=452 w=32 h=19
+box node=260 tag=div x=86 y=455 w=10 h=10
+box node=261 tag=td x=128 y=448 w=579 h=28
+box node=271 tag=tr x=40 y=482 w=782 h=22
+box node=272 tag=td x=40 y=482 w=76 h=8
+box node=273 tag=td x=128 y=482 w=579 h=22
+box node=292 tag=tr x=40 y=510 w=782 h=0
+box node=293 tag=tr x=40 y=516 w=782 h=28
+box node=294 tag=td x=40 y=516 w=32 h=28
+box node=297 tag=td x=84 y=516 w=32 h=27
+box node=298 tag=center x=84 y=520 w=32 h=19
+box node=300 tag=div x=86 y=523 w=10 h=10
+box node=301 tag=td x=128 y=516 w=579 h=28
+box node=311 tag=tr x=40 y=550 w=782 h=22
+box node=312 tag=td x=40 y=550 w=76 h=8
+box node=313 tag=td x=128 y=550 w=579 h=22
+box node=332 tag=tr x=40 y=578 w=782 h=0
+box node=333 tag=tr x=40 y=584 w=782 h=28
+box node=334 tag=td x=40 y=584 w=32 h=28
+box node=337 tag=td x=84 y=584 w=32 h=27
+box node=338 tag=center x=84 y=588 w=32 h=19
+box node=340 tag=div x=86 y=591 w=10 h=10
+box node=341 tag=td x=128 y=584 w=579 h=28
+box node=351 tag=tr x=40 y=618 w=782 h=22
+box node=352 tag=td x=40 y=618 w=76 h=8
+box node=353 tag=td x=128 y=618 w=579 h=22
+box node=372 tag=tr x=40 y=646 w=782 h=0
+box node=373 tag=tr x=40 y=652 w=782 h=28
+box node=374 tag=td x=40 y=652 w=32 h=28
+box node=377 tag=td x=84 y=652 w=32 h=28
+box node=379 tag=td x=128 y=652 w=579 h=28
+box node=389 tag=tr x=40 y=686 w=782 h=22
+box node=390 tag=td x=40 y=686 w=76 h=8
+box node=391 tag=td x=128 y=686 w=579 h=22
+box node=398 tag=tr x=40 y=714 w=782 h=0
+box node=399 tag=tr x=40 y=720 w=782 h=28
+box node=400 tag=td x=40 y=720 w=32 h=28
+box node=403 tag=td x=84 y=720 w=32 h=27
+box node=404 tag=center x=84 y=724 w=32 h=19
+box node=406 tag=div x=86 y=727 w=10 h=10
+box node=407 tag=td x=128 y=720 w=579 h=28
+box node=417 tag=tr x=40 y=754 w=782 h=22
+box node=418 tag=td x=40 y=754 w=76 h=8
+box node=419 tag=td x=128 y=754 w=579 h=22
+box node=438 tag=tr x=40 y=782 w=782 h=0
+box node=439 tag=tr x=40 y=788 w=782 h=28
+box node=440 tag=td x=40 y=788 w=32 h=28
+box node=443 tag=td x=84 y=788 w=32 h=27
+box node=444 tag=center x=84 y=792 w=32 h=19
+box node=446 tag=div x=86 y=795 w=10 h=10
+box node=447 tag=td x=128 y=788 w=579 h=28
+box node=457 tag=tr x=40 y=822 w=782 h=22
+box node=458 tag=td x=40 y=822 w=76 h=8
+box node=459 tag=td x=128 y=822 w=579 h=22
+box node=478 tag=tr x=40 y=850 w=782 h=0
+box node=479 tag=tr x=40 y=856 w=782 h=28
+box node=480 tag=td x=40 y=856 w=32 h=28
+box node=483 tag=td x=84 y=856 w=32 h=27
+box node=484 tag=center x=84 y=860 w=32 h=19
+box node=486 tag=div x=86 y=863 w=10 h=10
+box node=487 tag=td x=128 y=856 w=579 h=28
+box node=497 tag=tr x=40 y=890 w=782 h=22
+box node=498 tag=td x=40 y=890 w=76 h=8
+box node=499 tag=td x=128 y=890 w=579 h=22
+box node=518 tag=tr x=40 y=918 w=782 h=0
+box node=519 tag=tr x=40 y=924 w=782 h=28
+box node=520 tag=td x=40 y=924 w=32 h=28
+box node=523 tag=td x=84 y=924 w=32 h=27
+box node=524 tag=center x=84 y=928 w=32 h=19
+box node=526 tag=div x=86 y=931 w=10 h=10
+box node=527 tag=td x=128 y=924 w=579 h=28
+box node=537 tag=tr x=40 y=958 w=782 h=22
+box node=538 tag=td x=40 y=958 w=76 h=8
+box node=539 tag=td x=128 y=958 w=579 h=22
+box node=558 tag=tr x=40 y=986 w=782 h=0
+box node=559 tag=tr x=40 y=992 w=782 h=28
+box node=560 tag=td x=40 y=992 w=32 h=28
+box node=563 tag=td x=84 y=992 w=32 h=27
+box node=564 tag=center x=84 y=996 w=32 h=19
+box node=566 tag=div x=86 y=999 w=10 h=10
+box node=567 tag=td x=128 y=992 w=579 h=28
+box node=577 tag=tr x=40 y=1026 w=782 h=22
+box node=578 tag=td x=40 y=1026 w=76 h=8
+box node=579 tag=td x=128 y=1026 w=579 h=22
+box node=598 tag=tr x=40 y=1054 w=782 h=0
+box node=599 tag=tr x=40 y=1060 w=782 h=28
+box node=600 tag=td x=40 y=1060 w=32 h=28
+box node=603 tag=td x=84 y=1060 w=32 h=27
+box node=604 tag=center x=84 y=1064 w=32 h=19
+box node=606 tag=div x=86 y=1067 w=10 h=10
+box node=607 tag=td x=128 y=1060 w=579 h=28
+box node=617 tag=tr x=40 y=1094 w=782 h=22
+box node=618 tag=td x=40 y=1094 w=76 h=8
+box node=619 tag=td x=128 y=1094 w=579 h=22
+box node=638 tag=tr x=40 y=1122 w=782 h=0
+box node=639 tag=tr x=40 y=1128 w=782 h=28
+box node=640 tag=td x=40 y=1128 w=32 h=28
+box node=643 tag=td x=84 y=1128 w=32 h=27
+box node=644 tag=center x=84 y=1132 w=32 h=19
+box node=646 tag=div x=86 y=1135 w=10 h=10
+box node=647 tag=td x=128 y=1128 w=579 h=28
+box node=657 tag=tr x=40 y=1162 w=782 h=22
+box node=658 tag=td x=40 y=1162 w=76 h=8
+box node=659 tag=td x=128 y=1162 w=579 h=22
+box node=678 tag=tr x=40 y=1190 w=782 h=0
+box node=679 tag=tr x=40 y=1196 w=782 h=28
+box node=680 tag=td x=40 y=1196 w=32 h=28
+box node=683 tag=td x=84 y=1196 w=32 h=27
+box node=684 tag=center x=84 y=1200 w=32 h=19
+box node=686 tag=div x=86 y=1203 w=10 h=10
+box node=687 tag=td x=128 y=1196 w=579 h=28
+box node=697 tag=tr x=40 y=1230 w=782 h=22
+box node=698 tag=td x=40 y=1230 w=76 h=8
+box node=699 tag=td x=128 y=1230 w=579 h=22
+box node=718 tag=tr x=40 y=1258 w=782 h=0
+box node=719 tag=tr x=40 y=1264 w=782 h=28
+box node=720 tag=td x=40 y=1264 w=32 h=28
+box node=723 tag=td x=84 y=1264 w=32 h=27
+box node=724 tag=center x=84 y=1268 w=32 h=19
+box node=726 tag=div x=86 y=1271 w=10 h=10
+box node=727 tag=td x=128 y=1264 w=579 h=28
+box node=737 tag=tr x=40 y=1298 w=782 h=22
+box node=738 tag=td x=40 y=1298 w=76 h=8
+box node=739 tag=td x=128 y=1298 w=579 h=22
+box node=758 tag=tr x=40 y=1326 w=782 h=0
+box node=759 tag=tr x=40 y=1332 w=782 h=28
+box node=760 tag=td x=40 y=1332 w=32 h=28
+box node=763 tag=td x=84 y=1332 w=32 h=27
+box node=764 tag=center x=84 y=1336 w=32 h=19
+box node=766 tag=div x=86 y=1339 w=10 h=10
+box node=767 tag=td x=128 y=1332 w=579 h=28
+box node=777 tag=tr x=40 y=1366 w=782 h=22
+box node=778 tag=td x=40 y=1366 w=76 h=8
+box node=779 tag=td x=128 y=1366 w=579 h=22
+box node=798 tag=tr x=40 y=1394 w=782 h=0
+box node=799 tag=tr x=40 y=1400 w=782 h=28
+box node=800 tag=td x=40 y=1400 w=32 h=28
+box node=803 tag=td x=84 y=1400 w=32 h=27
+box node=804 tag=center x=84 y=1404 w=32 h=19
+box node=806 tag=div x=86 y=1407 w=10 h=10
+box node=807 tag=td x=128 y=1400 w=579 h=28
+box node=817 tag=tr x=40 y=1434 w=782 h=22
+box node=818 tag=td x=40 y=1434 w=76 h=8
+box node=819 tag=td x=128 y=1434 w=579 h=22
+box node=838 tag=tr x=40 y=1462 w=782 h=0
+box node=839 tag=tr x=40 y=1468 w=782 h=28
+box node=840 tag=td x=40 y=1468 w=32 h=28
+box node=843 tag=td x=84 y=1468 w=32 h=27
+box node=844 tag=center x=84 y=1472 w=32 h=19
+box node=846 tag=div x=86 y=1475 w=10 h=10
+box node=847 tag=td x=128 y=1468 w=579 h=28
+box node=857 tag=tr x=40 y=1502 w=782 h=22
+box node=858 tag=td x=40 y=1502 w=76 h=8
+box node=859 tag=td x=128 y=1502 w=579 h=22
+box node=878 tag=tr x=40 y=1530 w=782 h=0
+box node=879 tag=tr x=40 y=1536 w=782 h=28
+box node=880 tag=td x=40 y=1536 w=32 h=28
+box node=883 tag=td x=84 y=1536 w=32 h=27
+box node=884 tag=center x=84 y=1540 w=32 h=19
+box node=886 tag=div x=86 y=1543 w=10 h=10
+box node=887 tag=td x=128 y=1536 w=579 h=28
+box node=897 tag=tr x=40 y=1570 w=782 h=22
+box node=898 tag=td x=40 y=1570 w=76 h=8
+box node=899 tag=td x=128 y=1570 w=579 h=22
+box node=918 tag=tr x=40 y=1598 w=782 h=0
+box node=919 tag=tr x=40 y=1604 w=782 h=28
+box node=920 tag=td x=40 y=1604 w=32 h=28
+box node=923 tag=td x=84 y=1604 w=32 h=27
+box node=924 tag=center x=84 y=1608 w=32 h=19
+box node=926 tag=div x=86 y=1611 w=10 h=10
+box node=927 tag=td x=128 y=1604 w=579 h=28
+box node=937 tag=tr x=40 y=1638 w=782 h=22
+box node=938 tag=td x=40 y=1638 w=76 h=8
+box node=939 tag=td x=128 y=1638 w=579 h=22
+box node=958 tag=tr x=40 y=1666 w=782 h=0
+box node=959 tag=tr x=40 y=1672 w=782 h=28
+box node=960 tag=td x=40 y=1672 w=32 h=28
+box node=963 tag=td x=84 y=1672 w=32 h=27
+box node=964 tag=center x=84 y=1676 w=32 h=19
+box node=966 tag=div x=86 y=1679 w=10 h=10
+box node=967 tag=td x=128 y=1672 w=579 h=28
+box node=977 tag=tr x=40 y=1706 w=782 h=22
+box node=978 tag=td x=40 y=1706 w=76 h=8
+box node=979 tag=td x=128 y=1706 w=579 h=22
+box node=998 tag=tr x=40 y=1734 w=782 h=0
+box node=999 tag=tr x=40 y=1740 w=782 h=28
+box node=1000 tag=td x=40 y=1740 w=32 h=28
+box node=1003 tag=td x=84 y=1740 w=32 h=27
+box node=1004 tag=center x=84 y=1744 w=32 h=19
+box node=1006 tag=div x=86 y=1747 w=10 h=10
+box node=1007 tag=td x=128 y=1740 w=579 h=28
+box node=1017 tag=tr x=40 y=1774 w=782 h=22
+box node=1018 tag=td x=40 y=1774 w=76 h=8
+box node=1019 tag=td x=128 y=1774 w=579 h=22
+box node=1038 tag=tr x=40 y=1802 w=782 h=0
+box node=1039 tag=tr x=40 y=1808 w=782 h=28
+box node=1040 tag=td x=40 y=1808 w=32 h=28
+box node=1043 tag=td x=84 y=1808 w=32 h=27
+box node=1044 tag=center x=84 y=1812 w=32 h=19
+box node=1046 tag=div x=86 y=1815 w=10 h=10
+box node=1047 tag=td x=128 y=1808 w=579 h=28
+box node=1057 tag=tr x=40 y=1842 w=782 h=22
+box node=1058 tag=td x=40 y=1842 w=76 h=8
+box node=1059 tag=td x=128 y=1842 w=579 h=22
+box node=1078 tag=tr x=40 y=1870 w=782 h=0
+box node=1079 tag=tr x=40 y=1876 w=782 h=28
+box node=1080 tag=td x=40 y=1876 w=32 h=28
+box node=1083 tag=td x=84 y=1876 w=32 h=27
+box node=1084 tag=center x=84 y=1880 w=32 h=19
+box node=1086 tag=div x=86 y=1883 w=10 h=10
+box node=1087 tag=td x=128 y=1876 w=579 h=28
+box node=1097 tag=tr x=40 y=1910 w=782 h=22
+box node=1098 tag=td x=40 y=1910 w=76 h=8
+box node=1099 tag=td x=128 y=1910 w=579 h=22
+box node=1118 tag=tr x=40 y=1938 w=782 h=0
+box node=1119 tag=tr x=40 y=1944 w=782 h=28
+box node=1120 tag=td x=40 y=1944 w=32 h=28
+box node=1123 tag=td x=84 y=1944 w=32 h=27
+box node=1124 tag=center x=84 y=1948 w=32 h=19
+box node=1126 tag=div x=86 y=1951 w=10 h=10
+box node=1127 tag=td x=128 y=1944 w=579 h=28
+box node=1137 tag=tr x=40 y=1978 w=782 h=22
+box node=1138 tag=td x=40 y=1978 w=76 h=8
+box node=1139 tag=td x=128 y=1978 w=579 h=22
+box node=1158 tag=tr x=40 y=2006 w=782 h=0
+box node=1159 tag=tr x=40 y=2012 w=782 h=28
+box node=1160 tag=td x=40 y=2012 w=32 h=28
+box node=1163 tag=td x=84 y=2012 w=32 h=27
+box node=1164 tag=center x=84 y=2016 w=32 h=19
+box node=1166 tag=div x=86 y=2019 w=10 h=10
+box node=1167 tag=td x=128 y=2012 w=579 h=28
+box node=1177 tag=tr x=40 y=2046 w=782 h=22
+box node=1178 tag=td x=40 y=2046 w=76 h=8
+box node=1179 tag=td x=128 y=2046 w=579 h=22
+box node=1198 tag=tr x=40 y=2074 w=782 h=0
+box node=1199 tag=tr x=40 y=2080 w=782 h=28
+box node=1200 tag=td x=40 y=2080 w=32 h=28
+box node=1203 tag=td x=84 y=2080 w=32 h=27
+box node=1204 tag=center x=84 y=2084 w=32 h=19
+box node=1206 tag=div x=86 y=2087 w=10 h=10
+box node=1207 tag=td x=128 y=2080 w=579 h=28
+box node=1217 tag=tr x=40 y=2114 w=782 h=22
+box node=1218 tag=td x=40 y=2114 w=76 h=8
+box node=1219 tag=td x=128 y=2114 w=579 h=22
+box node=1238 tag=tr x=40 y=2142 w=782 h=0
+box node=1239 tag=tr x=40 y=2148 w=782 h=0
+box node=1240 tag=tr x=40 y=2154 w=782 h=28
+box node=1241 tag=td x=40 y=2154 w=76 h=8
+box node=1242 tag=td x=128 y=2154 w=579 h=28
+box node=1245 tag=tr x=40 y=2216 w=782 h=140
+box node=1246 tag=td x=40 y=2216 w=782 h=140
+box node=1248 tag=table x=40 y=2240 w=782 h=14
+box node=1249 tag=tr x=40 y=2240 w=782 h=8
+box node=1250 tag=td x=40 y=2240 w=32 h=8
+box node=1253 tag=center x=40 y=2292 w=782 h=60
+box node=1281 tag=form x=40 y=2332 w=782 h=20
+rect x=40 y=28 w=782 h=2334 color=fff6f6ef
+rect x=40 y=28 w=782 h=64 color=ffff6600
+rect x=42 y=38 w=18 h=1 color=ffffffff
+rect x=42 y=57 w=18 h=1 color=ffffffff
+rect x=42 y=38 w=1 h=20 color=ffffffff
+rect x=59 y=38 w=1 h=20 color=ffffffff
+image node=19 x=43 y=39 w=16 h=16 src="y18.svg" alt="" href="https://news.ycombinator.com"
+text node=24 x=86 baseline=50 top=38 w=42 h=15 size=13 bold=true italic=false color=ff000000 href="news" value="Hacker"
+text node=24 x=132 baseline=50 top=38 w=33 h=15 size=13 bold=true italic=false color=ff000000 href="news" value="News"
+text node=26 x=165 baseline=50 top=38 w=23 h=15 size=13 bold=false italic=false color=ff000000 href="newest" value="new"
+text node=27 x=192 baseline=50 top=38 w=3 h=15 size=13 bold=false italic=false color=ff222222 href="" value="|"
+text node=29 x=199 baseline=50 top=38 w=25 h=15 size=13 bold=false italic=false color=ff000000 href="front" value="past"
+text node=30 x=228 baseline=50 top=38 w=3 h=15 size=13 bold=false italic=false color=ff222222 href="" value="|"
+text node=32 x=235 baseline=50 top=38 w=61 h=15 size=13 bold=false italic=false color=ff000000 href="newcomments" value="comments"
+text node=33 x=300 baseline=50 top=38 w=3 h=15 size=13 bold=false italic=false color=ff222222 href="" value="|"
+text node=35 x=307 baseline=50 top=38 w=21 h=15 size=13 bold=false italic=false color=ff000000 href="ask" value="ask"
+text node=36 x=332 baseline=50 top=38 w=3 h=15 size=13 bold=false italic=false color=ff222222 href="" value="|"
+text node=38 x=339 baseline=50 top=38 w=30 h=15 size=13 bold=false italic=false color=ff000000 href="show" value="show"
+text node=39 x=373 baseline=50 top=38 w=3 h=15 size=13 bold=false italic=false color=ff222222 href="" value="|"
+text node=41 x=380 baseline=50 top=38 w=24 h=15 size=13 bold=false italic=false color=ff000000 href="jobs" value="jobs"
+text node=42 x=408 baseline=50 top=38 w=3 h=15 size=13 bold=false italic=false color=ff222222 href="" value="|"
+text node=44 x=415 baseline=50 top=38 w=39 h=15 size=13 bold=false italic=false color=ff000000 href="submit" value="submit"
+text node=48 x=467 baseline=52 top=40 w=27 h=15 size=13 bold=false italic=false color=ff000000 href="login?goto=news" value="login"
+text node=56 x=61 baseline=126 top=114 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="1."
+text node=64 x=237 baseline=126 top=114 w=68 h=15 size=13 bold=false italic=false color=ff000000 href="https://calif.io/java4shell/" value="Java4Shell:"
+text node=64 x=309 baseline=126 top=114 w=27 h=15 size=13 bold=false italic=false color=ff000000 href="https://calif.io/java4shell/" value="RCE"
+text node=64 x=340 baseline=126 top=114 w=10 h=15 size=13 bold=false italic=false color=ff000000 href="https://calif.io/java4shell/" value="in"
+text node=64 x=354 baseline=126 top=114 w=56 h=15 size=13 bold=false italic=false color=ff000000 href="https://calif.io/java4shell/" value="OpenJDK"
+text node=64 x=414 baseline=126 top=114 w=30 h=15 size=13 bold=false italic=false color=ff000000 href="https://calif.io/java4shell/" value="when"
+text node=64 x=448 baseline=126 top=114 w=63 h=15 size=13 bold=false italic=false color=ff000000 href="https://calif.io/java4shell/" value="processing"
+text node=64 x=515 baseline=126 top=114 w=44 h=15 size=13 bold=false italic=false color=ff000000 href="https://calif.io/java4shell/" value="Base64"
+text node=66 x=562 baseline=126 top=116 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=69 x=565 baseline=126 top=116 w=29 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=calif.io" value="calif.io"
+text node=70 x=594 baseline=126 top=116 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=76 x=301 baseline=156 top=147 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="685"
+text node=76 x=319 baseline=156 top=147 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=77 x=347 baseline=156 top=147 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=79 x=360 baseline=156 top=147 w=28 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=werrett" value="werrett"
+text node=83 x=391 baseline=156 top=147 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538240" value="8"
+text node=83 x=399 baseline=156 top=147 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538240" value="hours"
+text node=83 x=425 baseline=156 top=147 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538240" value="ago"
+text node=86 x=443 baseline=156 top=147 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=88 x=448 baseline=156 top=147 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50538240&goto=news" value="hide"
+text node=89 x=468 baseline=156 top=147 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=91 x=473 baseline=156 top=147 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538240" value="185 comments"
+text node=96 x=61 baseline=194 top=182 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="2."
+text node=104 x=264 baseline=194 top=182 w=35 h=15 size=13 bold=false italic=false color=ff000000 href="https://consumerrights.wiki/w/ID.me_terms_required_for_IRS_sign-in" value="ID.me"
+text node=104 x=303 baseline=194 top=182 w=33 h=15 size=13 bold=false italic=false color=ff000000 href="https://consumerrights.wiki/w/ID.me_terms_required_for_IRS_sign-in" value="terms"
+text node=104 x=340 baseline=194 top=182 w=46 h=15 size=13 bold=false italic=false color=ff000000 href="https://consumerrights.wiki/w/ID.me_terms_required_for_IRS_sign-in" value="required"
+text node=104 x=390 baseline=194 top=182 w=15 h=15 size=13 bold=false italic=false color=ff000000 href="https://consumerrights.wiki/w/ID.me_terms_required_for_IRS_sign-in" value="for"
+text node=104 x=409 baseline=194 top=182 w=22 h=15 size=13 bold=false italic=false color=ff000000 href="https://consumerrights.wiki/w/ID.me_terms_required_for_IRS_sign-in" value="IRS"
+text node=104 x=435 baseline=194 top=182 w=38 h=15 size=13 bold=false italic=false color=ff000000 href="https://consumerrights.wiki/w/ID.me_terms_required_for_IRS_sign-in" value="sign-in"
+text node=106 x=476 baseline=194 top=184 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=109 x=479 baseline=194 top=184 w=89 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=consumerrights.wiki" value="consumerrights.wiki"
+text node=110 x=568 baseline=194 top=184 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=116 x=294 baseline=224 top=215 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="232"
+text node=116 x=312 baseline=224 top=215 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=117 x=340 baseline=224 top=215 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=119 x=353 baseline=224 top=215 w=43 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=DeepLogin" value="DeepLogin"
+text node=123 x=399 baseline=224 top=215 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540437" value="4"
+text node=123 x=407 baseline=224 top=215 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540437" value="hours"
+text node=123 x=433 baseline=224 top=215 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540437" value="ago"
+text node=126 x=451 baseline=224 top=215 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=128 x=456 baseline=224 top=215 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50540437&goto=news" value="hide"
+text node=129 x=476 baseline=224 top=215 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=131 x=481 baseline=224 top=215 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540437" value="101 comments"
+text node=136 x=61 baseline=262 top=250 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="3."
+text node=144 x=235 baseline=262 top=250 w=50 h=15 size=13 bold=false italic=false color=ff000000 href="https://revscope.co/blog/search-seo-geo-2026/" value="Google's"
+text node=144 x=289 baseline=262 top=250 w=13 h=15 size=13 bold=false italic=false color=ff000000 href="https://revscope.co/blog/search-seo-geo-2026/" value="AI"
+text node=144 x=306 baseline=262 top=250 w=48 h=15 size=13 bold=false italic=false color=ff000000 href="https://revscope.co/blog/search-seo-geo-2026/" value="answers"
+text node=144 x=358 baseline=262 top=250 w=49 h=15 size=13 bold=false italic=false color=ff000000 href="https://revscope.co/blog/search-seo-geo-2026/" value="reducing"
+text node=144 x=411 baseline=262 top=250 w=39 h=15 size=13 bold=false italic=false color=ff000000 href="https://revscope.co/blog/search-seo-geo-2026/" value="search"
+text node=144 x=454 baseline=262 top=250 w=33 h=15 size=13 bold=false italic=false color=ff000000 href="https://revscope.co/blog/search-seo-geo-2026/" value="traffic"
+text node=144 x=491 baseline=262 top=250 w=14 h=15 size=13 bold=false italic=false color=ff000000 href="https://revscope.co/blog/search-seo-geo-2026/" value="by"
+text node=144 x=509 baseline=262 top=250 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://revscope.co/blog/search-seo-geo-2026/" value="40%"
+text node=146 x=538 baseline=262 top=252 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=149 x=541 baseline=262 top=252 w=56 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=revscope.co" value="revscope.co"
+text node=150 x=597 baseline=262 top=252 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=156 x=297 baseline=292 top=283 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="228"
+text node=156 x=315 baseline=292 top=283 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=157 x=343 baseline=292 top=283 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=159 x=356 baseline=292 top=283 w=37 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=slashdev" value="slashdev"
+text node=163 x=396 baseline=292 top=283 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540178" value="5"
+text node=163 x=404 baseline=292 top=283 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540178" value="hours"
+text node=163 x=430 baseline=292 top=283 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540178" value="ago"
+text node=166 x=448 baseline=292 top=283 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=168 x=453 baseline=292 top=283 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50540178&goto=news" value="hide"
+text node=169 x=473 baseline=292 top=283 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=171 x=478 baseline=292 top=283 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540178" value="153 comments"
+text node=176 x=61 baseline=330 top=318 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="4."
+text node=184 x=317 baseline=330 top=318 w=55 h=15 size=13 bold=false italic=false color=ff000000 href="https://openai.com/index/introducing-gpt-6-2-astra-sol/" value="GPT‑6.2"
+text node=184 x=376 baseline=330 top=318 w=31 h=15 size=13 bold=false italic=false color=ff000000 href="https://openai.com/index/introducing-gpt-6-2-astra-sol/" value="Astra"
+text node=184 x=411 baseline=330 top=318 w=21 h=15 size=13 bold=false italic=false color=ff000000 href="https://openai.com/index/introducing-gpt-6-2-astra-sol/" value="and"
+text node=184 x=436 baseline=330 top=318 w=19 h=15 size=13 bold=false italic=false color=ff000000 href="https://openai.com/index/introducing-gpt-6-2-astra-sol/" value="Sol"
+text node=186 x=458 baseline=330 top=320 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=189 x=461 baseline=330 top=320 w=54 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=openai.com" value="openai.com"
+text node=190 x=515 baseline=330 top=320 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=196 x=286 baseline=360 top=351 w=20 h=11 size=9 bold=false italic=false color=ff828282 href="" value="1176"
+text node=196 x=309 baseline=360 top=351 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=197 x=337 baseline=360 top=351 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=199 x=350 baseline=360 top=351 w=49 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=jasondavies" value="jasondavies"
+text node=203 x=402 baseline=360 top=351 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535230" value="11"
+text node=203 x=415 baseline=360 top=351 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535230" value="hours"
+text node=203 x=441 baseline=360 top=351 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535230" value="ago"
+text node=206 x=459 baseline=360 top=351 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=208 x=464 baseline=360 top=351 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50535230&goto=news" value="hide"
+text node=209 x=484 baseline=360 top=351 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=211 x=489 baseline=360 top=351 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535230" value="741 comments"
+text node=216 x=61 baseline=398 top=386 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="5."
+text node=224 x=209 baseline=398 top=386 w=47 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="Quad9's"
+text node=224 x=260 baseline=398 top=386 w=60 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="withdrawal"
+text node=224 x=324 baseline=398 top=386 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="from"
+text node=224 x=354 baseline=398 top=386 w=44 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="France:"
+text node=224 x=402 baseline=398 top=386 w=9 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="A"
+text node=224 x=415 baseline=398 top=386 w=39 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="canary"
+text node=224 x=458 baseline=398 top=386 w=10 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="in"
+text node=224 x=472 baseline=398 top=386 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="the"
+text node=224 x=494 baseline=398 top=386 w=24 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="coal"
+text node=224 x=522 baseline=398 top=386 w=28 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cloudflare.com/quad9-withdrawal-from-france/" value="mine"
+text node=226 x=553 baseline=398 top=388 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=229 x=556 baseline=398 top=388 w=67 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=cloudflare.com" value="cloudflare.com"
+text node=230 x=623 baseline=398 top=388 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=236 x=301 baseline=428 top=419 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="390"
+text node=236 x=319 baseline=428 top=419 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=237 x=347 baseline=428 top=419 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=239 x=360 baseline=428 top=419 w=28 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=subset" value="subset"
+text node=243 x=391 baseline=428 top=419 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538994" value="7"
+text node=243 x=399 baseline=428 top=419 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538994" value="hours"
+text node=243 x=425 baseline=428 top=419 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538994" value="ago"
+text node=246 x=443 baseline=428 top=419 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=248 x=448 baseline=428 top=419 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50538994&goto=news" value="hide"
+text node=249 x=468 baseline=428 top=419 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=251 x=473 baseline=428 top=419 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538994" value="127 comments"
+text node=256 x=61 baseline=466 top=454 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="6."
+text node=264 x=201 baseline=466 top=454 w=63 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/microsoft/onnxruntime" value="Microsoft's"
+text node=264 x=268 baseline=466 top=454 w=37 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/microsoft/onnxruntime" value="ONNX"
+text node=264 x=309 baseline=466 top=454 w=48 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/microsoft/onnxruntime" value="Runtime"
+text node=264 x=361 baseline=466 top=454 w=21 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/microsoft/onnxruntime" value="has"
+text node=264 x=386 baseline=466 top=454 w=70 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/microsoft/onnxruntime" value="disappeared"
+text node=264 x=460 baseline=466 top=454 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/microsoft/onnxruntime" value="from"
+text node=264 x=490 baseline=466 top=454 w=40 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/microsoft/onnxruntime" value="GitHub"
+text node=266 x=533 baseline=466 top=456 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=269 x=536 baseline=466 top=456 w=95 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=github.com/microsoft" value="github.com/microsoft"
+text node=270 x=631 baseline=466 top=456 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=276 x=304 baseline=496 top=487 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="212"
+text node=276 x=322 baseline=496 top=487 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=277 x=350 baseline=496 top=487 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=279 x=363 baseline=496 top=487 w=28 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=nvader" value="nvader"
+text node=283 x=394 baseline=496 top=487 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539610" value="6"
+text node=283 x=402 baseline=496 top=487 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539610" value="hours"
+text node=283 x=428 baseline=496 top=487 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539610" value="ago"
+text node=286 x=446 baseline=496 top=487 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=288 x=451 baseline=496 top=487 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50539610&goto=news" value="hide"
+text node=289 x=471 baseline=496 top=487 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=291 x=476 baseline=496 top=487 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539610" value="51 comments"
+text node=296 x=61 baseline=534 top=522 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="7."
+text node=304 x=209 baseline=534 top=522 w=36 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="Nvidia"
+text node=304 x=249 baseline=534 top=522 w=46 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="stopped"
+text node=304 x=299 baseline=534 top=522 w=58 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="disclosing"
+text node=304 x=361 baseline=534 top=522 w=58 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="Singapore"
+text node=304 x=423 baseline=534 top=522 w=31 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="sales"
+text node=304 x=458 baseline=534 top=522 w=14 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="as"
+text node=304 x=476 baseline=534 top=522 w=53 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="revenues"
+text node=304 x=533 baseline=534 top=522 w=14 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="hit"
+text node=304 x=551 baseline=534 top=522 w=37 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ft.com/content/dbde7a30-548c-4f9d-a4be-7898a0c24dcf" value="$104B"
+text node=306 x=591 baseline=534 top=524 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=309 x=594 baseline=534 top=524 w=28 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=ft.com" value="ft.com"
+text node=310 x=622 baseline=534 top=524 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=316 x=283 baseline=564 top=555 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="458"
+text node=316 x=301 baseline=564 top=555 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=317 x=329 baseline=564 top=555 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=319 x=342 baseline=564 top=555 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=louiereederson" value="louiereederson"
+text node=323 x=405 baseline=564 top=555 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50534631" value="12"
+text node=323 x=418 baseline=564 top=555 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50534631" value="hours"
+text node=323 x=444 baseline=564 top=555 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50534631" value="ago"
+text node=326 x=462 baseline=564 top=555 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=328 x=467 baseline=564 top=555 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50534631&goto=news" value="hide"
+text node=329 x=487 baseline=564 top=555 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=331 x=492 baseline=564 top=555 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50534631" value="217 comments"
+text node=336 x=61 baseline=602 top=590 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="8."
+text node=344 x=128 baseline=602 top=590 w=44 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="Archive"
+text node=344 x=176 baseline=602 top=590 w=33 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="Team"
+text node=344 x=213 baseline=602 top=590 w=10 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="is"
+text node=344 x=227 baseline=602 top=590 w=52 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="archiving"
+text node=344 x=283 baseline=602 top=590 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="the"
+text node=344 x=305 baseline=602 top=590 w=33 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="Apple"
+text node=344 x=342 baseline=602 top=590 w=45 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="Support"
+text node=344 x=391 baseline=602 top=590 w=66 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="Community"
+text node=344 x=461 baseline=602 top=590 w=42 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="(closes"
+text node=344 x=507 baseline=602 top=590 w=59 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="November"
+text node=344 x=570 baseline=602 top=590 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="20,"
+text node=344 x=592 baseline=602 top=590 w=32 h=15 size=13 bold=false italic=false color=ff000000 href="https://wiki.archiveteam.org/index.php/Apple_Discussions" value="2026)"
+text node=346 x=627 baseline=602 top=592 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=349 x=630 baseline=602 top=592 w=74 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=archiveteam.org" value="archiveteam.org"
+text node=350 x=704 baseline=602 top=592 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=356 x=292 baseline=632 top=623 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="140"
+text node=356 x=310 baseline=632 top=623 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=357 x=338 baseline=632 top=623 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=359 x=351 baseline=632 top=623 w=52 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=digitaldragon" value="digitaldragon"
+text node=363 x=406 baseline=632 top=623 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539747" value="5"
+text node=363 x=414 baseline=632 top=623 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539747" value="hours"
+text node=363 x=440 baseline=632 top=623 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539747" value="ago"
+text node=366 x=458 baseline=632 top=623 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=368 x=463 baseline=632 top=623 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50539747&goto=news" value="hide"
+text node=369 x=483 baseline=632 top=623 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=371 x=488 baseline=632 top=623 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539747" value="50 comments"
+text node=376 x=61 baseline=670 top=658 w=11 h=15 size=13 bold=false italic=false color=ff828282 href="" value="9."
+image node=378 x=93 y=669 w=14 h=1 src="s.gif" alt="" href=""
+text node=382 x=151 baseline=670 top=658 w=105 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="GoGoGrandparent"
+text node=382 x=260 baseline=670 top=658 w=22 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="(YC"
+text node=382 x=286 baseline=670 top=658 w=27 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="S16)"
+text node=382 x=317 baseline=670 top=658 w=11 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="Is"
+text node=382 x=332 baseline=670 top=658 w=7 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="a"
+text node=382 x=343 baseline=670 top=658 w=30 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="Front"
+text node=382 x=377 baseline=670 top=658 w=23 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="End"
+text node=382 x=404 baseline=670 top=658 w=62 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="JavaScript"
+text node=382 x=470 baseline=670 top=658 w=4 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="/"
+text node=382 x=478 baseline=670 top=658 w=63 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="TypeScript"
+text node=382 x=545 baseline=670 top=658 w=51 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/companies/gogograndparent/jobs/05woouL-front-end-javascript-typescript-engineer" value="Engineer"
+text node=384 x=599 baseline=670 top=660 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=387 x=602 baseline=670 top=660 w=78 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=ycombinator.com" value="ycombinator.com"
+text node=388 x=680 baseline=670 top=660 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=394 x=383 baseline=700 top=691 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541538" value="1"
+text node=394 x=391 baseline=700 top=691 w=18 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541538" value="hour"
+text node=394 x=412 baseline=700 top=691 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541538" value="ago"
+text node=395 x=430 baseline=700 top=691 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=397 x=435 baseline=700 top=691 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50541538&goto=news" value="hide"
+text node=402 x=54 baseline=738 top=726 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="10."
+text node=410 x=178 baseline=738 top=726 w=36 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="Highly"
+text node=410 x=218 baseline=738 top=726 w=55 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="classified"
+text node=410 x=277 baseline=738 top=726 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="US"
+text node=410 x=299 baseline=738 top=726 w=45 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="national"
+text node=410 x=348 baseline=738 top=726 w=46 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="security"
+text node=410 x=398 baseline=738 top=726 w=95 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="communications"
+text node=410 x=497 baseline=738 top=726 w=45 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="network"
+text node=410 x=546 baseline=738 top=726 w=28 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="goes"
+text node=410 x=578 baseline=738 top=726 w=30 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cnn.com/2026/11/17/politics/highly-classified-national-security-communications-network-goes-down" value="down"
+text node=412 x=611 baseline=738 top=728 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=415 x=614 baseline=738 top=728 w=39 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=cnn.com" value="cnn.com"
+text node=416 x=653 baseline=738 top=728 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=422 x=288 baseline=768 top=759 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="528"
+text node=422 x=306 baseline=768 top=759 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=423 x=334 baseline=768 top=759 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=425 x=347 baseline=768 top=759 w=50 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=monkeydust" value="monkeydust"
+text node=429 x=400 baseline=768 top=759 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50532849" value="13"
+text node=429 x=413 baseline=768 top=759 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50532849" value="hours"
+text node=429 x=439 baseline=768 top=759 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50532849" value="ago"
+text node=432 x=457 baseline=768 top=759 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=434 x=462 baseline=768 top=759 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50532849&goto=news" value="hide"
+text node=435 x=482 baseline=768 top=759 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=437 x=487 baseline=768 top=759 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50532849" value="600 comments"
+text node=442 x=54 baseline=806 top=794 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="11."
+text node=450 x=336 baseline=806 top=794 w=38 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/jquery/jquery/releases/tag/4.1.0" value="jQuery"
+text node=450 x=378 baseline=806 top=794 w=29 h=15 size=13 bold=false italic=false color=ff000000 href="https://github.com/jquery/jquery/releases/tag/4.1.0" value="4.1.0"
+text node=452 x=410 baseline=806 top=796 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=455 x=413 baseline=806 top=796 w=82 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=github.com/jquery" value="github.com/jquery"
+text node=456 x=495 baseline=806 top=796 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=462 x=292 baseline=836 top=827 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="282"
+text node=462 x=310 baseline=836 top=827 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=463 x=338 baseline=836 top=827 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=465 x=351 baseline=836 top=827 w=46 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=petecooper" value="petecooper"
+text node=469 x=400 baseline=836 top=827 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537156" value="9"
+text node=469 x=408 baseline=836 top=827 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537156" value="hours"
+text node=469 x=434 baseline=836 top=827 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537156" value="ago"
+text node=472 x=452 baseline=836 top=827 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=474 x=457 baseline=836 top=827 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50537156&goto=news" value="hide"
+text node=475 x=477 baseline=836 top=827 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=477 x=482 baseline=836 top=827 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537156" value="153 comments"
+text node=482 x=54 baseline=874 top=862 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="12."
+text node=490 x=299 baseline=874 top=862 w=24 h=15 size=13 bold=false italic=false color=ff000000 href="https://microsoft.ai/news/introducing-mai-code-2-and-mai-code-2-flash/" value="MAI"
+text node=490 x=327 baseline=874 top=862 w=30 h=15 size=13 bold=false italic=false color=ff000000 href="https://microsoft.ai/news/introducing-mai-code-2-and-mai-code-2-flash/" value="Code"
+text node=490 x=361 baseline=874 top=862 w=7 h=15 size=13 bold=false italic=false color=ff000000 href="https://microsoft.ai/news/introducing-mai-code-2-and-mai-code-2-flash/" value="2"
+text node=490 x=372 baseline=874 top=862 w=21 h=15 size=13 bold=false italic=false color=ff000000 href="https://microsoft.ai/news/introducing-mai-code-2-and-mai-code-2-flash/" value="and"
+text node=490 x=397 baseline=874 top=862 w=30 h=15 size=13 bold=false italic=false color=ff000000 href="https://microsoft.ai/news/introducing-mai-code-2-and-mai-code-2-flash/" value="Code"
+text node=490 x=431 baseline=874 top=862 w=7 h=15 size=13 bold=false italic=false color=ff000000 href="https://microsoft.ai/news/introducing-mai-code-2-and-mai-code-2-flash/" value="2"
+text node=490 x=442 baseline=874 top=862 w=32 h=15 size=13 bold=false italic=false color=ff000000 href="https://microsoft.ai/news/introducing-mai-code-2-and-mai-code-2-flash/" value="Flash"
+text node=492 x=477 baseline=874 top=864 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=495 x=480 baseline=874 top=864 w=52 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=microsoft.ai" value="microsoft.ai"
+text node=496 x=532 baseline=874 top=864 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=502 x=290 baseline=904 top=895 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="316"
+text node=502 x=308 baseline=904 top=895 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=503 x=336 baseline=904 top=895 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=505 x=349 baseline=904 top=895 w=46 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=lemonish97" value="lemonish97"
+text node=509 x=398 baseline=904 top=895 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535885" value="10"
+text node=509 x=411 baseline=904 top=895 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535885" value="hours"
+text node=509 x=437 baseline=904 top=895 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535885" value="ago"
+text node=512 x=455 baseline=904 top=895 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=514 x=460 baseline=904 top=895 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50535885&goto=news" value="hide"
+text node=515 x=480 baseline=904 top=895 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=517 x=485 baseline=904 top=895 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535885" value="144 comments"
+text node=522 x=54 baseline=942 top=930 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="13."
+text node=530 x=181 baseline=942 top=930 w=21 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="350"
+text node=530 x=206 baseline=942 top=930 w=32 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="years"
+text node=530 x=242 baseline=942 top=930 w=25 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="ago,"
+text node=530 x=271 baseline=942 top=930 w=20 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="Ole"
+text node=530 x=295 baseline=942 top=930 w=39 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="Rømer"
+text node=530 x=338 baseline=942 top=930 w=63 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="discovered"
+text node=530 x=405 baseline=942 top=930 w=22 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="that"
+text node=530 x=431 baseline=942 top=930 w=24 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="light"
+text node=530 x=459 baseline=942 top=930 w=21 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="has"
+text node=530 x=484 baseline=942 top=930 w=7 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="a"
+text node=530 x=495 baseline=942 top=930 w=28 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="finite"
+text node=530 x=527 baseline=942 top=930 w=35 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.sciencenorway.no/culture-history-history-of-science/350-years-ago-this-man-discovered-that-light-has-a-finite-speed/2737969" value="speed"
+text node=532 x=565 baseline=942 top=932 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=535 x=568 baseline=942 top=932 w=83 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=sciencenorway.no" value="sciencenorway.no"
+text node=536 x=651 baseline=942 top=932 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=542 x=310 baseline=972 top=963 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="290"
+text node=542 x=328 baseline=972 top=963 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=543 x=356 baseline=972 top=963 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=545 x=369 baseline=972 top=963 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=dxs" value="dxs"
+text node=549 x=387 baseline=972 top=963 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536813" value="9"
+text node=549 x=395 baseline=972 top=963 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536813" value="hours"
+text node=549 x=421 baseline=972 top=963 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536813" value="ago"
+text node=552 x=439 baseline=972 top=963 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=554 x=444 baseline=972 top=963 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50536813&goto=news" value="hide"
+text node=555 x=464 baseline=972 top=963 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=557 x=469 baseline=972 top=963 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536813" value="84 comments"
+text node=562 x=54 baseline=1010 top=998 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="14."
+text node=570 x=272 baseline=1010 top=998 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://kernel.dev/blog/why-is-gemini-4-carbon-taking-so-long/" value="Why"
+text node=570 x=302 baseline=1010 top=998 w=10 h=15 size=13 bold=false italic=false color=ff000000 href="https://kernel.dev/blog/why-is-gemini-4-carbon-taking-so-long/" value="is"
+text node=570 x=316 baseline=1010 top=998 w=41 h=15 size=13 bold=false italic=false color=ff000000 href="https://kernel.dev/blog/why-is-gemini-4-carbon-taking-so-long/" value="Gemini"
+text node=570 x=361 baseline=1010 top=998 w=7 h=15 size=13 bold=false italic=false color=ff000000 href="https://kernel.dev/blog/why-is-gemini-4-carbon-taking-so-long/" value="4"
+text node=570 x=372 baseline=1010 top=998 w=41 h=15 size=13 bold=false italic=false color=ff000000 href="https://kernel.dev/blog/why-is-gemini-4-carbon-taking-so-long/" value="Carbon"
+text node=570 x=417 baseline=1010 top=998 w=35 h=15 size=13 bold=false italic=false color=ff000000 href="https://kernel.dev/blog/why-is-gemini-4-carbon-taking-so-long/" value="taking"
+text node=570 x=456 baseline=1010 top=998 w=14 h=15 size=13 bold=false italic=false color=ff000000 href="https://kernel.dev/blog/why-is-gemini-4-carbon-taking-so-long/" value="so"
+text node=570 x=474 baseline=1010 top=998 w=31 h=15 size=13 bold=false italic=false color=ff000000 href="https://kernel.dev/blog/why-is-gemini-4-carbon-taking-so-long/" value="long?"
+text node=572 x=508 baseline=1010 top=1000 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=575 x=511 baseline=1010 top=1000 w=48 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=kernel.dev" value="kernel.dev"
+text node=576 x=559 baseline=1010 top=1000 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=582 x=308 baseline=1040 top=1031 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="13"
+text node=582 x=321 baseline=1040 top=1031 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=583 x=349 baseline=1040 top=1031 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=585 x=362 baseline=1040 top=1031 w=35 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=deenadz" value="deenadz"
+text node=589 x=400 baseline=1040 top=1031 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541790" value="1"
+text node=589 x=408 baseline=1040 top=1031 w=18 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541790" value="hour"
+text node=589 x=429 baseline=1040 top=1031 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541790" value="ago"
+text node=592 x=447 baseline=1040 top=1031 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=594 x=452 baseline=1040 top=1031 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50541790&goto=news" value="hide"
+text node=595 x=472 baseline=1040 top=1031 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=597 x=477 baseline=1040 top=1031 w=50 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541790" value="2 comments"
+text node=602 x=54 baseline=1078 top=1066 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="15."
+text node=610 x=330 baseline=1078 top=1066 w=41 h=15 size=13 bold=false italic=false color=ff000000 href="https://phrack.org/issues/73/introduction_md" value="Phrack"
+text node=610 x=375 baseline=1078 top=1066 w=14 h=15 size=13 bold=false italic=false color=ff000000 href="https://phrack.org/issues/73/introduction_md" value="73"
+text node=610 x=393 baseline=1078 top=1066 w=54 h=15 size=13 bold=false italic=false color=ff000000 href="https://phrack.org/issues/73/introduction_md" value="Released"
+text node=612 x=450 baseline=1078 top=1068 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=615 x=453 baseline=1078 top=1068 w=49 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=phrack.org" value="phrack.org"
+text node=616 x=502 baseline=1078 top=1068 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=622 x=289 baseline=1108 top=1099 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="329"
+text node=622 x=307 baseline=1108 top=1099 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=623 x=335 baseline=1108 top=1099 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=625 x=348 baseline=1108 top=1099 w=52 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=notmine1337" value="notmine1337"
+text node=629 x=403 baseline=1108 top=1099 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535992" value="10"
+text node=629 x=416 baseline=1108 top=1099 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535992" value="hours"
+text node=629 x=442 baseline=1108 top=1099 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535992" value="ago"
+text node=632 x=460 baseline=1108 top=1099 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=634 x=465 baseline=1108 top=1099 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50535992&goto=news" value="hide"
+text node=635 x=485 baseline=1108 top=1099 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=637 x=490 baseline=1108 top=1099 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535992" value="49 comments"
+text node=642 x=54 baseline=1146 top=1134 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="16."
+text node=650 x=131 baseline=1146 top=1134 w=45 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="Harvard"
+text node=650 x=180 baseline=1146 top=1134 w=68 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="researchers"
+text node=650 x=252 baseline=1146 top=1134 w=21 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="find"
+text node=650 x=277 baseline=1146 top=1134 w=13 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="AI"
+text node=650 x=294 baseline=1146 top=1134 w=38 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="coding"
+text node=650 x=336 baseline=1146 top=1134 w=39 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="agents"
+text node=650 x=379 baseline=1146 top=1134 w=39 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="shifted"
+text node=650 x=422 baseline=1146 top=1134 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="the"
+text node=650 x=444 baseline=1146 top=1134 w=60 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="bottleneck"
+text node=650 x=508 baseline=1146 top=1134 w=11 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="to"
+text node=650 x=523 baseline=1146 top=1134 w=28 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="code"
+text node=650 x=555 baseline=1146 top=1134 w=37 h=15 size=13 bold=false italic=false color=ff000000 href="https://complexdiscovery.com/harvard-researchers-find-ai-coding-agents-shifted-the-bottleneck-to-code-review/" value="review"
+text node=652 x=595 baseline=1146 top=1136 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=655 x=598 baseline=1146 top=1136 w=103 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=complexdiscovery.com" value="complexdiscovery.com"
+text node=656 x=701 baseline=1146 top=1136 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=662 x=293 baseline=1176 top=1167 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="115"
+text node=662 x=311 baseline=1176 top=1167 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=663 x=339 baseline=1176 top=1167 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=665 x=352 baseline=1176 top=1167 w=44 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=judahmeek" value="judahmeek"
+text node=669 x=399 baseline=1176 top=1167 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538303" value="8"
+text node=669 x=407 baseline=1176 top=1167 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538303" value="hours"
+text node=669 x=433 baseline=1176 top=1167 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538303" value="ago"
+text node=672 x=451 baseline=1176 top=1167 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=674 x=456 baseline=1176 top=1167 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50538303&goto=news" value="hide"
+text node=675 x=476 baseline=1176 top=1167 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=677 x=481 baseline=1176 top=1167 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538303" value="167 comments"
+text node=682 x=54 baseline=1214 top=1202 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="17."
+text node=690 x=274 baseline=1214 top=1202 w=22 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cmpxchg8b.com/2012/09/fun-with-constrained-programming.html" value="Fun"
+text node=690 x=300 baseline=1214 top=1202 w=23 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cmpxchg8b.com/2012/09/fun-with-constrained-programming.html" value="with"
+text node=690 x=327 baseline=1214 top=1202 w=69 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cmpxchg8b.com/2012/09/fun-with-constrained-programming.html" value="Constrained"
+text node=690 x=400 baseline=1214 top=1202 w=77 h=15 size=13 bold=false italic=false color=ff000000 href="https://blog.cmpxchg8b.com/2012/09/fun-with-constrained-programming.html" value="Programming"
+text node=692 x=480 baseline=1214 top=1204 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=695 x=483 baseline=1214 top=1204 w=75 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=cmpxchg8b.com" value="cmpxchg8b.com"
+text node=696 x=558 baseline=1214 top=1204 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=702 x=302 baseline=1244 top=1235 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="43"
+text node=702 x=315 baseline=1244 top=1235 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=703 x=343 baseline=1244 top=1235 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=705 x=356 baseline=1244 top=1235 w=59 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=colejohnson66" value="colejohnson66"
+text node=709 x=418 baseline=1244 top=1235 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50503492" value="5"
+text node=709 x=426 baseline=1244 top=1235 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50503492" value="hours"
+text node=709 x=452 baseline=1244 top=1235 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50503492" value="ago"
+text node=712 x=470 baseline=1244 top=1235 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=714 x=475 baseline=1244 top=1235 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50503492&goto=news" value="hide"
+text node=715 x=495 baseline=1244 top=1235 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=717 x=500 baseline=1244 top=1235 w=32 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50503492" value="discuss"
+text node=722 x=54 baseline=1282 top=1270 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="18."
+text node=730 x=262 baseline=1282 top=1270 w=29 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.everycrsreport.com/files/2026-10-14_IN12747_fcb1389788aa7b9102b795882af042e85d20532c.pdf" value="H-1B"
+text node=730 x=295 baseline=1282 top=1270 w=58 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.everycrsreport.com/files/2026-10-14_IN12747_fcb1389788aa7b9102b795882af042e85d20532c.pdf" value="Executive"
+text node=730 x=357 baseline=1282 top=1270 w=44 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.everycrsreport.com/files/2026-10-14_IN12747_fcb1389788aa7b9102b795882af042e85d20532c.pdf" value="Actions"
+text node=730 x=405 baseline=1282 top=1270 w=10 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.everycrsreport.com/files/2026-10-14_IN12747_fcb1389788aa7b9102b795882af042e85d20532c.pdf" value="in"
+text node=730 x=419 baseline=1282 top=1270 w=28 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.everycrsreport.com/files/2026-10-14_IN12747_fcb1389788aa7b9102b795882af042e85d20532c.pdf" value="2026"
+text node=730 x=451 baseline=1282 top=1270 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.everycrsreport.com/files/2026-10-14_IN12747_fcb1389788aa7b9102b795882af042e85d20532c.pdf" value="[pdf]"
+text node=732 x=480 baseline=1282 top=1272 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=735 x=483 baseline=1282 top=1272 w=87 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=everycrsreport.com" value="everycrsreport.com"
+text node=736 x=570 baseline=1282 top=1272 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=742 x=306 baseline=1312 top=1303 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="12"
+text node=742 x=319 baseline=1312 top=1303 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=743 x=347 baseline=1312 top=1303 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=745 x=360 baseline=1312 top=1303 w=39 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=rawgabbit" value="rawgabbit"
+text node=749 x=402 baseline=1312 top=1303 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541550" value="1"
+text node=749 x=410 baseline=1312 top=1303 w=18 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541550" value="hour"
+text node=749 x=431 baseline=1312 top=1303 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541550" value="ago"
+text node=752 x=449 baseline=1312 top=1303 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=754 x=454 baseline=1312 top=1303 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50541550&goto=news" value="hide"
+text node=755 x=474 baseline=1312 top=1303 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=757 x=479 baseline=1312 top=1303 w=50 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50541550" value="7 comments"
+text node=762 x=54 baseline=1350 top=1338 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="19."
+text node=770 x=289 baseline=1350 top=1338 w=52 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cerebras.ai/blog/cerebras-launches-disaggregated-inference" value="Cerebras"
+text node=770 x=345 baseline=1350 top=1338 w=83 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cerebras.ai/blog/cerebras-launches-disaggregated-inference" value="Disaggregated"
+text node=770 x=432 baseline=1350 top=1338 w=54 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.cerebras.ai/blog/cerebras-launches-disaggregated-inference" value="Inference"
+text node=772 x=489 baseline=1350 top=1340 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=775 x=492 baseline=1350 top=1340 w=51 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=cerebras.ai" value="cerebras.ai"
+text node=776 x=543 baseline=1350 top=1340 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=782 x=296 baseline=1380 top=1371 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="52"
+text node=782 x=309 baseline=1380 top=1371 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=783 x=337 baseline=1380 top=1371 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=785 x=350 baseline=1380 top=1371 w=49 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=emschwartz" value="emschwartz"
+text node=789 x=402 baseline=1380 top=1371 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540472" value="4"
+text node=789 x=410 baseline=1380 top=1371 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540472" value="hours"
+text node=789 x=436 baseline=1380 top=1371 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540472" value="ago"
+text node=792 x=454 baseline=1380 top=1371 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=794 x=459 baseline=1380 top=1371 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50540472&goto=news" value="hide"
+text node=795 x=479 baseline=1380 top=1371 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=797 x=484 baseline=1380 top=1371 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50540472" value="13 comments"
+text node=802 x=54 baseline=1418 top=1406 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="20."
+text node=810 x=362 baseline=1418 top=1406 w=29 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.solidjs.com/blog/solid-2-0-the-long-hold/" value="Solid"
+text node=810 x=395 baseline=1418 top=1406 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://www.solidjs.com/blog/solid-2-0-the-long-hold/" value="2.0"
+text node=812 x=416 baseline=1418 top=1408 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=815 x=419 baseline=1418 top=1408 w=50 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=solidjs.com" value="solidjs.com"
+text node=816 x=469 baseline=1418 top=1408 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=822 x=303 baseline=1448 top=1439 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="263"
+text node=822 x=321 baseline=1448 top=1439 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=823 x=349 baseline=1448 top=1439 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=825 x=362 baseline=1448 top=1439 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=pier25" value="pier25"
+text node=829 x=390 baseline=1448 top=1439 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536387" value="10"
+text node=829 x=403 baseline=1448 top=1439 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536387" value="hours"
+text node=829 x=429 baseline=1448 top=1439 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536387" value="ago"
+text node=832 x=447 baseline=1448 top=1439 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=834 x=452 baseline=1448 top=1439 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50536387&goto=news" value="hide"
+text node=835 x=472 baseline=1448 top=1439 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=837 x=477 baseline=1448 top=1439 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536387" value="75 comments"
+text node=842 x=54 baseline=1486 top=1474 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="21."
+text node=850 x=269 baseline=1486 top=1474 w=30 h=15 size=13 bold=false italic=false color=ff000000 href="https://runta.com/blog/introducing-frontierharness-eval-v1-1/" value="What"
+text node=850 x=303 baseline=1486 top=1474 w=10 h=15 size=13 bold=false italic=false color=ff000000 href="https://runta.com/blog/introducing-frontierharness-eval-v1-1/" value="is"
+text node=850 x=317 baseline=1486 top=1474 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://runta.com/blog/introducing-frontierharness-eval-v1-1/" value="the"
+text node=850 x=339 baseline=1486 top=1474 w=25 h=15 size=13 bold=false italic=false color=ff000000 href="https://runta.com/blog/introducing-frontierharness-eval-v1-1/" value="best"
+text node=850 x=368 baseline=1486 top=1474 w=46 h=15 size=13 bold=false italic=false color=ff000000 href="https://runta.com/blog/introducing-frontierharness-eval-v1-1/" value="harness"
+text node=850 x=418 baseline=1486 top=1474 w=15 h=15 size=13 bold=false italic=false color=ff000000 href="https://runta.com/blog/introducing-frontierharness-eval-v1-1/" value="for"
+text node=850 x=437 baseline=1486 top=1474 w=28 h=15 size=13 bold=false italic=false color=ff000000 href="https://runta.com/blog/introducing-frontierharness-eval-v1-1/" value="each"
+text node=850 x=469 baseline=1486 top=1474 w=42 h=15 size=13 bold=false italic=false color=ff000000 href="https://runta.com/blog/introducing-frontierharness-eval-v1-1/" value="model?"
+text node=852 x=514 baseline=1486 top=1476 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=855 x=517 baseline=1486 top=1476 w=46 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=runta.com" value="runta.com"
+text node=856 x=563 baseline=1486 top=1476 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=862 x=293 baseline=1516 top=1507 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="352"
+text node=862 x=311 baseline=1516 top=1507 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=863 x=339 baseline=1516 top=1507 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=865 x=352 baseline=1516 top=1507 w=40 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=Edward40" value="Edward40"
+text node=869 x=395 baseline=1516 top=1507 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50532191" value="14"
+text node=869 x=408 baseline=1516 top=1507 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50532191" value="hours"
+text node=869 x=434 baseline=1516 top=1507 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50532191" value="ago"
+text node=872 x=452 baseline=1516 top=1507 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=874 x=457 baseline=1516 top=1507 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50532191&goto=news" value="hide"
+text node=875 x=477 baseline=1516 top=1507 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=877 x=482 baseline=1516 top=1507 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50532191" value="123 comments"
+text node=882 x=54 baseline=1554 top=1542 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="22."
+text node=890 x=263 baseline=1554 top=1542 w=40 h=15 size=13 bold=false italic=false color=ff000000 href="https://scholarworks.uni.edu/cgi/viewcontent.cgi?article=1193&context=surp" value="Duality"
+text node=890 x=307 baseline=1554 top=1542 w=11 h=15 size=13 bold=false italic=false color=ff000000 href="https://scholarworks.uni.edu/cgi/viewcontent.cgi?article=1193&context=surp" value="of"
+text node=890 x=322 baseline=1554 top=1542 w=80 h=15 size=13 bold=false italic=false color=ff000000 href="https://scholarworks.uni.edu/cgi/viewcontent.cgi?article=1193&context=surp" value="Quadrilaterals"
+text node=890 x=406 baseline=1554 top=1542 w=17 h=15 size=13 bold=false italic=false color=ff000000 href="https://scholarworks.uni.edu/cgi/viewcontent.cgi?article=1193&context=surp" value="via"
+text node=890 x=427 baseline=1554 top=1542 w=70 h=15 size=13 bold=false italic=false color=ff000000 href="https://scholarworks.uni.edu/cgi/viewcontent.cgi?article=1193&context=surp" value="Quaternions"
+text node=890 x=501 baseline=1554 top=1542 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://scholarworks.uni.edu/cgi/viewcontent.cgi?article=1193&context=surp" value="[pdf]"
+text node=892 x=530 baseline=1554 top=1544 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=895 x=533 baseline=1554 top=1544 w=35 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=uni.edu" value="uni.edu"
+text node=896 x=568 baseline=1554 top=1544 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=902 x=319 baseline=1584 top=1575 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="" value="8"
+text node=902 x=327 baseline=1584 top=1575 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=903 x=355 baseline=1584 top=1575 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=905 x=368 baseline=1584 top=1575 w=36 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=teleforce" value="teleforce"
+text node=909 x=407 baseline=1584 top=1575 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50501829" value="1"
+text node=909 x=415 baseline=1584 top=1575 w=18 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50501829" value="hour"
+text node=909 x=436 baseline=1584 top=1575 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50501829" value="ago"
+text node=912 x=454 baseline=1584 top=1575 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=914 x=459 baseline=1584 top=1575 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50501829&goto=news" value="hide"
+text node=915 x=479 baseline=1584 top=1575 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=917 x=484 baseline=1584 top=1575 w=32 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50501829" value="discuss"
+text node=922 x=54 baseline=1622 top=1610 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="23."
+text node=930 x=335 baseline=1622 top=1610 w=47 h=15 size=13 bold=false italic=false color=ff000000 href="https://hy.tencent.ai/research/hy4-flash" value="Tencent"
+text node=930 x=386 baseline=1622 top=1610 w=23 h=15 size=13 bold=false italic=false color=ff000000 href="https://hy.tencent.ai/research/hy4-flash" value="Hy4"
+text node=930 x=413 baseline=1622 top=1610 w=32 h=15 size=13 bold=false italic=false color=ff000000 href="https://hy.tencent.ai/research/hy4-flash" value="Flash"
+text node=932 x=448 baseline=1622 top=1612 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=935 x=451 baseline=1622 top=1612 w=46 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=tencent.ai" value="tencent.ai"
+text node=936 x=497 baseline=1622 top=1612 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=942 x=303 baseline=1652 top=1643 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="87"
+text node=942 x=316 baseline=1652 top=1643 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=943 x=344 baseline=1652 top=1643 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=945 x=357 baseline=1652 top=1643 w=35 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=lyra1337" value="lyra1337"
+text node=949 x=395 baseline=1652 top=1643 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538184" value="8"
+text node=949 x=403 baseline=1652 top=1643 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538184" value="hours"
+text node=949 x=429 baseline=1652 top=1643 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538184" value="ago"
+text node=952 x=447 baseline=1652 top=1643 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=954 x=452 baseline=1652 top=1643 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50538184&goto=news" value="hide"
+text node=955 x=472 baseline=1652 top=1643 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=957 x=477 baseline=1652 top=1643 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50538184" value="12 comments"
+text node=962 x=54 baseline=1690 top=1678 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="24."
+text node=970 x=167 baseline=1690 top=1678 w=42 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="Launch"
+text node=970 x=213 baseline=1690 top=1678 w=22 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="HN:"
+text node=970 x=239 baseline=1690 top=1678 w=53 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="StarSling"
+text node=970 x=296 baseline=1690 top=1678 w=22 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="(YC"
+text node=970 x=322 baseline=1690 top=1678 w=27 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="P25)"
+text node=970 x=353 baseline=1690 top=1678 w=7 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="–"
+text node=970 x=364 baseline=1690 top=1678 w=83 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="Self-improving"
+text node=970 x=451 baseline=1690 top=1678 w=13 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="CI"
+text node=970 x=468 baseline=1690 top=1678 w=15 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="for"
+text node=970 x=487 baseline=1690 top=1678 w=78 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="agent-volume"
+text node=970 x=569 baseline=1690 top=1678 w=32 h=15 size=13 bold=false italic=false color=ff000000 href="https://starsling.dev" value="repos"
+text node=972 x=604 baseline=1690 top=1680 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=975 x=607 baseline=1690 top=1680 w=58 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=starsling.dev" value="starsling.dev"
+text node=976 x=665 baseline=1690 top=1680 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=982 x=303 baseline=1720 top=1711 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="64"
+text node=982 x=316 baseline=1720 top=1711 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=983 x=344 baseline=1720 top=1711 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=985 x=357 baseline=1720 top=1711 w=30 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=yonasb" value="yonasb"
+text node=989 x=390 baseline=1720 top=1711 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536468" value="10"
+text node=989 x=403 baseline=1720 top=1711 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536468" value="hours"
+text node=989 x=429 baseline=1720 top=1711 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536468" value="ago"
+text node=992 x=447 baseline=1720 top=1711 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=994 x=452 baseline=1720 top=1711 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50536468&goto=news" value="hide"
+text node=995 x=472 baseline=1720 top=1711 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=997 x=477 baseline=1720 top=1711 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50536468" value="36 comments"
+text node=1002 x=54 baseline=1758 top=1746 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="25."
+text node=1010 x=271 baseline=1758 top=1746 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://browser.engineering/" value="Web"
+text node=1010 x=301 baseline=1758 top=1746 w=47 h=15 size=13 bold=false italic=false color=ff000000 href="https://browser.engineering/" value="Browser"
+text node=1010 x=352 baseline=1758 top=1746 w=68 h=15 size=13 bold=false italic=false color=ff000000 href="https://browser.engineering/" value="Engineering"
+text node=1010 x=424 baseline=1758 top=1746 w=36 h=15 size=13 bold=false italic=false color=ff000000 href="https://browser.engineering/" value="(2021)"
+text node=1012 x=463 baseline=1758 top=1748 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=1015 x=466 baseline=1758 top=1748 w=94 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=browser.engineering" value="browser.engineering"
+text node=1016 x=560 baseline=1758 top=1748 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=1022 x=304 baseline=1788 top=1779 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="145"
+text node=1022 x=322 baseline=1788 top=1779 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=1023 x=350 baseline=1788 top=1779 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=1025 x=363 baseline=1788 top=1779 w=27 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=ibobev" value="ibobev"
+text node=1029 x=393 baseline=1788 top=1779 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537290" value="9"
+text node=1029 x=401 baseline=1788 top=1779 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537290" value="hours"
+text node=1029 x=427 baseline=1788 top=1779 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537290" value="ago"
+text node=1032 x=445 baseline=1788 top=1779 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1034 x=450 baseline=1788 top=1779 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50537290&goto=news" value="hide"
+text node=1035 x=470 baseline=1788 top=1779 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1037 x=475 baseline=1788 top=1779 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537290" value="20 comments"
+text node=1042 x=54 baseline=1826 top=1814 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="26."
+text node=1050 x=302 baseline=1826 top=1814 w=33 h=15 size=13 bold=false italic=false color=ff000000 href="https://developer.apple.com/system-status/" value="Apple"
+text node=1050 x=339 baseline=1826 top=1814 w=51 h=15 size=13 bold=false italic=false color=ff000000 href="https://developer.apple.com/system-status/" value="Services"
+text node=1050 x=394 baseline=1826 top=1814 w=32 h=15 size=13 bold=false italic=false color=ff000000 href="https://developer.apple.com/system-status/" value="Down"
+text node=1052 x=429 baseline=1826 top=1816 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=1055 x=432 baseline=1826 top=1816 w=97 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=developer.apple.com" value="developer.apple.com"
+text node=1056 x=529 baseline=1826 top=1816 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=1062 x=299 baseline=1856 top=1847 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="666"
+text node=1062 x=317 baseline=1856 top=1847 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=1063 x=345 baseline=1856 top=1847 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=1065 x=358 baseline=1856 top=1847 w=27 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=willy_k" value="willy_k"
+text node=1069 x=388 baseline=1856 top=1847 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535238" value="11"
+text node=1069 x=401 baseline=1856 top=1847 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535238" value="hours"
+text node=1069 x=427 baseline=1856 top=1847 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535238" value="ago"
+text node=1072 x=445 baseline=1856 top=1847 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1074 x=450 baseline=1856 top=1847 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50535238&goto=news" value="hide"
+text node=1075 x=470 baseline=1856 top=1847 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1077 x=475 baseline=1856 top=1847 w=60 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535238" value="373 comments"
+text node=1082 x=54 baseline=1894 top=1882 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="27."
+text node=1090 x=264 baseline=1894 top=1882 w=36 h=15 size=13 bold=false italic=false color=ff000000 href="https://shivamduggal4.github.io/latent-lattice-language-models/" value="Latent"
+text node=1090 x=304 baseline=1894 top=1882 w=39 h=15 size=13 bold=false italic=false color=ff000000 href="https://shivamduggal4.github.io/latent-lattice-language-models/" value="Lattice"
+text node=1090 x=347 baseline=1894 top=1882 w=56 h=15 size=13 bold=false italic=false color=ff000000 href="https://shivamduggal4.github.io/latent-lattice-language-models/" value="Language"
+text node=1090 x=407 baseline=1894 top=1882 w=42 h=15 size=13 bold=false italic=false color=ff000000 href="https://shivamduggal4.github.io/latent-lattice-language-models/" value="Models"
+text node=1092 x=452 baseline=1894 top=1884 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=1095 x=455 baseline=1894 top=1884 w=113 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=shivamduggal4.github.io" value="shivamduggal4.github.io"
+text node=1096 x=568 baseline=1894 top=1884 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=1102 x=296 baseline=1924 top=1915 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="41"
+text node=1102 x=309 baseline=1924 top=1915 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=1103 x=337 baseline=1924 top=1915 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=1105 x=350 baseline=1924 top=1915 w=53 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=E-Reverance" value="E-Reverance"
+text node=1109 x=406 baseline=1924 top=1915 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539039" value="7"
+text node=1109 x=414 baseline=1924 top=1915 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539039" value="hours"
+text node=1109 x=440 baseline=1924 top=1915 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539039" value="ago"
+text node=1112 x=458 baseline=1924 top=1915 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1114 x=463 baseline=1924 top=1915 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50539039&goto=news" value="hide"
+text node=1115 x=483 baseline=1924 top=1915 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1117 x=488 baseline=1924 top=1915 w=50 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50539039" value="5 comments"
+text node=1122 x=54 baseline=1962 top=1950 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="28."
+text node=1130 x=296 baseline=1962 top=1950 w=20 h=15 size=13 bold=false italic=false color=ff000000 href="https://newsletter.posthog.com/p/decision-models" value="Not"
+text node=1130 x=320 baseline=1962 top=1950 w=62 h=15 size=13 bold=false italic=false color=ff000000 href="https://newsletter.posthog.com/p/decision-models" value="Everything"
+text node=1130 x=386 baseline=1962 top=1950 w=37 h=15 size=13 bold=false italic=false color=ff000000 href="https://newsletter.posthog.com/p/decision-models" value="Needs"
+text node=1130 x=427 baseline=1962 top=1950 w=14 h=15 size=13 bold=false italic=false color=ff000000 href="https://newsletter.posthog.com/p/decision-models" value="an"
+text node=1130 x=445 baseline=1962 top=1950 w=25 h=15 size=13 bold=false italic=false color=ff000000 href="https://newsletter.posthog.com/p/decision-models" value="LLM"
+text node=1132 x=473 baseline=1962 top=1952 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=1135 x=476 baseline=1962 top=1952 w=60 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=posthog.com" value="posthog.com"
+text node=1136 x=536 baseline=1962 top=1952 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=1142 x=300 baseline=1992 top=1983 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="126"
+text node=1142 x=318 baseline=1992 top=1983 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=1143 x=346 baseline=1992 top=1983 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=1145 x=359 baseline=1992 top=1983 w=30 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=speckx" value="speckx"
+text node=1149 x=392 baseline=1992 top=1983 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535740" value="11"
+text node=1149 x=405 baseline=1992 top=1983 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535740" value="hours"
+text node=1149 x=431 baseline=1992 top=1983 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535740" value="ago"
+text node=1152 x=449 baseline=1992 top=1983 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1154 x=454 baseline=1992 top=1983 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50535740&goto=news" value="hide"
+text node=1155 x=474 baseline=1992 top=1983 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1157 x=479 baseline=1992 top=1983 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535740" value="52 comments"
+text node=1162 x=54 baseline=2030 top=2018 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="29."
+text node=1170 x=248 baseline=2030 top=2018 w=42 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="Effects"
+text node=1170 x=294 baseline=2030 top=2018 w=11 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="of"
+text node=1170 x=309 baseline=2030 top=2018 w=7 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="a"
+text node=1170 x=320 baseline=2030 top=2018 w=44 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="Nuclear"
+text node=1170 x=368 baseline=2030 top=2018 w=62 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="Detonation"
+text node=1170 x=434 baseline=2030 top=2018 w=10 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="in"
+text node=1170 x=448 baseline=2030 top=2018 w=23 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="Low"
+text node=1170 x=475 baseline=2030 top=2018 w=31 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="Earth"
+text node=1170 x=510 baseline=2030 top=2018 w=28 h=15 size=13 bold=false italic=false color=ff000000 href="https://arxiv.org/abs/2611.09827" value="Orbit"
+text node=1172 x=541 baseline=2030 top=2020 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=1175 x=544 baseline=2030 top=2020 w=39 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=arxiv.org" value="arxiv.org"
+text node=1176 x=583 baseline=2030 top=2020 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=1182 x=300 baseline=2060 top=2051 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="92"
+text node=1182 x=313 baseline=2060 top=2051 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=1183 x=341 baseline=2060 top=2051 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=1185 x=354 baseline=2060 top=2051 w=41 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=PaulHoule" value="PaulHoule"
+text node=1189 x=398 baseline=2060 top=2051 w=5 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537120" value="9"
+text node=1189 x=406 baseline=2060 top=2051 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537120" value="hours"
+text node=1189 x=432 baseline=2060 top=2051 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537120" value="ago"
+text node=1192 x=450 baseline=2060 top=2051 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1194 x=455 baseline=2060 top=2051 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50537120&goto=news" value="hide"
+text node=1195 x=475 baseline=2060 top=2051 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1197 x=480 baseline=2060 top=2051 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50537120" value="66 comments"
+text node=1202 x=54 baseline=2098 top=2086 w=18 h=15 size=13 bold=false italic=false color=ff828282 href="" value="30."
+text node=1210 x=227 baseline=2098 top=2086 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://read.corematter.com/p/section-232-us-machine-tools" value="Who"
+text node=1210 x=257 baseline=2098 top=2086 w=36 h=15 size=13 bold=false italic=false color=ff000000 href="https://read.corematter.com/p/section-232-us-machine-tools" value="Builds"
+text node=1210 x=297 baseline=2098 top=2086 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://read.corematter.com/p/section-232-us-machine-tools" value="the"
+text node=1210 x=319 baseline=2098 top=2086 w=56 h=15 size=13 bold=false italic=false color=ff000000 href="https://read.corematter.com/p/section-232-us-machine-tools" value="Machines"
+text node=1210 x=379 baseline=2098 top=2086 w=26 h=15 size=13 bold=false italic=false color=ff000000 href="https://read.corematter.com/p/section-232-us-machine-tools" value="That"
+text node=1210 x=409 baseline=2098 top=2086 w=29 h=15 size=13 bold=false italic=false color=ff000000 href="https://read.corematter.com/p/section-232-us-machine-tools" value="Build"
+text node=1210 x=442 baseline=2098 top=2086 w=18 h=15 size=13 bold=false italic=false color=ff000000 href="https://read.corematter.com/p/section-232-us-machine-tools" value="the"
+text node=1210 x=464 baseline=2098 top=2086 w=63 h=15 size=13 bold=false italic=false color=ff000000 href="https://read.corematter.com/p/section-232-us-machine-tools" value="Machines?"
+text node=1212 x=530 baseline=2098 top=2088 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="("
+text node=1215 x=533 baseline=2098 top=2088 w=71 h=13 size=10 bold=false italic=false color=ff828282 href="from?site=corematter.com" value="corematter.com"
+text node=1216 x=604 baseline=2098 top=2088 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value=")"
+text node=1222 x=302 baseline=2128 top=2119 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="" value="119"
+text node=1222 x=320 baseline=2128 top=2119 w=25 h=11 size=9 bold=false italic=false color=ff828282 href="" value="points"
+text node=1223 x=348 baseline=2128 top=2119 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="" value="by"
+text node=1225 x=361 baseline=2128 top=2119 w=27 h=11 size=9 bold=false italic=false color=ff828282 href="user?id=gmays" value="gmays"
+text node=1229 x=391 baseline=2128 top=2119 w=10 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535208" value="11"
+text node=1229 x=404 baseline=2128 top=2119 w=23 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535208" value="hours"
+text node=1229 x=430 baseline=2128 top=2119 w=15 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535208" value="ago"
+text node=1232 x=448 baseline=2128 top=2119 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1234 x=453 baseline=2128 top=2119 w=17 h=11 size=9 bold=false italic=false color=ff828282 href="hide?id=50535208&goto=news" value="hide"
+text node=1235 x=473 baseline=2128 top=2119 w=2 h=11 size=9 bold=false italic=false color=ff828282 href="" value="|"
+text node=1237 x=478 baseline=2128 top=2119 w=55 h=11 size=9 bold=false italic=false color=ff828282 href="item?id=50535208" value="36 comments"
+text node=1244 x=403 baseline=2172 top=2160 w=29 h=15 size=13 bold=false italic=false color=ff000000 href="?p=2" value="More"
+image node=1247 x=431 y=2224 w=0 h=10 src="s.gif" alt="" href=""
+rect x=40 y=2240 w=32 h=8 color=ffff6600
+text node=1256 x=268 baseline=2306 top=2296 w=49 h=13 size=10 bold=false italic=false color=ff000000 href="newsguidelines.html" value="Guidelines"
+text node=1257 x=320 baseline=2306 top=2296 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="|"
+text node=1259 x=326 baseline=2306 top=2296 w=21 h=13 size=10 bold=false italic=false color=ff000000 href="newsfaq.html" value="FAQ"
+text node=1260 x=350 baseline=2306 top=2296 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="|"
+text node=1262 x=356 baseline=2306 top=2296 w=21 h=13 size=10 bold=false italic=false color=ff000000 href="lists" value="Lists"
+text node=1263 x=380 baseline=2306 top=2296 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="|"
+text node=1265 x=386 baseline=2306 top=2296 w=17 h=13 size=10 bold=false italic=false color=ff000000 href="https://github.com/HackerNews/API" value="API"
+text node=1266 x=406 baseline=2306 top=2296 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="|"
+text node=1268 x=412 baseline=2306 top=2296 w=37 h=13 size=10 bold=false italic=false color=ff000000 href="security.html" value="Security"
+text node=1269 x=452 baseline=2306 top=2296 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="|"
+text node=1271 x=458 baseline=2306 top=2296 w=26 h=13 size=10 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/legal/" value="Legal"
+text node=1272 x=487 baseline=2306 top=2296 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="|"
+text node=1274 x=493 baseline=2306 top=2296 w=26 h=13 size=10 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/apply/" value="Apply"
+text node=1274 x=522 baseline=2306 top=2296 w=9 h=13 size=10 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/apply/" value="to"
+text node=1274 x=534 baseline=2306 top=2296 w=14 h=13 size=10 bold=false italic=false color=ff000000 href="https://www.ycombinator.com/apply/" value="YC"
+text node=1275 x=551 baseline=2306 top=2296 w=3 h=13 size=10 bold=false italic=false color=ff828282 href="" value="|"
+text node=1277 x=557 baseline=2306 top=2296 w=36 h=13 size=10 bold=false italic=false color=ff000000 href="mailto:hn@ycombinator.com" value="Contact"
+text node=1282 x=408 baseline=2346 top=2334 w=45 h=15 size=13 bold=false italic=false color=ff828282 href="" value="Search:"

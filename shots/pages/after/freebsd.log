@@ -1,0 +1,5 @@
+TLS www.freebsd.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=69975
+HTTP_RESPONSE status=200 bytes=19136 url=https://www.freebsd.org/about/
+TLS www.freebsd.org authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature=1027 handshake_us=72870
+IMAGE unavailable Image format is not supported; expected PNG, JPEG or GIF url=https://www.freebsd.org/images/FreeBSD-monochromatic.svg
+PAINT wayland-submit elapsed_us=1225235 url=https://www.freebsd.org/about/

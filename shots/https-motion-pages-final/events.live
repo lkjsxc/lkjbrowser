@@ -1,0 +1,43 @@
+# 12-second native Wayland demo: record 30 frames at 400 ms per frame.
+# All actions pass through Browser::event/Browser::key using Linux key codes.
+# Start from about:welcome. No direct address/open/follow commands are used.
+# Ctrl+L selects the address field; h replaces the selected address.
+400 down 29
+420 key 38
+440 up 29
+# Type https://www.kernel.org/ at 70 ms per character.
+600 key 35
+670 key 20
+740 key 20
+810 key 25
+880 key 31
+940 down 42
+950 key 39
+970 up 42
+1020 key 53
+1090 key 53
+1160 key 17
+1230 key 17
+1300 key 17
+1370 key 52
+1440 key 37
+1510 key 18
+1580 key 19
+1650 key 49
+1720 key 18
+1790 key 38
+1860 key 52
+1930 key 24
+2000 key 19
+2070 key 34
+2140 key 53
+# Enter navigates through the ordinary address handler.
+2500 key 28
+# Show the page and its release rows, then return to the header.
+4500 scroll 480
+5400 scroll 480
+7000 key 102
+# About text is x286..334 and window y208..228 at scroll zero in the confirmed 1000x760 capture.
+8000 click 310 218
+# Reveal the linked About page body in the final two seconds.
+10000 scroll 420
