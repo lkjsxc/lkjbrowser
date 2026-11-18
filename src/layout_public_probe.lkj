@@ -1,6 +1,6 @@
 //! Offline renderer for cached public HTML; never opens network sockets.
 //! Usage: layout-public-probe INPUT.html OUTPUT_BASE [SCROLL_Y] [STYLESHEET.css ...]
-//! Content viewport matches the 1000x760 browser window: 988x662.
+//! Content viewport matches the 1000x760 browser window: 1000x708.
 mod html;
 mod css;
 mod font;
@@ -33,24 +33,31 @@ fn main(mut world:World){
     let mut bold=font::Font::parse(read(&mut world,"/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf")).unwrap();
     let mut italic=font::Font::parse(read(&mut world,"/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf")).unwrap();
     let mut bolditalic=font::Font::parse(read(&mut world,"/usr/share/fonts/truetype/liberation/LiberationSans-BoldItalic.ttf")).unwrap();
-    let page=layout::build_in_viewport(&doc,988,1000,662,&normal,&bold,&italic,&bolditalic);
-    let mut canvas=paint::Canvas::new(988usize,662usize,page.background);
+    let mut mono=font::Font::parse(read(&mut world,"/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf")).unwrap();
+    let mut monobold=font::Font::parse(read(&mut world,"/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf")).unwrap();
+    let mut monoitalic=font::Font::parse(read(&mut world,"/usr/share/fonts/truetype/liberation/LiberationMono-Italic.ttf")).unwrap();
+    let mut monobolditalic=font::Font::parse(read(&mut world,"/usr/share/fonts/truetype/liberation/LiberationMono-BoldItalic.ttf")).unwrap();
+    let styles=css::compute_viewport(&doc,1000,708);
+    let sizes:Vec<layout::ImageSize>=Vec::new();
+    let page=layout::build_styled_faces(&doc,&styles,1000,&normal,&bold,&italic,&bolditalic,&mono,&monobold,&monoitalic,&monobolditalic,&sizes);
+    let mut canvas=paint::Canvas::new(1000usize,708usize,page.background);
     for command in &page.commands{
         match command{
             layout::Command::Rect(r)=>canvas.rect(r.x,r.y-scroll,r.width,r.height,r.color),
             layout::Command::Text(run)=>{
-                if run.baseline+run.size-scroll>0 && run.top-scroll<662{
-                    let face=if run.bold && run.italic{&mut bolditalic}else if run.bold{&mut bold}else if run.italic{&mut italic}else{&mut normal};
+                if run.baseline+run.size-scroll>0 && run.top-scroll<708{
+                    let face=if run.monospace{if run.bold && run.italic{&mut monobolditalic}else if run.bold{&mut monobold}else if run.italic{&mut monoitalic}else{&mut mono}}
+                        else if run.bold && run.italic{&mut bolditalic}else if run.bold{&mut bold}else if run.italic{&mut italic}else{&mut normal};
                     canvas.text(face,run.text.as_str(),run.size,run.x,run.baseline-scroll,run.color);
                 }
             },
             layout::Command::Image(im)=>{
                 canvas.rect(im.x,im.y-scroll,im.width,im.height,0xe6eef0u32);
-                if im.y-scroll+28>0 && im.y-scroll<662{canvas.text(&mut normal,im.alt.as_str(),15,im.x+12,im.y-scroll+28,0x54717du32);}
+                if im.y-scroll+28>0 && im.y-scroll<708{canvas.text(&mut normal,im.alt.as_str(),15,im.x+12,im.y-scroll+28,0x54717du32);}
             },
         }
     }
-    write(&mut world,format!("{}.png",output).as_str(),&png::encode(988usize,662usize,&canvas.pixels).unwrap());
+    write(&mut world,format!("{}.png",output).as_str(),&png::encode(1000usize,708usize,&canvas.pixels).unwrap());
     write(&mut world,format!("{}.layout",output).as_str(),page.dump().as_bytes());
     world.stdout().write(format!("Offline page: {} height={} commands={} scroll={}\n",input,page.height,page.commands.len(),scroll).as_bytes());
 }

@@ -10,37 +10,73 @@ mod css;
 mod layout;
 mod wayland;
 mod png;
+mod jpeg;
+mod gif;
+mod images;
+mod typefaces;
 
 use font::Font;
+use typefaces::Fonts;
 use paint::Canvas;
 use wayland::Event;
 // The page runs from under the toolbar to the window edge; chrome overlays, it takes no strip or gutter.
 const TOP: i32 = chrome::HEIGHT;
 const BOTTOM: i32 = 0i32;
 
-struct Fonts { normal:Font,bold:Font,italic:Font,bolditalic:Font }
-fn load_face(world:&mut World,filename:&str,fallback:&str,override_dir:&str)->Result<Font,String>{
-    if !override_dir.is_empty(){
-        return Font::parse(net::read_path(world,format!("{}/{}",override_dir,filename).as_str())?);
+// Intrinsic image sizes can move text that was already visible, including when
+// the same source occurs earlier in the document. Track a text-node position,
+// not a fragment index: changing a float's width may split that text differently.
+#[derive(Copy,Clone)]
+struct ImageScrollAnchor { node:usize, byte_offset:usize, screen_top:i32 }
+fn image_scroll_anchor(page:&layout::Page,scroll:i32,viewport_height:i32)->Option<ImageScrollAnchor>{
+    // Initial navigation must keep the top edge, even when its first image grows.
+    if scroll<=0i32 || viewport_height<=0i32{return None;}
+    let mut selected=page.commands.len();
+    let mut top=2147483647i32;let mut left=2147483647i32;
+    let mut index=0usize;
+    while index<page.commands.len(){
+        if let layout::Command::Text(run)=&page.commands[index]{
+            if !run.text.is_empty() && run.width>0i32 && run.height>0i32
+                && run.x<page.width && run.x as i64+run.width as i64>0i64
+                && run.top as i64+run.height as i64>scroll as i64
+                && (run.top as i64)<scroll as i64+viewport_height as i64
+                && (run.top<top || (run.top==top && run.x<left)){
+                selected=index;top=run.top;left=run.x;
+            }
+        }
+        index+=1usize;
     }
-    let candidates=vec![
-        format!("/usr/share/fonts/truetype/liberation/{}",filename),
-        format!("/usr/share/fonts/truetype/liberation2/{}",filename),
-        format!("/usr/share/fonts/truetype/dejavu/{}",fallback),
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf".to_string(),
-    ];
-    for path in candidates {
-        if let Ok(bytes)=net::read_path(world,path.as_str()){return Font::parse(bytes);}
+    if selected==page.commands.len(){return None;}
+    if let layout::Command::Text(run)=&page.commands[selected]{
+        let mut byte_offset=0usize;let mut before=0usize;
+        while before<selected{
+            if let layout::Command::Text(previous)=&page.commands[before]{
+                if previous.node==run.node{byte_offset+=previous.text.len();}
+            }
+            before+=1usize;
+        }
+        return Some(ImageScrollAnchor{node:run.node,byte_offset,screen_top:run.top-scroll});
     }
-    Err("No usable TrueType font found. Install Liberation Sans or pass --font-dir DIRECTORY.".to_string())
+    None
 }
-fn fonts(world:&mut World,directory:&str)->Result<Fonts,String>{
-    let normal=load_face(world,"LiberationSans-Regular.ttf","DejaVuSans.ttf",directory)?;
-    let bold=load_face(world,"LiberationSans-Bold.ttf","DejaVuSans-Bold.ttf",directory)?;
-    let italic=load_face(world,"LiberationSans-Italic.ttf","DejaVuSans-Oblique.ttf",directory)?;
-    let bolditalic=load_face(world,"LiberationSans-BoldItalic.ttf","DejaVuSans-BoldOblique.ttf",directory)?;
-    Ok(Fonts{normal,bold,italic,bolditalic})
+fn image_anchor_scroll(page:&layout::Page,anchor:ImageScrollAnchor)->Option<i32>{
+    let mut byte_offset=0usize;
+    for command in &page.commands{
+        if let layout::Command::Text(run)=command{
+            if run.node==anchor.node{
+                let end=byte_offset+run.text.len();
+                if byte_offset<=anchor.byte_offset && anchor.byte_offset<end{
+                    let scroll=(run.top as i64-anchor.screen_top as i64).max(0i64).min(2147483647i64);
+                    return Some(scroll as i32);
+                }
+                byte_offset=end;
+            }
+        }
+    }
+    None
 }
+
+fn fonts(world:&mut World,directory:&str)->Result<Fonts,String>{typefaces::load(world,directory)}
 fn escape(value:&str)->String {
     value.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;").replace('"',"&quot;")
 }
@@ -75,7 +111,7 @@ fn error_html(address:&str,problem:&str)->String{
 // The browser's own pages share the toolbar's palette: ink, quiet ink, hairline, one accent, one warning.
 const OWN_PAGE_STYLE:&str="body {margin:0;background:#ffffff;color:#1b2a32;font-size:17px;line-height:1.55;} .sheet {max-width:600px;margin:0 auto;padding:72px 24px 48px 24px;} .mark {color:#0b7a87;font-size:14px;font-weight:bold;margin:0 0 12px 0;} .warn {color:#ae422b;} h1 {font-size:40px;line-height:1.15;margin:0 0 16px 0;} .lead {font-size:20px;line-height:1.45;color:#5d717b;margin:0 0 40px 0;} .rule {height:1px;background:#d8e0e4;} .row {padding:18px 0 18px 0;} h2 {font-size:16px;margin:0 0 4px 0;} p {margin:0;} .quiet {color:#5d717b;} a {color:#0b7a87;}";
 fn welcome()->String{
-    format!("<!doctype html><html><head><title>lkjbrowser</title><style>{}</style></head><body><div class=\"sheet\"><p class=\"mark\">lkjbrowser</p><h1>A clear place to read.</h1><p class=\"lead\">Web pages, links and PNG pictures work here. Scripts, forms and sign-ins do not.</p><div class=\"rule\"></div><div class=\"row\"><h2>Open a page</h2><p class=\"quiet\">Click the address field or press <strong>Ctrl+L</strong>, type an address and press Enter. Try <a href=\"https://example.com/\">example.com</a>.</p></div><div class=\"rule\"></div><div class=\"row\"><h2>Move around</h2><p class=\"quiet\">Scroll with the wheel, the arrow keys or Page Up and Page Down. Click a link to follow it. The arrows in the toolbar go back and forward, and <strong>Ctrl+R</strong> loads the page again.</p></div><div class=\"rule\"></div><div class=\"row\"><h2>Close</h2><p class=\"quiet\">Press <strong>Ctrl+Q</strong> or click the cross in the toolbar.</p></div></div></body></html>",OWN_PAGE_STYLE)
+    format!("<!doctype html><html><head><title>lkjbrowser</title><style>{}</style></head><body><div class=\"sheet\"><p class=\"mark\">lkjbrowser</p><h1>A clear place to read.</h1><p class=\"lead\">Web pages, links and pictures work here. Scripts, forms and sign-ins do not.</p><div class=\"rule\"></div><div class=\"row\"><h2>Open a page</h2><p class=\"quiet\">Click the address field or press <strong>Ctrl+L</strong>, type an address and press Enter. Try <a href=\"https://example.com/\">example.com</a>.</p></div><div class=\"rule\"></div><div class=\"row\"><h2>Move around</h2><p class=\"quiet\">Scroll with the wheel, the arrow keys or Page Up and Page Down. Click a link to follow it. The arrows in the toolbar go back and forward, and <strong>Ctrl+R</strong> loads the page again.</p></div><div class=\"rule\"></div><div class=\"row\"><h2>Close</h2><p class=\"quiet\">Press <strong>Ctrl+Q</strong> or click the cross in the toolbar.</p></div></div></body></html>",OWN_PAGE_STYLE)
 }
 fn fit(font:&Font,text:&str,size:i32,max_width:i32)->String{
     let mut total=0i32;for c in text.chars(){total+=font.advance(c as u32,size);}
@@ -102,19 +138,20 @@ impl Modifiers{
 struct HistoryEntry {url:String,allow_file:bool}
 struct LoadedImage { src:String,image:png::Image }
 struct Browser {
-    fonts:Fonts,page:layout::Page,url:String,address:String,source:String,title:String,status:String,
+    fonts:Fonts,page:layout::Page,document:html::Document,computed:Vec<css::Style>,url:String,address:String,source:String,title:String,status:String,
     width:i32,height:i32,scroll:i32,editing:bool,select_all:bool,modifiers:Modifiers,
-    history:Vec<HistoryEntry>,history_at:usize,hover:String,dns:String,images:Vec<LoadedImage>,file_authority:bool,
+    history:Vec<HistoryEntry>,history_at:usize,hover:String,dns:String,images:Vec<LoadedImage>,image_sizes:Vec<layout::ImageSize>,file_authority:bool,
     trust_file:String,paint_started:Option<usize>,styles:String,image_attempted:Vec<String>,chrome:chrome::State,
 }
 impl Browser {
     fn new(fonts:Fonts,width:i32,height:i32,dns:String)->Browser{
         let document=html::parse("<html><body></body></html>");
         let page=layout::build_in_viewport(&document,width,width,height-TOP-BOTTOM,&fonts.normal,&fonts.bold,&fonts.italic,&fonts.bolditalic);
-        Browser {fonts,page,url:String::new(),address:String::new(),source:String::new(),
+        let computed=css::compute_viewport(&document,width,height-TOP-BOTTOM);
+        Browser {fonts,page,document,computed,url:String::new(),address:String::new(),source:String::new(),
             title:String::new(),status:String::new(),width,height,scroll:0i32,editing:false,
             select_all:false,modifiers:Modifiers{shift:0u8,ctrl:0u8},history:Vec::new(),history_at:0usize,
-            hover:String::new(),dns,images:Vec::new(),file_authority:true,
+            hover:String::new(),dns,images:Vec::new(),image_sizes:Vec::new(),file_authority:true,
             trust_file:net::SYSTEM_TRUST.to_string(),paint_started:None,styles:String::new(),image_attempted:Vec::new(),chrome:chrome::State::new()}
     }
     fn max_scroll(&self)->i32{
@@ -125,13 +162,27 @@ impl Browser {
         let max=self.max_scroll();
         self.scroll=(self.scroll+amount).max(0i32).min(max);
     }
-    fn relayout(&mut self){
+    fn rebuild_document(&mut self){
         let mut document=html::parse(self.source.as_str());
         document.styles=self.styles.clone();
         self.title=document.title.clone();
-        self.page=layout::build_in_viewport(&document,self.width,self.width,self.height-TOP-BOTTOM,&self.fonts.normal,&self.fonts.bold,&self.fonts.italic,&self.fonts.bolditalic);
+        self.computed=css::compute_viewport(&document,self.width,self.height-TOP-BOTTOM);
+        self.document=document;
+    }
+    fn relayout(&mut self){
+        self.page=layout::build_styled_faces(&self.document,&self.computed,self.width,&self.fonts.normal,&self.fonts.bold,&self.fonts.italic,&self.fonts.bolditalic,&self.fonts.mono,&self.fonts.monobold,&self.fonts.monoitalic,&self.fonts.monobolditalic,&self.image_sizes);
         self.scroll=self.scroll.min(self.max_scroll());
     }
+    fn relayout_images(&mut self){
+        let anchor=image_scroll_anchor(&self.page,self.scroll,self.height-TOP-BOTTOM);
+        self.relayout();
+        if let Some(saved)=anchor{
+            if let Some(scroll)=image_anchor_scroll(&self.page,saved){
+                self.scroll=scroll.min(self.max_scroll());
+            }
+        }
+    }
+
     fn navigate(&mut self,world:&mut World,address:&str,remember:bool){
         self.navigate_authorized(world,address,remember,true);
     }
@@ -152,10 +203,18 @@ impl Browser {
                     final_address=response.url;
                     world.stdout().write(format!("HTTP_RESPONSE status={} bytes={} url={}\n",response.status,response.body.len(),final_address).as_bytes());
                     self.status=if final_address.starts_with("https://"){"Verified HTTPS".to_string()}else{String::new()};
-                    let text=net::text(&response.body);
-                    if response.content_type.to_ascii_lowercase().starts_with("text/plain"){
-                        format!("<html><head><title>Text document</title></head><body><pre>{}</pre></body></html>",escape(text.as_str()))
-                    }else{text}
+                    match net::document_text(&response.body,response.content_type.as_str()){
+                        Ok(text)=>{
+                            if response.content_type.to_ascii_lowercase().starts_with("text/plain"){
+                                format!("<html><head><title>Text document</title></head><body><pre>{}</pre></body></html>",escape(text.as_str()))
+                            }else{text}
+                        }
+                        Err(problem)=>{
+                            self.status="Unable to load this address".to_string();
+                            world.stdout().write(format!("NAV_ERROR {}: {}\n",address,problem).as_bytes());
+                            error_html(address,problem.as_str())
+                        }
+                    }
                 }
                 Err(problem)=>{
                     self.status="Unable to load this address".to_string();
@@ -165,8 +224,9 @@ impl Browser {
             }
         };
         self.source=source;self.url=final_address;self.address=self.url.clone();
-        self.images.clear();self.image_attempted.clear();
+        self.images.clear();self.image_sizes.clear();self.image_attempted.clear();
         self.load_styles(world);
+        self.rebuild_document();
         self.scroll=0i32;self.editing=false;self.select_all=false;self.hover.clear();
         self.relayout();
         self.load_images(world);
@@ -179,60 +239,56 @@ impl Browser {
         }
     }
     fn load_styles(&mut self,world:&mut World){
-        let doc=html::parse(self.source.as_str());
-        let mut styles=String::new();let mut fetched:Vec<(String,String)>=Vec::new();
-        let mut clock=world.clock();let deadline=clock.nanoseconds().unwrap()+3000000000usize;
-        let mut n=0usize;
-        while n<doc.nodes.len(){
-            let media=doc.attribute(n,"media").to_ascii_lowercase();
-            let applies=media.is_empty() || css::media_matches(media.as_str(),self.width);
-            if doc.nodes[n].tag=="style" && applies{
-                let text=doc.text_content(n);
-                if styles.len()+text.len()+1usize<=4194304usize{styles.push_str(text.as_str());styles.push('\n');}
-            }else if doc.nodes[n].tag=="link" && applies{
-                let rel=doc.attribute(n,"rel").to_ascii_lowercase();
-                let mut sheet=false;for word in css::words(rel.as_str()){if word=="stylesheet"{sheet=true;}}
-                if sheet{
-                    let href=doc.attribute(n,"href");
-                    let url=net::resolve(self.url.as_str(),href.as_str());
-                    if !href.is_empty() && (!self.url.starts_with("https://") || url.starts_with("https://")){
-                        let mut found=false;let mut content=String::new();
-                        for cached in &fetched{if cached.0==url{found=true;content=cached.1.clone();break;}}
-                        if !found && fetched.len()<4usize{
-                            match resources::stylesheet(world,url.as_str(),self.dns.as_str(),self.local_files_allowed(),self.trust_file.as_str(),deadline){
-                                Ok(text)=>{content=text;}
-                                Err(problem)=>{world.stdout().write(format!("STYLES {} url={}\n",problem,url).as_bytes());}
-                            }
-                            // Cache failures too, and replay successful bytes at every source occurrence.
-                            fetched.push((url,content.clone()));
-                        }
-                        if styles.len()+content.len()+1usize<=4194304usize{styles.push_str(content.as_str());styles.push('\n');}
-                    }
-                }
-            }n+=1usize;
-        }
-        self.styles=styles;
+        let allowed=self.local_files_allowed();
+        self.styles=resources::stylesheets(world,self.source.as_str(),self.url.as_str(),self.dns.as_str(),allowed,self.trust_file.as_str(),self.width);
     }
+
     fn load_images(&mut self,world:&mut World){
         let allowed=self.local_files_allowed();
-        let mut sources:Vec<String>=Vec::new();
-        for command in &self.page.commands{
-            if let layout::Command::Image(img)=command{
-                if !img.src.is_empty() && !sources.contains(&img.src) && !self.image_attempted.contains(&img.src) &&
-                    img.y+img.height>self.scroll && img.y<self.scroll+self.height-TOP-BOTTOM{
-                    sources.push(img.src.clone());
+        loop{
+            let mut sources:Vec<String>=Vec::new();
+            for command in &self.page.commands{
+                if let layout::Command::Image(img)=command{
+                    if !img.src.is_empty() && img.width>0 && img.height>0
+                        && !sources.contains(&img.src) && !self.image_attempted.contains(&img.src)
+                        && img.y+img.height>self.scroll && img.y<self.scroll+self.height-TOP-BOTTOM{
+                        sources.push(img.src.clone());
+                    }
                 }
             }
-        }
-        for source in sources{
-            self.image_attempted.push(source.clone());
-            let url=net::resolve(self.url.as_str(),source.as_str());
-            if self.url.starts_with("https://") && !url.starts_with("https://"){continue;}
-            if let Ok(response)=net::fetch_with_trust(world,url.as_str(),self.dns.as_str(),allowed,self.trust_file.as_str()){
-                if let Ok(image)=png::decode(&response.body){self.images.push(LoadedImage{src:source,image});}
+            if sources.is_empty(){break;}
+            let mut changed=false;
+            for source in sources{
+                self.image_attempted.push(source.clone());
+                let url=net::resolve(self.url.as_str(),source.as_str());
+                if self.url.starts_with("https://") && !url.starts_with("https://"){continue;}
+                match net::fetch_with_trust(world,url.as_str(),self.dns.as_str(),allowed,self.trust_file.as_str()){
+                    Ok(response)=>{
+                        match images::decode(&response.body){
+                            Ok(image)=>{
+                                world.stdout().write(format!("IMAGE decoded width={} height={} url={}\n",image.width,image.height,url).as_bytes());
+                                self.image_sizes.push(layout::ImageSize{src:source.clone(),width:image.width as i32,height:image.height as i32});
+                                self.images.push(LoadedImage{src:source,image});
+                                changed=true;
+                            }
+                            Err(problem)=>{
+                                if response.content_type.to_ascii_lowercase().contains("image/svg+xml"){
+                                    if let Some((width,height))=images::svg_dimensions(&response.body){
+                                        self.image_sizes.push(layout::ImageSize{src:source.clone(),width,height});
+                                        changed=true;
+                                    }
+                                }
+                                world.stdout().write(format!("IMAGE unavailable {} url={}\n",problem,url).as_bytes());
+                            }
+                        }
+                    }
+                    Err(problem)=>{world.stdout().write(format!("IMAGE unavailable {} url={}\n",problem,url).as_bytes());}
+                }
             }
+            if changed{self.relayout_images();}
         }
     }
+
     fn follow(&mut self,world:&mut World,href:&str){
         if href.starts_with('#'){
             self.scroll=self.page.anchor(&href[1..]).max(0i32).min(self.max_scroll());
@@ -337,6 +393,18 @@ impl Browser {
         }
         true
     }
+    fn toggle_disclosure(&mut self,node:usize){
+        if node>=self.document.nodes.len() || self.document.nodes[node].tag!="details"{return;}
+        if self.document.has_attribute(node,"open"){
+            let mut attributes:Vec<html::Attribute>=Vec::new();
+            for attribute in &self.document.nodes[node].attributes{
+                if attribute.name!="open"{attributes.push(attribute.clone());}
+            }
+            self.document.nodes[node].attributes=attributes;
+        }else{self.document.nodes[node].attributes.push(html::Attribute{name:"open".to_string(),value:String::new()});}
+        self.computed=css::compute_viewport(&self.document,self.width,self.height-TOP-BOTTOM);
+        self.relayout();
+    }
     fn event(&mut self,world:&mut World,event:Event)->bool{
         match event{
             Event::Close=>false,
@@ -360,6 +428,7 @@ impl Browser {
                         self.editing=false;
                         let href=self.page.hit(x,y-TOP+self.scroll);
                         if !href.is_empty(){self.follow(world,href.as_str());}
+                        else if let Some(node)=self.page.disclosure_at(x,y-TOP+self.scroll){self.toggle_disclosure(node);}
                     }
                     _=>{}
                 }
@@ -391,7 +460,10 @@ impl Browser {
                 layout::Command::Text(run)=>{
                     let baseline=run.baseline+TOP-self.scroll;
                     if baseline+run.size>TOP && run.top+TOP-self.scroll<self.height-BOTTOM{
-                        let font=if run.bold && run.italic{&mut self.fonts.bolditalic}
+                        let font=if run.monospace {
+                            if run.bold && run.italic{&mut self.fonts.monobolditalic}
+                            else if run.bold{&mut self.fonts.monobold}else if run.italic{&mut self.fonts.monoitalic}else{&mut self.fonts.mono}
+                        }else if run.bold && run.italic{&mut self.fonts.bolditalic}
                             else if run.bold{&mut self.fonts.bold}else if run.italic{&mut self.fonts.italic}else{&mut self.fonts.normal};
                         canvas.text(font,run.text.as_str(),run.size,run.x,baseline,run.color);
                     }
@@ -626,4 +698,84 @@ fn both_modifier_keys_survive_one_release(){
     modifiers.update(29u32,true);modifiers.update(97u32,true);
     modifiers.update(29u32,false);assert!(modifiers.ctrl!=0u8);
     modifiers.update(97u32,false);assert_eq!(modifiers.ctrl,0u8);
+}
+
+fn anchor_test_browser(source:&str,width:i32)->Browser{
+    let faces=Fonts{normal:font::metric_test_font(),bold:font::metric_test_font(),
+        italic:font::metric_test_font(),bolditalic:font::metric_test_font(),
+        mono:font::metric_test_font(),monobold:font::metric_test_font(),
+        monoitalic:font::metric_test_font(),monobolditalic:font::metric_test_font()};
+    let mut app=Browser::new(faces,width,500i32,String::new());
+    app.source=source.to_string();app.styles=html::parse(source).styles;
+    app.rebuild_document();app.relayout();app
+}
+fn anchor_test_text_top(page:&layout::Page,value:&str)->i32{
+    for command in &page.commands{
+        if let layout::Command::Text(run)=command{
+            if run.text==value{return run.top;}
+        }
+    }
+    assert!(false);0i32
+}
+#[test]
+fn image_reflow_anchors_text_when_visible_source_also_occurs_above(){
+    let mut app=anchor_test_browser("<style>body{margin:0;font-size:20px}p{margin:0;line-height:24px}img{display:block}</style><img src='same.gif'><div style='height:100px'></div><p>Reading position stays here.</p><img src='same.gif'><div style='height:900px'></div>",640i32);
+    app.scroll=anchor_test_text_top(&app.page,"Reading")-5i32;
+    let before_scroll=app.scroll;
+    let mut above=0usize;let mut visible=0usize;
+    for command in &app.page.commands{
+        if let layout::Command::Image(img)=command{
+            if img.y+img.height<=app.scroll{above+=1usize;}
+            if img.y+img.height>app.scroll && img.y<app.scroll+app.height-TOP-BOTTOM{visible+=1usize;}
+        }
+    }
+    assert_eq!(above,1usize);assert_eq!(visible,1usize);
+    app.image_sizes.push(layout::ImageSize{src:"same.gif".to_string(),width:200i32,height:180i32});
+    app.relayout_images();
+    assert_eq!(anchor_test_text_top(&app.page,"Reading")-app.scroll,5i32);
+    assert!(app.scroll>=before_scroll+100i32);
+    let mut enlarged=0usize;
+    for command in &app.page.commands{
+        if let layout::Command::Image(img)=command{if img.height==180i32{enlarged+=1usize;}}
+    }
+    assert_eq!(enlarged,2usize);
+}
+#[test]
+fn image_reflow_preserves_partly_clipped_unicode_fragment_after_rewrap(){
+    let token="ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζηθικλμνξοπρστυφχψωАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя";
+    let source=format!("<style>body{{margin:0;font-size:20px;line-height:24px}}p{{margin:0}}img{{display:block}}</style><img src='same.gif'><div style='height:100px'></div><div><img src='same.gif' style='float:left'><p>{}</p></div><div style='height:900px'></div>",token);
+    let mut app=anchor_test_browser(source.as_str(),320i32);
+    let mut count=0usize;let mut marker=String::new();let mut old_fragment=String::new();
+    for command in &app.page.commands{
+        if let layout::Command::Text(run)=command{
+            if count==3usize{
+                marker=run.text.as_str().chars().next().unwrap().to_string();
+                old_fragment=run.text.clone();app.scroll=run.top+2i32;
+                break;
+            }
+            count+=1usize;
+        }
+    }
+    assert!(!marker.is_empty());
+    app.image_sizes.push(layout::ImageSize{src:"same.gif".to_string(),width:120i32,height:180i32});
+    app.relayout_images();
+    let mut found=false;
+    for command in &app.page.commands{
+        if let layout::Command::Text(run)=command{
+            if run.text.contains(marker.as_str()){
+                assert_ne!(run.text,old_fragment);
+                assert_eq!(run.top-app.scroll,-2i32);found=true;break;
+            }
+        }
+    }
+    assert!(found);
+}
+#[test]
+fn initial_image_reflow_keeps_document_top(){
+    let mut app=anchor_test_browser("<style>body{margin:0}img{display:block}</style><img src='first.gif'><p>First text</p><div style='height:900px'></div>",640i32);
+    assert_eq!(app.scroll,0i32);
+    app.image_sizes.push(layout::ImageSize{src:"first.gif".to_string(),width:200i32,height:300i32});
+    app.relayout_images();
+    assert_eq!(app.scroll,0i32);
+    assert!(anchor_test_text_top(&app.page,"First")>=300i32);
 }

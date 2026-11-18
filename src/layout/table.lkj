@@ -1,0 +1,342 @@
+//! A bounded automatic table grid: intrinsic widths, spans and source-order cells.
+//! Cells are laid out once. Their recorded geometry is moved after row heights
+//! are known, so nested tables do not cause repeated/exponential layout work.
+use crate::html::Document;
+use crate::css::{Style,NONE,BLOCK,FLEX,INLINE_BLOCK,INLINE_FLEX};
+use super::{Flow,Fonts,Page,Rect,BoxRecord,Anchor,Command};
+
+fn max(a:i32,b:i32)->i32{if a>b{a}else{b}}
+fn min(a:i32,b:i32)->i32{if a<b{a}else{b}}
+fn bounded(value:i64)->i32{value.max(0i64).min(1000000000i64) as i32}
+fn add(a:i32,b:i32)->i32{bounded(a as i64+b as i64)}
+struct Row {node:usize,end:usize}
+struct Cell {node:usize,row:usize,column:usize,columns:usize,rows:usize}
+struct Grid {rows:Vec<Row>,cells:Vec<Cell>,columns:usize,valid:bool}
+
+fn visible(styles:&[Style],node:usize)->bool{
+    let style=styles[node];
+    style.display!=NONE && !(style.clip_empty && (style.position==2u8 || style.position==3u8))
+}
+fn group(doc:&Document,styles:&[Style],node:usize,rows:&mut Vec<Row>){
+    let start=rows.len();
+    if doc.nodes[node].tag=="tr"{rows.push(Row{node,end:0usize});}
+    else{for child in &doc.nodes[node].children{if doc.nodes[*child].tag=="tr" && visible(styles,*child){rows.push(Row{node:*child,end:0usize});}}}
+    let end=rows.len();let mut i=start;while i<end{rows[i].end=end;i+=1usize;}
+}
+fn grid(doc:&Document,styles:&[Style],node:usize)->Grid{
+    let mut rows:Vec<Row>=Vec::new();
+    // A tfoot may precede tbody in HTML source. Its visual group remains last.
+    for child in &doc.nodes[node].children{if doc.nodes[*child].tag=="thead" && visible(styles,*child){group(doc,styles,*child,&mut rows);}}
+    let direct_start=rows.len();
+    for child in &doc.nodes[node].children{
+        let tag=doc.nodes[*child].tag.as_str();if !visible(styles,*child){continue;}
+        if tag=="tbody"{group(doc,styles,*child,&mut rows);}
+        else if tag=="tr"{rows.push(Row{node:*child,end:0usize});}
+    }
+    let direct_end=rows.len();let mut index=direct_start;
+    while index<direct_end{if rows[index].end==0usize{rows[index].end=direct_end;}index+=1usize;}
+    for child in &doc.nodes[node].children{if doc.nodes[*child].tag=="tfoot" && visible(styles,*child){group(doc,styles,*child,&mut rows);}}
+    let mut occupied=[0usize;64];let mut cells:Vec<Cell>=Vec::new();let mut columns=0usize;let mut row=0usize;let mut valid=true;
+    while row<rows.len(){
+        let mut column=0usize;
+        for child in &doc.nodes[rows[row].node].children{
+            let tag=doc.nodes[*child].tag.as_str();
+            if !(tag=="td" || tag=="th") || !visible(styles,*child){continue;}
+            let span=doc.attribute(*child,"colspan").as_str().parse::<usize>().unwrap_or(1usize).max(1usize).min(64usize);
+            loop{
+                if column>64usize-span{valid=false;break;}
+                let mut free=true;let mut k=0usize;
+                while k<span{if occupied[column+k]>row{column+=k+1usize;free=false;break;}k+=1usize;}
+                if free{break;}
+            }
+            if !valid{break;}
+            let requested=doc.attribute(*child,"rowspan").as_str().parse::<usize>().unwrap_or(1usize);
+            let remaining=rows[row].end-row;
+            let down=if requested==0usize{remaining}else{requested.max(1usize).min(remaining)};
+            let mut k=0usize;while k<span{occupied[column+k]=row+down;k+=1usize;}
+            cells.push(Cell{node:*child,row,column,columns:span,rows:down});
+            column+=span;columns=columns.max(column);
+        }
+        if !valid{break;}row+=1usize;
+    }
+    Grid{rows,cells,columns,valid}
+}
+fn spacing(doc:&Document,node:usize)->i32{
+    doc.attribute(node,"cellspacing").as_str().parse::<i32>().unwrap_or(2i32).max(0).min(256)
+}
+struct Measure {line:i32,word:i32,space:i32,minimum:i32,preferred:i32}
+impl Measure{
+    fn word_end(&mut self){self.minimum=max(self.minimum,self.word);self.word=0;}
+    fn line_end(&mut self){self.word_end();self.preferred=max(self.preferred,self.line);self.line=0;self.space=0;}
+    fn atom(&mut self,minimum:i32,preferred:i32){
+        self.word_end();if self.line>0{self.line=add(self.line,self.space);}self.space=0;
+        self.line=add(self.line,preferred);self.minimum=max(self.minimum,minimum);
+    }
+}
+fn new_measure()->Measure{Measure{line:0,word:0,space:0,minimum:0,preferred:0}}
+fn text_widths(state:&mut Measure,text:&str,style:Style,fonts:&Fonts){
+    let font=super::selected(fonts,style.bold,style.italic,style.monospace);
+    for ch in text.chars(){
+        if style.pre && (ch=='\n' || ch=='\r'){state.line_end();continue;}
+        let white=ch==' ' || ch=='\t' || ch=='\r' || ch=='\n' || ch=='\u{000c}';
+        if white && !style.pre{state.word_end();if state.line>0{state.space=font.advance(32u32,style.font_size);}continue;}
+        if state.line>0{state.line=add(state.line,state.space);}state.space=0;
+        let width=if ch=='\t'{font.advance(32u32,style.font_size)*4}else{font.advance(ch as u32,style.font_size)};
+        state.line=min(8192,add(state.line,width));state.word=min(8192,add(state.word,width));
+    }
+}
+fn walk(doc:&Document,styles:&[Style],node:usize,fonts:&Fonts,containing:i32,state:&mut Measure,depth:usize){
+    if !visible(styles,node){return;}let style=super::resolved(styles[node],containing);
+    let tag=doc.nodes[node].tag.as_str();
+    if tag=="#text"{text_widths(state,doc.nodes[node].text.as_str(),style,fonts);return;}
+    if tag=="br"{state.line_end();return;}if tag=="wbr"{state.word_end();return;}
+    if tag=="img"{let size=super::image_size(doc,node,style,8192,fonts);state.atom(size.0,size.0);return;}
+    if style.display==BLOCK || style.display==FLEX{
+        state.line_end();let widths=intrinsic(doc,styles,node,fonts,containing,depth+1usize);
+        state.minimum=max(state.minimum,widths.0);state.preferred=max(state.preferred,widths.1);return;
+    }
+    if style.display==INLINE_BLOCK || style.display==INLINE_FLEX{
+        let widths=intrinsic(doc,styles,node,fonts,containing,depth+1usize);state.atom(widths.0,widths.1);return;
+    }
+    for child in &doc.nodes[node].children{walk(doc,styles,*child,fonts,containing,state,depth+1usize);}
+}
+fn sum(widths:&[i32],start:usize,count:usize)->i32{
+    let mut total=0i32;let mut i=0usize;while i<count{total+=widths[start+i];i+=1usize;}total
+}
+fn satisfy(widths:&mut Vec<i32>,start:usize,count:usize,target:i32,gap:i32){
+    let current=sum(widths,start,count)+gap*(count as i32-1);if current>=target{return;}
+    let deficit=target-current;let each=deficit/count as i32;let mut remaining=deficit%count as i32;let mut i=0usize;
+    while i<count{widths[start+i]+=each;if remaining>0{widths[start+i]+=1;remaining-=1;}i+=1usize;}
+}
+fn column_preferences(doc:&Document,styles:&[Style],grid:&Grid,fonts:&Fonts,containing:i32,gap:i32,depth:usize)->(Vec<i32>,Vec<i32>){
+    let mut minimum=vec![1i32;grid.columns];let mut preferred=vec![1i32;grid.columns];
+    let mut measured:Vec<(i32,i32)>=Vec::new();
+    for cell in &grid.cells{
+        let widths=intrinsic(doc,styles,cell.node,fonts,containing,depth+1usize);measured.push(widths);
+        if cell.columns==1usize{minimum[cell.column]=max(minimum[cell.column],widths.0);preferred[cell.column]=max(preferred[cell.column],widths.1);}
+    }
+    let mut i=0usize;while i<grid.cells.len(){
+        let cell=&grid.cells[i];if cell.columns>1usize{
+            satisfy(&mut minimum,cell.column,cell.columns,measured[i].0,gap);
+            satisfy(&mut preferred,cell.column,cell.columns,measured[i].1,gap);
+        }i+=1usize;
+    }
+    i=0usize;while i<grid.columns{preferred[i]=max(preferred[i],minimum[i]);i+=1usize;}
+    (minimum,preferred)
+}
+fn intrinsic(doc:&Document,styles:&[Style],node:usize,fonts:&Fonts,containing:i32,depth:usize)->(i32,i32){
+    if !visible(styles,node){return (0,0);}
+    let style=super::resolved(styles[node],containing);
+    let extras=max(0,style.padding_left+style.padding_right+style.border_width*2+style.margin_left+style.margin_right);
+    if depth>128usize{return (min(containing,32),containing);}
+    let mut minimum=0;let mut preferred=0;
+    if doc.nodes[node].tag=="table"{
+        let grid=grid(doc,styles,node);
+        if grid.valid && grid.columns>0usize{
+            let gap=spacing(doc,node);let widths=column_preferences(doc,styles,&grid,fonts,containing,gap,depth+1usize);
+            minimum=sum(&widths.0,0usize,grid.columns)+gap*(grid.columns as i32+1);
+            preferred=sum(&widths.1,0usize,grid.columns)+gap*(grid.columns as i32+1);
+        }
+    }else if doc.nodes[node].tag=="img"{
+        let size=super::image_size(doc,node,style,8192,fonts);minimum=size.0;preferred=size.0;
+    }else{
+        let mut state=new_measure();
+        if doc.nodes[node].tag=="#text"{text_widths(&mut state,doc.nodes[node].text.as_str(),style,fonts);}
+        else{for child in &doc.nodes[node].children{walk(doc,styles,*child,fonts,containing,&mut state,depth+1usize);}}
+        state.line_end();minimum=state.minimum;preferred=state.preferred;
+    }
+    minimum=min(8192,add(minimum,extras));preferred=min(8192,add(preferred,extras));
+    if style.width>=0{
+        let declared=style.width+if style.box_border_box{0}else{extras};
+        preferred=max(minimum,declared);
+        if doc.nodes[node].children.is_empty(){minimum=max(minimum,declared);}
+    }
+    if style.max_width>=0{preferred=max(minimum,min(preferred,style.max_width+if style.box_border_box{0}else{extras}));}
+    (minimum,max(minimum,preferred))
+}
+
+/// Parent block layout may use this for shrink-to-fit auto table boxes.
+pub fn preferred(doc:&Document,styles:&[Style],node:usize,fonts:&Fonts,available:i32)->i32{
+    min(available,intrinsic(doc,styles,node,fonts,available,0usize).1)
+}
+
+fn widths(minimum:&[i32],preferred:&[i32],target:i32)->Vec<i32>{
+    let columns=minimum.len();let floor=sum(minimum,0usize,columns);let ceiling=sum(preferred,0usize,columns);
+    let mut result=minimum.to_vec();let extra=max(0,target-floor);let flexible=max(0,ceiling-floor);
+    let mut used=0i32;let mut last=columns-1usize;let mut i=0usize;
+    while i<columns{
+        let weight=if flexible>0{preferred[i]-minimum[i]}else{1};
+        if weight>0{last=i;}
+        let addition=if flexible>0{(extra as i64*weight as i64/flexible as i64) as i32}else{extra/columns as i32};
+        result[i]+=addition;used+=addition;i+=1usize;
+    }
+    result[last]+=extra-used;result
+}
+struct Painted {
+    node:usize,row:usize,rows:usize,height:i32,
+    commands_start:usize,commands_end:usize,boxes_start:usize,boxes_end:usize,
+    anchors_start:usize,anchors_end:usize,disclosures_start:usize,disclosures_end:usize,
+}
+fn move_commands(page:&mut Page,start:usize,end:usize,offset:i32){
+    let mut i=start;while i<end{
+        match &mut page.commands[i]{
+            Command::Rect(item)=>{item.y+=offset;},
+            Command::Text(item)=>{item.top+=offset;item.baseline+=offset;},
+            Command::Image(item)=>{item.y+=offset;},
+        }
+        i+=1usize;
+    }
+}
+fn vertical_alignment(doc:&Document,cell:usize,row:usize)->u8{
+    let mut value=doc.attribute(cell,"valign").to_ascii_lowercase();
+    if value.is_empty(){value=doc.attribute(row,"valign").to_ascii_lowercase();}
+    if value=="top" || value=="baseline"{0u8}else if value=="bottom"{2u8}else{1u8}
+}
+fn fallback(doc:&Document,styles:&[Style],node:usize,grid:&Grid,flow:&mut Flow,fonts:&Fonts,page:&mut Page){
+    if grid.rows.is_empty(){
+        for child in &doc.nodes[node].children{if doc.nodes[*child].tag!="caption"{super::feed(doc,styles,*child,flow,fonts,page);}}
+    }else{for row in &grid.rows{super::feed(doc,styles,row.node,flow,fonts,page);}}
+    super::flush(flow,fonts,page,false);
+}
+pub fn contents(doc:&Document,styles:&[Style],node:usize,flow:&mut Flow,fonts:&Fonts,page:&mut Page){
+    let grid=grid(doc,styles,node);
+    for child in &doc.nodes[node].children{if doc.nodes[*child].tag=="caption"{super::feed(doc,styles,*child,flow,fonts,page);}}
+    super::flush(flow,fonts,page,false);
+    if !grid.valid || grid.columns==0usize{fallback(doc,styles,node,&grid,flow,fonts,page);return;}
+    let mut gap=spacing(doc,node);
+    let measured=column_preferences(doc,styles,&grid,fonts,flow.width,gap,0usize);
+    let floor=sum(&measured.0,0usize,grid.columns);
+    if floor+gap*(grid.columns as i32+1)>flow.width{gap=min(gap,max(0,(flow.width-floor)/(grid.columns as i32+1)));}
+    let available=max(0,flow.width-gap*(grid.columns as i32+1));
+    if floor>available{fallback(doc,styles,node,&grid,flow,fonts,page);return;}
+    let ceiling=sum(&measured.1,0usize,grid.columns);
+    let table_style=styles[node];let explicit=table_style.width>=0 || table_style.width_percent>=0;
+    let target=if explicit{available}else{min(available,ceiling)};
+    let columns=widths(&measured.0,&measured.1,max(floor,target));
+    let used=sum(&columns,0usize,grid.columns)+gap*(grid.columns as i32+1);
+    let mut x=vec![flow.left+gap;grid.columns];let mut i=1usize;
+    while i<grid.columns{x[i]=x[i-1usize]+columns[i-1usize]+gap;i+=1usize;}
+    let grid_top=flow.y+gap;
+    let mut heights=vec![0i32;grid.rows.len()];let mut row_boxes:Vec<usize>=Vec::new();let mut backgrounds:Vec<usize>=Vec::new();
+    for row in &grid.rows{
+        row_boxes.push(page.boxes.len());page.boxes.push(BoxRecord{node:row.node,tag:"tr".to_string(),x:flow.left+gap,y:grid_top,width:max(0,used-gap*2),height:0});
+        backgrounds.push(page.commands.len());
+        if styles[row.node].has_background && styles[row.node].visible{page.commands.push(super::empty_rect());}
+    }
+    let mut painted:Vec<Painted>=Vec::new();
+    for cell in &grid.cells{
+        let width=sum(&columns,cell.column,cell.columns)+gap*(cell.columns as i32-1);
+        let commands_start=page.commands.len();let boxes_start=page.boxes.len();let anchors_start=page.anchors.len();let disclosures_start=page.disclosures.len();
+        let height=super::block(doc,styles,cell.node,x[cell.column],grid_top,width,fonts,page);
+        if cell.rows==1usize{heights[cell.row]=max(heights[cell.row],height);}
+        painted.push(Painted{node:cell.node,row:cell.row,rows:cell.rows,height,
+            commands_start,commands_end:page.commands.len(),boxes_start,boxes_end:page.boxes.len(),
+            anchors_start,anchors_end:page.anchors.len(),disclosures_start,disclosures_end:page.disclosures.len()});
+    }
+    i=0usize;while i<grid.rows.len(){heights[i]=max(heights[i],max(0,styles[grid.rows[i].node].height));i+=1usize;}
+    for item in &painted{
+        if item.rows>1usize{
+            let existing=sum(&heights,item.row,item.rows)+gap*(item.rows as i32-1);
+            if item.height>existing{satisfy(&mut heights,item.row,item.rows,item.height,gap);}
+        }
+    }
+    let mut tops=vec![grid_top;grid.rows.len()];i=1usize;
+    while i<grid.rows.len(){tops[i]=add(add(tops[i-1usize],heights[i-1usize]),gap);i+=1usize;}
+    i=0usize;
+    while i<grid.rows.len(){
+        let row=&grid.rows[i];page.boxes[row_boxes[i]].y=tops[i];page.boxes[row_boxes[i]].height=heights[i];
+        if styles[row.node].has_background && styles[row.node].visible{
+            page.commands[backgrounds[i]]=Command::Rect(Rect{x:flow.left+gap,y:tops[i],width:max(0,used-gap*2),height:heights[i],color:styles[row.node].background});
+        }
+        let id=doc.attribute(row.node,"id");if !id.is_empty(){page.anchors.push(Anchor{name:id,y:tops[i]});}i+=1usize;
+    }
+    for item in &painted{
+        let full=sum(&heights,item.row,item.rows)+gap*(item.rows as i32-1);
+        let extra=max(0,full-item.height);
+        let align=vertical_alignment(doc,item.node,grid.rows[item.row].node);
+        let inset=if align==0u8{0}else if align==2u8{extra}else{extra/2};
+        let offset=tops[item.row]-grid_top+inset;
+        move_commands(page,item.commands_start,item.commands_end,offset);
+        let mut at=item.boxes_start;while at<item.boxes_end{page.boxes[at].y+=offset;at+=1usize;}
+        at=item.anchors_start;while at<item.anchors_end{page.anchors[at].y+=offset;at+=1usize;}
+        at=item.disclosures_start;while at<item.disclosures_end{page.disclosures[at].y+=offset;at+=1usize;}
+        let style=super::resolved(styles[item.node],flow.width);
+        // Stretch only the cell's own box and decorations, not descendants.
+        let box_y=page.boxes[item.boxes_start].y-inset;
+        let box_height=max(page.boxes[item.boxes_start].height,full-style.margin_top-style.margin_bottom);
+        page.boxes[item.boxes_start].y=box_y;page.boxes[item.boxes_start].height=box_height;
+        if !doc.attribute(item.node,"id").is_empty() && item.anchors_start<item.anchors_end{page.anchors[item.anchors_start].y-=inset;}
+        let mut decoration=item.commands_start;
+        if style.has_background && style.visible{
+            if let Command::Rect(rect)=&mut page.commands[decoration]{rect.y=box_y;rect.height=box_height;}decoration+=1usize;
+        }
+        if style.border_width>0 && style.visible{
+            if let Command::Rect(rect)=&mut page.commands[decoration]{rect.y=box_y;}
+            if let Command::Rect(rect)=&mut page.commands[decoration+1usize]{rect.y=box_y+box_height-style.border_width;}
+            if let Command::Rect(rect)=&mut page.commands[decoration+2usize]{rect.y=box_y;rect.height=box_height;}
+            if let Command::Rect(rect)=&mut page.commands[decoration+3usize]{rect.y=box_y;rect.height=box_height;}
+        }
+    }
+    flow.y=add(add(tops[tops.len()-1usize],heights[heights.len()-1usize]),gap);
+}
+
+#[test]
+fn rowspan_reserves_columns_and_moves_links_without_overlap(){
+    let font=crate::font::metric_test_font();
+    let document=crate::html::parse("<style>body{margin:0;font-size:20px}td{padding:0}</style><body><table cellspacing='2'><tr><td rowspan='2' valign='top' style='background:#eeeeee'><a href='long'>A<br>B<br>C</a></td><td>First</td></tr><tr><td><a href='next'>Second</a></td></tr><tr><td colspan='2'>After</td></tr></table></body>");
+    let page=super::build(&document,400,&font,&font,&font,&font);
+    let mut first_x=-1;let mut second_x=-1;let mut second_y=-1;let mut after_y=-1;let mut last_span=-1;
+    for command in &page.commands{if let Command::Text(run)=command{
+        if run.text=="First"{first_x=run.x;}
+        if run.text=="Second"{second_x=run.x;second_y=run.top;assert_eq!(page.hit(run.x+1,run.top+1),"next");}
+        if run.text=="C"{last_span=run.top+run.height;}
+        if run.text=="After"{after_y=run.top;}
+    }}
+    assert!(first_x>0 && first_x==second_x);assert!(second_y>=0 && after_y>=last_span);
+}
+#[test]
+fn zero_rowspan_stays_in_its_group_and_footer_is_last(){
+    let font=crate::font::metric_test_font();
+    let document=crate::html::parse("<style>body{margin:0}td{padding:0}</style><body><table><tfoot><tr><td>Footer</td></tr></tfoot><tbody><tr><td rowspan='0'>Side</td><td>One</td></tr><tr><td>Two</td></tr></tbody><tbody><tr><td>New</td></tr></tbody></table></body>");
+    let page=super::build(&document,500,&font,&font,&font,&font);let mut one=-1;let mut two=-1;let mut side=-1;let mut fresh=-1;let mut footer_y=-1;let mut new_y=-1;
+    for command in &page.commands{if let Command::Text(run)=command{
+        if run.text=="Side"{side=run.x;}if run.text=="One"{one=run.x;}if run.text=="Two"{two=run.x;}
+        if run.text=="New"{fresh=run.x;new_y=run.top;}if run.text=="Footer"{footer_y=run.top;}
+    }}
+    assert!(one==two && one>side);assert_eq!(fresh,side);assert!(footer_y>new_y);
+}
+#[test]
+fn narrow_ranks_and_presentational_article_width_are_preserved(){
+    let font=crate::font::metric_test_font();
+    let document=crate::html::parse("<style>body{margin:0;font-size:20px}td{padding:0}p{margin:0}</style><body><table cellspacing='0'><tr><td>1.</td><td width='10'></td><td width='435'><p>one two three four five six seven eight nine ten</p><p>one two three four five six seven eight nine ten</p></td></tr></table></body>");
+    let page=super::build(&document,1000,&font,&font,&font,&font);let mut rank_width=0;let mut article_x=-1;let mut article_width=0;
+    for item in &page.boxes{if item.tag=="td"{
+        let hint=document.attribute(item.node,"width");
+        if hint=="435"{article_x=item.x;article_width=item.width;}
+        else if hint.is_empty(){rank_width=item.width;}
+    }}
+    assert!(rank_width<40);assert!(article_x>20 && article_x<60);assert_eq!(article_width,435);
+}
+#[test]
+fn intrinsic_paragraphs_do_not_add_and_images_take_width(){
+    let font=crate::font::metric_test_font();
+    let document=crate::html::parse("<style>body{margin:0;font-size:20px}td{padding:0}p{margin:0}</style><body><table cellspacing='0'><tr><td><img width='69' height='40'></td><td><p>ABCDEF</p><p>123456</p></td></tr></table></body>");
+    let page=super::build(&document,500,&font,&font,&font,&font);let mut cells=Vec::<i32>::new();
+    for item in &page.boxes{if item.tag=="td"{cells.push(item.width);}}
+    assert_eq!(cells,vec![69i32,72i32]);
+}
+
+#[test]
+fn table_cell_translation_keeps_disclosure_hit_targets(){
+    let font=crate::font::metric_test_font();
+    let document=crate::html::parse("<style>body{margin:0;font-size:20px}td{padding:0}</style><body><p>Before</p><table><tr><td>One<br>Two<br>Three</td><td><details><summary>Options</summary><p>Hidden</p></details></td></tr><tr><td colspan='2'><details><summary>Later</summary><p>Hidden</p></details></td></tr></table></body>");
+    let page=super::build(&document,500,&font,&font,&font,&font);let mut matched=0usize;
+    for command in &page.commands{if let Command::Text(run)=command{
+        if run.text=="Options" || run.text=="Later"{
+            let summary=document.nodes[run.node].parent;let details=document.nodes[summary].parent;
+            assert_eq!(page.disclosure_at(run.x+1,run.top+1),Some(details));matched+=1usize;
+        }
+        assert!(run.text!="Hidden");
+    }}
+    assert_eq!(matched,2usize);assert_eq!(page.disclosures.len(),2usize);
+}

@@ -2,8 +2,9 @@
 //! Text widths use the same loaded TrueType font and rounded advances as painting.
 
 use crate::html::Document;
-use crate::css::{Style, BLOCK, INLINE, NONE};
+use crate::css::{Style, BLOCK, INLINE, NONE, INLINE_BLOCK, FLEX, INLINE_FLEX};
 use crate::font::Font;
+mod table;
 
 pub struct TextRun {
     pub x: i32,
@@ -15,6 +16,7 @@ pub struct TextRun {
     pub color: u32,
     pub bold: bool,
     pub italic: bool,
+    pub monospace: bool,
     pub text: String,
     pub href: String,
     pub node: usize,
@@ -60,7 +62,10 @@ pub struct Anchor {
     pub y: i32,
 }
 
+pub struct Disclosure { pub node:usize, pub x:i32, pub y:i32, pub width:i32, pub height:i32 }
+
 pub struct Page {
+    pub disclosures: Vec<Disclosure>,
     pub width: i32,
     pub height: i32,
     pub background: u32,
@@ -70,14 +75,29 @@ pub struct Page {
     pub anchors: Vec<Anchor>,
 }
 
+pub struct ImageSize {
+    pub src: String,
+    pub width: i32,
+    pub height: i32,
+}
+
 struct Fonts<'a> {
+    images: &'a [ImageSize],
     regular: &'a Font,
     bold: &'a Font,
     italic: &'a Font,
     bolditalic: &'a Font,
+    mono: &'a Font,
+    monobold: &'a Font,
+    monoitalic: &'a Font,
+    monobolditalic: &'a Font,
 }
 
-fn selected<'a>(fonts: &Fonts<'a>, bold: bool, italic: bool) -> &'a Font {
+fn selected<'a>(fonts: &Fonts<'a>, bold: bool, italic: bool, monospace: bool) -> &'a Font {
+    if monospace {
+        return if bold && italic { fonts.monobolditalic } else if bold { fonts.monobold }
+            else if italic { fonts.monoitalic } else { fonts.mono };
+    }
     if bold && italic { fonts.bolditalic }
     else if bold { fonts.bold }
     else if italic { fonts.italic }
@@ -94,7 +114,7 @@ fn measured(font: &Font, text: &str, size: i32) -> i32 {
 }
 
 fn line_height(style: Style, fonts: &Fonts) -> i32 {
-    let font = selected(fonts, style.bold, style.italic);
+    let font = selected(fonts, style.bold, style.italic, style.monospace);
     let metrics = font.ascent(style.font_size) + font.descent(style.font_size);
     let desired = if style.line_height_scale > 0 {
         (style.font_size * style.line_height_scale + 500) / 1000
@@ -117,6 +137,12 @@ struct Fragment {
 }
 
 struct Flow {
+    base_left: i32,
+    base_width: i32,
+    float_left_width: i32,
+    float_right_width: i32,
+    float_left_bottom: i32,
+    float_right_bottom: i32,
     left: i32,
     width: i32,
     y: i32,
@@ -133,14 +159,22 @@ fn empty_rect() -> Command {
     Command::Rect(Rect { x: 0, y: 0, width: 0, height: 0, color: 0xffffffffu32 })
 }
 
+fn flow_bounds(flow: &mut Flow) {
+    if flow.y >= flow.float_left_bottom { flow.float_left_width = 0; }
+    if flow.y >= flow.float_right_bottom { flow.float_right_width = 0; }
+    flow.left = flow.base_left + flow.float_left_width;
+    flow.width = max(1, flow.base_width - flow.float_left_width - flow.float_right_width);
+}
+
 fn flush(flow: &mut Flow, fonts: &Fonts, page: &mut Page, force: bool) {
+    flow_bounds(flow);
     if flow.items.is_empty() {
-        if force { flow.y += line_height(flow.style, fonts); }
+        if force { flow.y += line_height(flow.style, fonts); flow_bounds(flow); }
         flow.pending_space = false;
         flow.word_start = 0usize; flow.word_before = 0; flow.word_offset = 0;
         return;
     }
-    let base_font = selected(fonts, flow.style.bold, flow.style.italic);
+    let base_font = selected(fonts, flow.style.bold, flow.style.italic, flow.style.monospace);
     let mut ascent = base_font.ascent(flow.style.font_size);
     let mut descent = base_font.descent(flow.style.font_size);
     let mut height = line_height(flow.style, fonts);
@@ -150,7 +184,7 @@ fn flush(flow: &mut Flow, fonts: &Fonts, page: &mut Page, force: bool) {
         if item.kind == 1u8 {
             ascent = max(ascent, item.image_height);
         } else {
-            let font = selected(fonts, item.style.bold, item.style.italic);
+            let font = selected(fonts, item.style.bold, item.style.italic, item.style.monospace);
             ascent = max(ascent, font.ascent(item.style.font_size));
             descent = max(descent, font.descent(item.style.font_size));
             height = max(height, line_height(item.style, fonts));
@@ -165,6 +199,7 @@ fn flush(flow: &mut Flow, fonts: &Fonts, page: &mut Page, force: bool) {
     let mut i = 0usize;
     while i < flow.items.len() {
         let item = &flow.items[i];
+        if !item.style.visible { i += 1usize; continue; }
         let x = flow.left + item.offset + alignment;
         if item.kind == 1u8 {
             page.commands.push(Command::Image(ImageBox {
@@ -173,7 +208,7 @@ fn flush(flow: &mut Flow, fonts: &Fonts, page: &mut Page, force: bool) {
                 node: item.node, href: item.href.clone(),
             }));
         } else {
-            let font = selected(fonts, item.style.bold, item.style.italic);
+            let font = selected(fonts, item.style.bold, item.style.italic, item.style.monospace);
             let top = baseline - font.ascent(item.style.font_size);
             let text_height = font.ascent(item.style.font_size) + font.descent(item.style.font_size);
             if item.style.has_background {
@@ -183,7 +218,7 @@ fn flush(flow: &mut Flow, fonts: &Fonts, page: &mut Page, force: bool) {
             }
             page.commands.push(Command::Text(TextRun {
                 x, baseline, top, height: text_height, width: item.width, size: item.style.font_size,
-                color: item.style.color, bold: item.style.bold, italic: item.style.italic,
+                color: item.style.color, bold: item.style.bold, italic: item.style.italic, monospace: item.style.monospace,
                 text: item.text.clone(), href: item.href.clone(), node: item.node,
             }));
         }
@@ -196,7 +231,7 @@ fn flush(flow: &mut Flow, fonts: &Fonts, page: &mut Page, force: bool) {
     let mut i = 0usize;
     while i < flow.items.len() {
         let item = &flow.items[i];
-        if item.kind != 0u8 || !item.style.underline { i += 1usize; continue; }
+        if item.kind != 0u8 || !item.style.underline || !item.style.visible { i += 1usize; continue; }
         let underline_y = baseline + max(2, item.style.font_size / 10);
         let thickness = max(1, item.style.font_size / 18);
         let mut right = item.offset + item.width;
@@ -225,6 +260,7 @@ fn flush(flow: &mut Flow, fonts: &Fonts, page: &mut Page, force: bool) {
         i = next;
     }
     flow.y += height;
+    flow_bounds(flow);
     flow.items.clear();
     flow.used = 0;
     flow.pending_space = false;
@@ -243,7 +279,7 @@ fn fragment(flow: &mut Flow, text: &str, width: i32, style: Style, href: &str, n
 fn word(flow: &mut Flow, text: &str, style: Style, href: &str, node: usize, link_owner: usize,
     fonts: &Fonts, page: &mut Page) {
     if text.is_empty() { return; }
-    let font = selected(fonts, style.bold, style.italic);
+    let font = selected(fonts, style.bold, style.italic, style.monospace);
     let width = measured(font, text, style.font_size);
     let begins_word = flow.pending_space || flow.word_start >= flow.items.len();
 
@@ -311,7 +347,7 @@ fn text(flow: &mut Flow, value: &str, style: Style, href: &str, node: usize, lin
     fonts: &Fonts, page: &mut Page) {
     let mut pending = String::new();
     if style.pre {
-        let font = selected(fonts, style.bold, style.italic);
+        let font = selected(fonts, style.bold, style.italic, style.monospace);
         for ch in value.chars() {
             if ch == '\r' { continue; }
             if ch == '\n' {
@@ -357,18 +393,58 @@ fn text(flow: &mut Flow, value: &str, style: Style, href: &str, node: usize, lin
     if !pending.is_empty() { word(flow, pending.as_str(), style, href, node, link_owner, fonts, page); }
 }
 
-fn image_size(doc: &Document, node: usize, style: Style, available: i32) -> (i32, i32) {
-    let mut width = 320;
-    let mut height = 180;
-    if let Ok(v) = doc.attribute(node, "width").as_str().parse::<i32>() { width = max(1, min(4096, v)); }
-    if let Ok(v) = doc.attribute(node, "height").as_str().parse::<i32>() { height = max(1, min(4096, v)); }
-    if style.width > 0 { width = style.width; }
-    if style.height > 0 { height = style.height; }
-    if width > available && available > 0 {
-        height = max(1, ((height as i64 * available as i64) / width as i64) as i32);
-        width = available;
+fn percentage(value: i32, basis: i32) -> i32 {
+    ((value as i64 * max(0, basis) as i64) / 100000i64).max(-8192i64).min(8192i64) as i32
+}
+fn resolved(mut style: Style, containing: i32) -> Style {
+    style.margin_top += percentage(style.margin_percent[0usize], containing);
+    style.margin_right += percentage(style.margin_percent[1usize], containing);
+    style.margin_bottom += percentage(style.margin_percent[2usize], containing);
+    style.margin_left += percentage(style.margin_percent[3usize], containing);
+    style.padding_top += percentage(style.padding_percent[0usize], containing);
+    style.padding_right += percentage(style.padding_percent[1usize], containing);
+    style.padding_bottom += percentage(style.padding_percent[2usize], containing);
+    style.padding_left += percentage(style.padding_percent[3usize], containing);
+    if style.width_percent >= 0 { style.width = percentage(style.width_percent, containing); }
+    if style.max_width_percent >= 0 { style.max_width = percentage(style.max_width_percent, containing); }
+    style
+}
+fn image_size(doc: &Document, node: usize, style: Style, available: i32, fonts: &Fonts) -> (i32, i32) {
+    let source = doc.attribute(node, "src");
+    let mut natural_width = 0;
+    let mut natural_height = 0;
+    for image in fonts.images {
+        if image.src == source { natural_width = image.width; natural_height = image.height; break; }
     }
-    (width, height)
+    let mut width = style.width;
+    let mut height = style.height;
+    if width < 0 {
+        if let Ok(v) = doc.attribute(node, "width").as_str().parse::<i32>() { width = max(0, min(4096, v)); }
+    }
+    if height < 0 {
+        if let Ok(v) = doc.attribute(node, "height").as_str().parse::<i32>() { height = max(0, min(4096, v)); }
+    }
+    if width < 0 && height < 0 {
+        if natural_width > 0 && natural_height > 0 { width = natural_width; height = natural_height; }
+        else {
+            // Unknown or unavailable graphics keep a compact, honest alt box.
+            // Their decoded intrinsic dimensions replace this provisional size
+            // before the final page paint when the visible resource is available.
+            let alt = doc.attribute(node, "alt");
+            width = min(320, max(24, measured(fonts.regular, alt.as_str(), 15) + 24));
+            height = 32;
+        }
+    } else if width < 0 {
+        width = if natural_height > 0 { ((height as i64 * natural_width as i64) / natural_height as i64) as i32 } else { height };
+    } else if height < 0 {
+        height = if natural_width > 0 { ((width as i64 * natural_height as i64) / natural_width as i64) as i32 } else { width };
+    }
+    let limit = if style.max_width >= 0 { min(available, style.max_width) } else { available };
+    if width > limit && limit >= 0 {
+        height = max(0, ((height as i64 * limit as i64) / max(1, width) as i64) as i32);
+        width = limit;
+    }
+    (max(0, width), max(0, height))
 }
 
 fn link_root(doc: &Document, node: usize) -> usize {
@@ -384,13 +460,62 @@ fn link_root(doc: &Document, node: usize) -> usize {
 
 fn feed(doc: &Document, styles: &[Style], node: usize, flow: &mut Flow,
     fonts: &Fonts, page: &mut Page) {
-    let style = styles[node];
+    flow_bounds(flow);
+    let style = resolved(styles[node], flow.base_width);
     if style.display == NONE { return; }
-    if style.display == BLOCK {
+    if style.position == 2u8 || style.position == 3u8 {
+        if !style.visible || style.clip_empty { return; }
+        let own_width = if style.width >= 0 { style.width } else { flow.base_width };
+        let shift = style.translate_x + percentage(style.translate_x_percent, own_width);
+        let origin = if style.inset_left != -8193 { style.inset_left }
+            else if style.inset_right != -8193 { page.width - style.inset_right - own_width } else { flow.left };
+        let intended_x = origin + shift;
+        if intended_x + own_width <= 0 || intended_x >= page.width { return; }
+    }
+    // If a float leaves less than one ordinary word of room, start below
+    // its exclusion area instead of painting a column one character wide.
+    if flow.width < min(flow.base_width, max(40, style.font_size * 3))
+        && (flow.float_left_width > 0 || flow.float_right_width > 0) && style.float_side == 0u8 {
+        flush(flow, fonts, page, false);
+        flow.y = max(flow.y, max(flow.float_left_bottom, flow.float_right_bottom));
+        flow_bounds(flow);
+    }
+    let clear = style.clear_side | style.before_clear;
+    if clear != 0u8 {
+        flush(flow, fonts, page, false);
+        if clear == 1u8 || clear == 3u8 { flow.y = max(flow.y, flow.float_left_bottom); }
+        if clear == 2u8 || clear == 3u8 { flow.y = max(flow.y, flow.float_right_bottom); }
+        flow_bounds(flow);
+    }
+    if style.float_side != 0u8 {
+        flush(flow, fonts, page, false);
+        let padding = style.padding_left + style.padding_right + style.border_width * 2;
+        let preferred = if style.width >= 0 {
+            style.width + if style.box_border_box { 0 } else { padding }
+        } else { cell_preferred(doc, styles, node, fonts, flow.base_width) };
+        let width = max(1, min(flow.base_width, preferred + style.margin_left + style.margin_right));
+        if width > flow.width {
+            flow.y = max(flow.y, max(flow.float_left_bottom, flow.float_right_bottom));
+            flow_bounds(flow);
+        }
+        let left = if style.float_side == 2u8 { flow.left + flow.width - width } else { flow.left };
+        let height = block_resolved(doc, styles, node, left, flow.y, width, style, fonts, page);
+        if style.float_side == 2u8 {
+            flow.float_right_width += width;
+            flow.float_right_bottom = max(flow.float_right_bottom, flow.y + height);
+        } else {
+            flow.float_left_width += width;
+            flow.float_left_bottom = max(flow.float_left_bottom, flow.y + height);
+        }
+        flow_bounds(flow);
+        return;
+    }
+    if style.display == BLOCK || style.display == FLEX {
         flush(flow, fonts, page, false);
         let left = flow.left; let y = flow.y; let width = flow.width;
         let height = block(doc, styles, node, left, y, width, fonts, page);
         flow.y += height;
+        flow_bounds(flow);
         flow.pending_space = false;
         return;
     }
@@ -404,7 +529,7 @@ fn feed(doc: &Document, styles: &[Style], node: usize, flow: &mut Flow,
     if !anchor.is_empty() { page.anchors.push(Anchor { name: anchor, y: flow.y }); }
     if name == "br" { flush(flow, fonts, page, true); return; }
     if name == "img" {
-        let dimensions = image_size(doc, node, style, flow.width);
+        let dimensions = image_size(doc, node, style, flow.width, fonts);
         if !flow.items.is_empty() && flow.used + dimensions.0 > flow.width {
             flush(flow, fonts, page, false);
         }
@@ -428,131 +553,221 @@ fn feed(doc: &Document, styles: &[Style], node: usize, flow: &mut Flow,
     }
 }
 
-fn bullet(doc: &Document, node: usize) -> String {
+fn alpha_marker(mut value: i32, upper: bool) -> String {
+    if value <= 0 { return format!("{}", value); }
+    let mut reversed = Vec::new();
+    while value > 0 { value -= 1; reversed.push((value % 26) as u8 + if upper { 65u8 } else { 97u8 }); value /= 26; }
+    let mut out = String::new();
+    while let Some(b) = reversed.pop() { out.push(b as char); }
+    out
+}
+fn roman_marker(mut value: i32, upper: bool) -> String {
+    if value <= 0 || value > 3999 { return format!("{}", value); }
+    let numbers = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
+    let letters = vec!["m".to_string(),"cm".to_string(),"d".to_string(),"cd".to_string(),"c".to_string(),"xc".to_string(),"l".to_string(),"xl".to_string(),"x".to_string(),"ix".to_string(),"v".to_string(),"iv".to_string(),"i".to_string()];
+    let mut out = String::new(); let mut i = 0usize;
+    while i < numbers.len() { while value >= numbers[i] { out.push_str(letters[i].as_str()); value -= numbers[i]; } i += 1usize; }
+    if upper { out.to_ascii_uppercase() } else { out }
+}
+fn bullet(doc: &Document, node: usize, kind: u8) -> String {
+    if kind == 0u8 { return String::new(); }
+    if kind == 1u8 { return "•".to_string(); }
+    if kind == 3u8 { return "◦".to_string(); }
+    if kind == 4u8 { return "▪".to_string(); }
     let parent = doc.nodes[node].parent;
-    if doc.nodes[parent].tag != "ol" { return "•".to_string(); }
-    let mut count = 0usize;
-    let mut at = 0usize;
-    while at < doc.nodes[parent].children.len() {
-        let child = doc.nodes[parent].children[at];
-        if doc.nodes[child].tag == "li" { count += 1; }
-        if child == node { break; }
-        at += 1;
+    let reversed = doc.has_attribute(parent, "reversed");
+    let mut count = 1i32;
+    if reversed {
+        count = 0;
+        for child in &doc.nodes[parent].children { if doc.nodes[*child].tag == "li" { count += 1; } }
     }
-    format!("{}.", count)
+    if let Ok(start) = doc.attribute(parent, "start").as_str().parse::<i32>() { count = start.max(-1000000).min(1000000); }
+    for child in &doc.nodes[parent].children {
+        if doc.nodes[*child].tag != "li" { continue; }
+        if let Ok(value) = doc.attribute(*child, "value").as_str().parse::<i32>() { count = value.max(-1000000).min(1000000); }
+        if *child == node { break; }
+        count += if reversed { -1 } else { 1 };
+    }
+    let marker = if kind == 5u8 || kind == 6u8 { alpha_marker(count, kind == 6u8) }
+        else if kind == 7u8 || kind == 8u8 { roman_marker(count, kind == 8u8) }
+        else { format!("{}", count) };
+    format!("{}.", marker)
 }
 
-// Readable table fallback: rows preserve document order; up to 64 columns receive
-// intrinsic text widths and may shrink to 32px. Narrow/wider tables stack cells.
-// This is not the CSS table formatting algorithm: row spans, collapsed borders,
-// column style boxes and external style sheets are not implemented here.
-fn table_rows(doc:&Document,styles:&[Style],node:usize)->Vec<usize>{
-    let mut pending=Vec::new();let mut i=doc.nodes[node].children.len();
-    while i>0usize{i-=1usize;pending.push(doc.nodes[node].children[i]);}
-    let mut rows=Vec::new();
-    while let Some(at)=pending.pop(){
-        if styles[at].display==NONE{continue;}
+fn content_widths(doc:&Document,styles:&[Style],node:usize,fonts:&Fonts,limit:i32)->(i32,i32){
+    let mut pending=vec![(node,false)];
+    let mut line=0i32;let mut word=0i32;let mut widest=0i32;let mut minimum=0i32;let mut space=false;let mut insets=0i32;
+    while let Some((at,closing))=pending.pop(){
+        let style=resolved(styles[at],limit);
+        if style.display==NONE || ((!style.visible || style.clip_empty) && (style.position==2u8 || style.position==3u8)){continue;}
         let tag=doc.nodes[at].tag.as_str();
-        if tag=="tr"{rows.push(at);}
-        else if tag=="thead" || tag=="tbody" || tag=="tfoot"{
-            let mut i=doc.nodes[at].children.len();while i>0usize{i-=1usize;pending.push(doc.nodes[at].children[i]);}
+        let breaks=style.display==BLOCK || style.display==FLEX || tag=="br";
+        let own_inset=if at==node{0}else{style.padding_left+style.padding_right+2*style.border_width+max(0,style.margin_left)+max(0,style.margin_right)};
+        if closing{
+            if breaks{widest=max(widest,line+insets);minimum=max(minimum,word+insets);line=0;word=0;space=false;insets-=own_inset;}
+            continue;
         }
-    }rows
-}
-fn cell_span(doc:&Document,node:usize)->usize{
-    match doc.attribute(node,"colspan").as_str().parse::<usize>(){
-        Ok(n)=>n.max(1usize).min(64usize),Err(_)=>1usize
-    }
-}
-fn cell_preferred(doc:&Document,styles:&[Style],node:usize,fonts:&Fonts,limit:i32)->i32{
-    let mut pending=vec![node];let mut width=0i32;let mut space=false;
-    while let Some(at)=pending.pop(){
-        let style=styles[at];if style.display==NONE{continue;}
-        if doc.nodes[at].tag=="#text"{
-            let face=selected(fonts,style.bold,style.italic);
+        if breaks{widest=max(widest,line+insets);minimum=max(minimum,word+insets);line=0;word=0;space=false;if tag!="br"{insets+=own_inset;}}
+        if tag=="#text"{
+            let face=selected(fonts,style.bold,style.italic,style.monospace);
             for ch in doc.nodes[at].text.as_str().chars(){
-                if ch==' ' || ch=='\t' || ch=='\r' || ch=='\n' || ch=='\u{000c}'{space=width>0;}
-                else{
-                    if space{width+=face.advance(32u32,style.font_size);space=false;}
-                    width+=face.advance(ch as u32,style.font_size);
-                    if width>=limit{return limit;}
+                if style.pre && ch=='\n'{widest=max(widest,line+insets);minimum=max(minimum,word+insets);line=0;word=0;space=false;}
+                else if ch==' ' || ch=='\t' || ch=='\r' || ch=='\n' || ch=='\u{000c}'{
+                    minimum=max(minimum,word+insets);word=0;space=line>0;
+                }else{
+                    if space{line=min(limit,line+face.advance(32u32,style.font_size));space=false;}
+                    let advance=face.advance(ch as u32,style.font_size);
+                    line=min(limit,line+advance);word=min(limit,word+advance);
                 }
             }
+        }else if tag=="img"{
+            let size=image_size(doc,at,style,limit,fonts);
+            minimum=max(minimum,size.0);line=min(limit,line+size.0);word=0;space=false;
         }else{
-            if doc.nodes[at].tag=="br"{space=width>0;}
+            if breaks && tag!="br"{pending.push((at,true));}
             let mut i=doc.nodes[at].children.len();
-            while i>0usize{i-=1usize;pending.push(doc.nodes[at].children[i]);}
+            while i>0usize{i-=1usize;pending.push((doc.nodes[at].children[i],false));}
         }
     }
-    let style=styles[node];
-    min(limit,max(32,width+style.padding_left+style.padding_right+2*style.border_width))
+    widest=max(widest,line+insets);minimum=max(minimum,word+insets);
+    let style=resolved(styles[node],limit);
+    let padding=style.padding_left+style.padding_right+2*style.border_width;
+    let hint=if style.width>=0{style.width+if style.box_border_box{0}else{padding}}else{0};
+    let preferred=max(hint,widest+padding);
+    (min(limit,max(1,minimum+padding)),min(limit,max(1,preferred)))
+}
+fn cell_preferred(doc:&Document,styles:&[Style],node:usize,fonts:&Fonts,limit:i32)->i32{
+    let widths=content_widths(doc,styles,node,fonts,limit);max(1,widths.1)
 }
 
-fn table_contents(doc:&Document,styles:&[Style],node:usize,flow:&mut Flow,fonts:&Fonts,page:&mut Page){
-    let rows=table_rows(doc,styles,node);let mut columns=0usize;
-    for row in &rows{
-        let mut count=0usize;
-        for cell in &doc.nodes[*row].children{
-            let tag=doc.nodes[*cell].tag.as_str();
-            if (tag=="td" || tag=="th") && styles[*cell].display!=NONE{count+=cell_span(doc,*cell);}
-        }
-        columns=columns.max(count);
-    }
-    if columns==0usize || columns>64usize || flow.width<(columns as i32)*32+(columns as i32-1)*4{
-        let mut i=0usize;while i<doc.nodes[node].children.len(){feed(doc,styles,doc.nodes[node].children[i],flow,fonts,page);i+=1usize;}
-        flush(flow,fonts,page,false);return;
-    }
-    let mut preferred=vec![32i32;columns];
-    for row in &rows{
-        let mut column=0usize;
-        for cell in &doc.nodes[*row].children{
-            let tag=doc.nodes[*cell].tag.as_str();
-            if (tag=="td" || tag=="th") && styles[*cell].display!=NONE{
-                let span=cell_span(doc,*cell);
-                if span==1usize{preferred[column]=max(preferred[column],cell_preferred(doc,styles,*cell,fonts,flow.width));}
-                column+=span;
-            }
-        }
-    }
-    let mut total=0i32;for width in &preferred{total+=*width;}
-    let gap=if total+(columns as i32-1)*12>flow.width{4}else{12};
-    let available=flow.width-(columns as i32-1)*gap;let mut widths=preferred.clone();
-    if total>available{
-        let extra=available-columns as i32*32;let preferred_extra=total-columns as i32*32;let mut i=0usize;
-        while i<columns{widths[i]=32+((preferred[i]-32) as i64*extra as i64/preferred_extra as i64) as i32;i+=1usize;}
-    }
+// A finite row/column flex formatting context for ordinary document navigation
+// and sidebars. Wrapping/grid alignment and the full flex min-size algorithm are
+// deliberately not claimed; crowded rows become readable stacked items.
+fn flex_contents(doc:&Document,styles:&[Style],node:usize,flow:&mut Flow,fonts:&Fonts,page:&mut Page){
+    let mut children:Vec<usize>=Vec::new();
     for child in &doc.nodes[node].children{
-        if doc.nodes[*child].tag=="caption"{feed(doc,styles,*child,flow,fonts,page);}
+        let style=styles[*child];
+        if style.display==NONE || ((!style.visible || style.clip_empty) && (style.position==2u8 || style.position==3u8)){continue;}
+        if doc.nodes[*child].tag=="#text" && crate::html::trim(doc.nodes[*child].text.as_str()).is_empty(){continue;}
+        children.push(*child);
     }
-    flush(flow,fonts,page,false);
-    for row in &rows{
-        let top=flow.y;let mut left=flow.left;let mut column=0usize;let mut height=0i32;
-        let row_box=page.boxes.len();page.boxes.push(BoxRecord{node:*row,tag:"tr".to_string(),x:left,y:top,width:flow.width,height:0});
-        let background=page.commands.len();if styles[*row].has_background{page.commands.push(empty_rect());}
-        let id=doc.attribute(*row,"id");if !id.is_empty(){page.anchors.push(Anchor{name:id,y:top});}
-        for cell in &doc.nodes[*row].children{
-            let tag=doc.nodes[*cell].tag.as_str();
-            if (tag=="td" || tag=="th") && styles[*cell].display!=NONE{
-                let span=cell_span(doc,*cell);let mut width=0i32;let mut i=0usize;
-                while i<span{width+=widths[column+i];if i>0usize{width+=gap;}i+=1usize;}
-                height=max(height,block(doc,styles,*cell,left,top,width,fonts,page));
-                left+=width+gap;column+=span;
-            }
+    // Stable order is observable for CSS ordered navigation, so ties keep source order.
+    let mut i=1usize;
+    while i<children.len(){
+        let current=children[i];let mut at=i;
+        while at>0usize && styles[children[at-1usize]].order>styles[current].order{
+            children[at]=children[at-1usize];at-=1usize;
         }
-        page.boxes[row_box].height=height;
-        if styles[*row].has_background{page.commands[background]=Command::Rect(Rect{x:flow.left,y:top,width:flow.width,height,color:styles[*row].background});}
-        flow.y+=height+6;
+        children[at]=current;i+=1usize;
     }
+    let parent=styles[node];
+    let count=children.len();
+    if count==0usize{return;}
+    let gap=max(0,parent.column_gap);
+    let mut widths:Vec<i32>=Vec::new();let mut minimums:Vec<i32>=Vec::new();let mut total=0i32;let mut min_total=0i32;let mut grows=0i64;
+    for child in &children{
+        let mut style=resolved(styles[*child],flow.width);
+        style.margin_left=max(0,style.margin_left);style.margin_right=max(0,style.margin_right);
+        let padding=style.padding_left+style.padding_right+2*style.border_width;
+        let mut basis=style.flex_basis;
+        if style.flex_basis_percent>=0{basis=percentage(style.flex_basis_percent,flow.width);}
+        if basis<0 && style.width>=0{basis=style.width;}
+        let width=if basis>=0{basis+if style.box_border_box{0}else{padding}}
+            else{cell_preferred(doc,styles,*child,fonts,flow.width)};
+        let outer=max(1,width+style.margin_left+style.margin_right);
+        let measured=content_widths(doc,styles,*child,fonts,flow.width);
+        let margins=style.margin_left+style.margin_right;
+        let minimum=max(padding+max(0,margins)+1,min(outer,measured.0+max(0,margins)));
+        widths.push(max(outer,minimum));minimums.push(minimum);min_total+=minimum;total+=max(outer,minimum);grows+=max(0,style.flex_grow) as i64;
+    }
+    let budget=max(1,flow.width-gap*max(0,count as i32-1));
+    let stack=parent.flex_column || (count>1usize && min_total>budget);
+    if stack{
+        for child in &children{
+            if doc.nodes[*child].tag=="#text"{feed(doc,styles,*child,flow,fonts,page);flush(flow,fonts,page,false);}
+            else{
+                let mut allocated=resolved(styles[*child],flow.width);
+                allocated.margin_left=max(0,allocated.margin_left);allocated.margin_right=max(0,allocated.margin_right);
+                if !parent.flex_column{allocated.width=-1;allocated.width_percent=-1;}
+                flow.y+=block_resolved(doc,styles,*child,flow.left,flow.y,flow.width,allocated,fonts,page);
+            }
+            flow.y+=gap;
+        }
+        flow.y-=gap;
+        return;
+    }
+    if total>budget{
+        let mut i=0usize;let mut used=0i32;
+        let extra=max(0,budget-min_total);let demand=max(1,total-min_total);
+        while i<count{widths[i]=minimums[i]+((widths[i]-minimums[i]) as i64*extra as i64/demand as i64) as i32;used+=widths[i];i+=1usize;}
+        if used<budget{widths[count-1usize]+=budget-used;}
+    }else if grows>0i64{
+        let extra=budget-total;let mut i=0usize;
+        while i<count{widths[i]+=(extra as i64*max(0,styles[children[i]].flex_grow) as i64/grows) as i32;i+=1usize;}
+    }
+    let top=flow.y;let mut left=flow.left;let mut height=0i32;let mut i=0usize;
+    while i<count{
+        let child=children[i];
+        if doc.nodes[child].tag=="#text"{
+            // Anonymous text flex item. Keep its words in the same font metrics path.
+            let mut nested=Flow{base_left:left,base_width:widths[i],float_left_width:0,float_right_width:0,float_left_bottom:top,float_right_bottom:top,
+                left,width:widths[i],y:top,used:0,items:Vec::new(),pending_space:false,word_start:0usize,word_before:0,word_offset:0,style:styles[child]};
+            feed(doc,styles,child,&mut nested,fonts,page);flush(&mut nested,fonts,page,false);
+            height=max(height,nested.y-top);
+        }else{
+            let mut allocated=resolved(styles[child],flow.width);
+            allocated.margin_left=max(0,allocated.margin_left);allocated.margin_right=max(0,allocated.margin_right);
+            // Flex distribution has already consumed width/basis percentages.
+            // The allocated outer width is authoritative; descendant percentages
+            // still resolve against this item's final content box.
+            allocated.width=-1;allocated.width_percent=-1;
+            height=max(height,block_resolved(doc,styles,child,left,top,widths[i],allocated,fonts,page));
+        }
+        left+=widths[i]+gap;i+=1usize;
+    }
+    flow.y+=height;
 }
 
 fn block(doc: &Document, styles: &[Style], node: usize, x: i32, top: i32,
     available: i32, fonts: &Fonts, page: &mut Page) -> i32 {
-    let style = styles[node];
+    let style = resolved(styles[node], available);
+    block_resolved(doc, styles, node, x, top, available, style, fonts, page)
+}
+
+fn block_resolved(doc: &Document, styles: &[Style], node: usize, x: i32, top: i32,
+    available: i32, mut style: Style, fonts: &Fonts, page: &mut Page) -> i32 {
     if style.display == NONE { return 0; }
+    // Table width hints have already participated in column allocation.
+    if doc.nodes[node].tag == "td" || doc.nodes[node].tag == "th" {
+        style.width = -1; style.width_percent = -1; style.max_width = -1; style.max_width_percent = -1;
+    }
+    if doc.nodes[node].tag == "ol" || doc.nodes[node].tag == "ul" {
+        let mut widest = 0i32;
+        for child in &doc.nodes[node].children {
+            let item = styles[*child];
+            if doc.nodes[*child].tag == "li" && item.display != NONE && item.list_style != 0u8 {
+                let mark = bullet(doc, *child, item.list_style);
+                let face = selected(fonts, item.bold, item.italic, item.monospace);
+                widest = max(widest, measured(face, mark.as_str(), item.font_size));
+            }
+        }
+        if widest > 0 {
+            // Outside markers must remain on the viewport when the author removes
+            // the body margin. Reserve only the otherwise clipped part of the gutter.
+            style.padding_left = max(style.padding_left, max(0, widest + 10 - x - style.margin_left - style.border_width));
+        }
+    }
     let padding_width = style.padding_left + style.padding_right + style.border_width * 2;
     let usable = max(1, available - style.margin_left - style.margin_right - padding_width);
-    let mut content_width = if style.width > 0 { min(usable, style.width) } else { usable };
-    if style.max_width > 0 { content_width = min(content_width, style.max_width); }
+    let declared = if style.width >= 0 && style.box_border_box { max(0, style.width - padding_width) } else { style.width };
+    let mut content_width = if declared >= 0 { min(usable, declared) } else { usable };
+    if style.max_width >= 0 {
+        let limit = if style.box_border_box { max(0, style.max_width - padding_width) } else { style.max_width };
+        content_width = min(content_width, limit);
+    }
+    if doc.nodes[node].tag == "table" && style.width < 0 {
+        content_width = min(content_width, table::preferred(doc, styles, node, fonts, content_width));
+    }
     let border_width = content_width + padding_width;
     let unused = max(0, available - border_width - style.margin_left - style.margin_right);
     let offset = if style.auto_left && style.auto_right { unused / 2 }
@@ -568,35 +783,45 @@ fn block(doc: &Document, styles: &[Style], node: usize, x: i32, top: i32,
     let anchor = doc.attribute(node, "id");
     if !anchor.is_empty() { page.anchors.push(Anchor { name: anchor, y: border_y }); }
     let background_index = page.commands.len();
-    if style.has_background { page.commands.push(empty_rect()); }
+    if style.has_background && style.visible { page.commands.push(empty_rect()); }
     let border_index = page.commands.len();
-    if style.border_width > 0 {
+    if style.border_width > 0 && style.visible {
         page.commands.push(empty_rect()); page.commands.push(empty_rect());
         page.commands.push(empty_rect()); page.commands.push(empty_rect());
     }
     let mut flow = Flow {
+        base_left: content_x, base_width: content_width,
+        float_left_width: 0, float_right_width: 0, float_left_bottom: content_y, float_right_bottom: content_y,
         left: content_x, width: content_width, y: content_y, used: 0,
         items: Vec::new(), pending_space: false, word_start: 0usize, word_before: 0, word_offset: 0, style,
     };
     if doc.nodes[node].tag == "img" {
-        let size = image_size(doc, node, style, content_width);
+        let size = image_size(doc, node, style, content_width, fonts);
         page.commands.push(Command::Image(ImageBox {
             src: doc.attribute(node, "src"), alt: doc.attribute(node, "alt"),
             x: content_x, y: content_y, width: size.0, height: size.1, node, href: doc.href_for(node),
         }));
         flow.y += size.1;
     } else if doc.nodes[node].tag == "table" {
-        table_contents(doc, styles, node, &mut flow, fonts, page);
+        table::contents(doc, styles, node, &mut flow, fonts, page);
+    } else if style.display == FLEX || style.display == INLINE_FLEX {
+        flex_contents(doc, styles, node, &mut flow, fonts, page);
     } else {
         let first_command = page.commands.len();
         let mut i = 0usize;
+        let closed_details = doc.nodes[node].tag == "details" && !doc.has_attribute(node, "open");
+        let mut summary_seen = false;
         while i < doc.nodes[node].children.len() {
-            feed(doc, styles, doc.nodes[node].children[i], &mut flow, fonts, page);
+            let child = doc.nodes[node].children[i];
+            if !closed_details || (!summary_seen && doc.nodes[child].tag == "summary") {
+                feed(doc, styles, child, &mut flow, fonts, page);
+                if closed_details { summary_seen = true; }
+            }
             i += 1;
         }
         flush(&mut flow, fonts, page, false);
-        if doc.nodes[node].tag == "li" {
-            let font = selected(fonts, style.bold, style.italic);
+        if doc.nodes[node].tag == "li" && style.list_style != 0u8 && style.visible {
+            let font = selected(fonts, style.bold, style.italic, style.monospace);
             let mut baseline = content_y + font.ascent(style.font_size)
                 + max(0, line_height(style, fonts) - font.ascent(style.font_size) - font.descent(style.font_size)) / 2;
             let mut i = first_command;
@@ -604,26 +829,30 @@ fn block(doc: &Document, styles: &[Style], node: usize, x: i32, top: i32,
                 if let Command::Text(run) = &page.commands[i] { baseline = run.baseline; break; }
                 i += 1;
             }
-            let mark = bullet(doc, node);
+            let mark = bullet(doc, node, style.list_style);
             let width = measured(font, mark.as_str(), style.font_size);
             let top = baseline - font.ascent(style.font_size);
             page.commands.push(Command::Text(TextRun {
                 x: content_x - width - 10, baseline, top,
                 height: font.ascent(style.font_size) + font.descent(style.font_size),
-                width, size: style.font_size, color: style.color, bold: style.bold, italic: style.italic,
+                width, size: style.font_size, color: style.color, bold: style.bold, italic: style.italic, monospace: style.monospace,
                 text: mark, href: String::new(), node,
             }));
         }
     }
+    flow.y = max(flow.y, max(flow.float_left_bottom, flow.float_right_bottom));
     let content_height = max(max(0, flow.y - content_y), max(0, style.height));
     let height = content_height + style.padding_top + style.padding_bottom + style.border_width * 2;
     page.boxes[box_index].height = height;
-    if style.has_background {
+    if doc.nodes[node].tag == "summary" && style.visible && doc.nodes[doc.nodes[node].parent].tag == "details" {
+        page.disclosures.push(Disclosure{node:doc.nodes[node].parent,x:border_x,y:border_y,width:border_width,height});
+    }
+    if style.has_background && style.visible {
         page.commands[background_index] = Command::Rect(Rect {
             x: border_x, y: border_y, width: border_width, height, color: style.background,
         });
     }
-    if style.border_width > 0 {
+    if style.border_width > 0 && style.visible {
         let b = style.border_width;
         let color = style.border_color;
         page.commands[border_index] = Command::Rect(Rect { x: border_x, y: border_y, width: border_width, height: b, color });
@@ -647,8 +876,27 @@ pub fn build_viewport(doc: &Document, width: i32, viewport_height: i32, regular:
 /// Layout width may reserve a scrollbar; CSS units and media use viewport axes.
 pub fn build_in_viewport(doc: &Document, width: i32, viewport_width: i32, viewport_height: i32,
     regular: &Font, bold: &Font, italic: &Font, bolditalic: &Font) -> Page {
-    let fonts = Fonts { regular, bold, italic, bolditalic };
+    let images: Vec<ImageSize> = Vec::new();
+    build_with_images(doc, width, viewport_width, viewport_height, regular, bold, italic, bolditalic, &images)
+}
+
+pub fn build_with_images(doc: &Document, width: i32, viewport_width: i32, viewport_height: i32,
+    regular: &Font, bold: &Font, italic: &Font, bolditalic: &Font, images: &[ImageSize]) -> Page {
     let styles = crate::css::compute_viewport(doc, max(0, viewport_width), max(0, viewport_height));
+    build_styled(doc, &styles, width, regular, bold, italic, bolditalic, images)
+}
+
+/// Image intrinsic-size reflow does not change CSS or the document tree.
+pub fn build_styled(doc: &Document, styles: &[Style], width: i32,
+    regular: &Font, bold: &Font, italic: &Font, bolditalic: &Font, images: &[ImageSize]) -> Page {
+    build_styled_faces(doc, styles, width, regular, bold, italic, bolditalic,
+        regular, bold, italic, bolditalic, images)
+}
+
+pub fn build_styled_faces(doc: &Document, styles: &[Style], width: i32,
+    regular: &Font, bold: &Font, italic: &Font, bolditalic: &Font,
+    mono: &Font, monobold: &Font, monoitalic: &Font, monobolditalic: &Font, images: &[ImageSize]) -> Page {
+    let fonts = Fonts { regular, bold, italic, bolditalic, mono, monobold, monoitalic, monobolditalic, images };
     let mut background = 0xffffffffu32;
     let mut i = 0usize;
     while i < doc.nodes.len() {
@@ -660,9 +908,9 @@ pub fn build_in_viewport(doc: &Document, width: i32, viewport_width: i32, viewpo
     let width = max(80, width);
     let mut page = Page {
         width, height: 0, background, title: doc.title.clone(), commands: Vec::new(),
-        boxes: Vec::new(), anchors: Vec::new(),
+        boxes: Vec::new(), anchors: Vec::new(), disclosures: Vec::new(),
     };
-    let height = block(doc, &styles, 0usize, 0, 0, width, &fonts, &mut page);
+    let height = block(doc, styles, 0usize, 0, 0, width, &fonts, &mut page);
     page.height = max(1, height);
     page
 }
@@ -683,6 +931,12 @@ fn escaped(value: &str) -> String {
 }
 
 impl Page {
+    pub fn disclosure_at(&self,x:i32,y:i32)->Option<usize>{
+        let mut i=self.disclosures.len();
+        while i>0usize{i-=1usize;let item=&self.disclosures[i];
+            if x>=item.x && x<item.x+item.width && y>=item.y && y<item.y+item.height{return Some(item.node);}
+        }None
+    }
     pub fn hit(&self, x: i32, y: i32) -> String {
         let mut i = self.commands.len();
         while i > 0usize {
@@ -731,8 +985,8 @@ impl Page {
                 Command::Rect(r) => result.push_str(format!("rect x={} y={} w={} h={} color={:08x}\n",
                     r.x, r.y, r.width, r.height, r.color).as_str()),
                 Command::Text(t) => result.push_str(format!(
-                    "text node={} x={} baseline={} top={} w={} h={} size={} bold={} italic={} color={:08x} href=\"{}\" value=\"{}\"\n",
-                    t.node, t.x, t.baseline, t.top, t.width, t.height, t.size, t.bold, t.italic,
+                    "text node={} x={} baseline={} top={} w={} h={} size={} bold={} italic={} monospace={} color={:08x} href=\"{}\" value=\"{}\"\n",
+                    t.node, t.x, t.baseline, t.top, t.width, t.height, t.size, t.bold, t.italic, t.monospace,
                     t.color, escaped(t.href.as_str()), escaped(t.text.as_str())).as_str()),
                 Command::Image(im) => result.push_str(format!(
                     "image node={} x={} y={} w={} h={} src=\"{}\" alt=\"{}\" href=\"{}\"\n",
@@ -981,4 +1235,96 @@ fn table_column_width_measures_styled_descendant_text(){
         if baseline<0{baseline=run.baseline;}else{assert_eq!(run.baseline,baseline);}
         text.push_str(run.text.as_str());runs+=1usize;
     }}assert_eq!(runs,4usize);assert_eq!(text,"ABCDABCD");
+}
+
+#[test]
+fn floats_measure_lines_and_images_and_leave_readable_text(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0;font-size:20px}p{margin:0}.aside{float:right}img{display:block}</style><body><div class='aside'><p>short line</p><p>another one</p><img src='logo.gif' width='160' height='50'></div><p id='body'>A paragraph continues in the available column.</p></body>");
+    let page=build(&doc,600,&font,&font,&font,&font);
+    let mut column=0;let mut image_width=0;
+    for item in &page.boxes{if doc.attribute(item.node,"id")=="body"{column=item.width;}}
+    for command in &page.commands{if let Command::Image(im)=command{image_width=im.width;}}
+    assert!(column>=400);assert_eq!(image_width,160);
+}
+#[test]
+fn full_width_float_moves_following_text_below_its_exclusion(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0}.wide{float:right;width:100%;height:90px}p{margin:0}</style><body><div class='wide'>Banner</div><p id='body'>Readable words follow the banner.</p></body>");
+    let page=build(&doc,300,&font,&font,&font,&font);
+    for item in &page.boxes{if doc.attribute(item.node,"id")=="body"{assert_eq!(item.width,300);assert!(item.y>=90);}}
+}
+#[test]
+fn clipped_and_closed_document_controls_do_not_bury_the_article(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0}.hidden{position:absolute;clip:rect(1px,1px,1px,1px);width:1px;height:1px}.drawer{position:fixed;left:0;width:300px;transform:translateX(calc(-100% - 10px))}</style><body><a class='hidden'>Invisible</a><div class='drawer'>Closed drawer</div><details><summary>Options</summary><p>Closed contents</p></details><p>Article</p></body>");
+    let page=build(&doc,600,&font,&font,&font,&font);let mut visible=String::new();
+    for command in &page.commands{if let Command::Text(run)=command{visible.push_str(run.text.as_str());}}
+    assert_eq!(visible,"OptionsArticle");assert_eq!(page.disclosures.len(),1usize);
+    let d=&page.disclosures[0usize];assert_eq!(page.disclosure_at(d.x+1,d.y+1),Some(d.node));
+}
+#[test]
+fn image_size_reflow_reuses_identical_computed_styles(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0}img{max-width:100%}p{color:#123456}</style><body><img src='wide.jpg'><p>After image</p></body>");
+    let images=vec![ImageSize{src:"wide.jpg".to_string(),width:800,height:400}];
+    let styles=crate::css::compute_viewport(&doc,300,500);
+    let cached=build_styled(&doc,&styles,300,&font,&font,&font,&font,&images);
+    let fresh=build_with_images(&doc,300,300,500,&font,&font,&font,&font,&images);
+    assert_eq!(cached.dump(),fresh.dump());
+    for command in &cached.commands{if let Command::Image(im)=command{assert_eq!(im.width,300);assert_eq!(im.height,150);}}
+}
+
+#[test]
+fn floated_navigation_includes_nested_link_padding(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0;font-size:20px}ul{padding:0}li{float:left;list-style:none;margin:0}a{display:block;padding:8px 12px}</style><body><ul><li><a>Home</a></li><li><a>Documentation</a></li></ul></body>");
+    let page=build(&doc,600,&font,&font,&font,&font);let mut count=0;let mut baseline=-1;
+    for command in &page.commands{if let Command::Text(run)=command{
+        assert!(run.text=="Home" || run.text=="Documentation");
+        if baseline<0{baseline=run.baseline;}else{assert_eq!(baseline,run.baseline);}count+=1;
+    }}assert_eq!(count,2);
+}
+
+#[test]
+fn multi_digit_list_markers_remain_inside_a_marginless_viewport(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0;font-size:20px}</style><body><ol start='9'><li>Nine</li><li>Ten</li><li>Eleven</li></ol></body>");
+    let page=build(&doc,300,&font,&font,&font,&font);let mut markers=0;
+    for command in &page.commands{if let Command::Text(run)=command{
+        if run.text=="9." || run.text=="10." || run.text=="11."{assert!(run.x>=0);markers+=1;}
+    }}assert_eq!(markers,3);
+}
+
+#[test]
+fn float_and_flex_percentages_are_resolved_once(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0}.row{width:400px}.half{width:50%}.floating{float:left}.flex{display:flex}</style><body><div class='row'><div id='float' class='half floating'>Half width</div></div><div class='row flex'><div id='flex1' class='half'>First</div><div id='flex2' class='half'>Second</div></div></body>");
+    let page=build(&doc,500,&font,&font,&font,&font);let mut found=0;
+    for item in &page.boxes{
+        let id=doc.attribute(item.node,"id");
+        if id=="float" || id=="flex1" || id=="flex2"{assert_eq!(item.width,200);found+=1;}
+    }assert_eq!(found,3);
+}
+#[test]
+fn padded_flex_items_stack_when_their_minimum_boxes_do_not_fit(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0}.row{display:flex;width:400px}.item{padding:10px 120px}</style><body><div class='row'><div id='first' class='item'>First</div><div id='second' class='item'>Second</div></div></body>");
+    let page=build(&doc,500,&font,&font,&font,&font);let mut end=-1;
+    for item in &page.boxes{
+        let id=doc.attribute(item.node,"id");
+        if id=="first"{assert!(item.width<=400);end=item.y+item.height;}
+        if id=="second"{assert!(item.x+item.width<=400);assert!(item.y>=end);}
+    }assert!(end>0);
+}
+
+#[test]
+fn readable_flex_fallback_keeps_negative_margin_items_separate(){
+    let font=crate::font::metric_test_font();
+    let doc=crate::html::parse("<style>body{margin:0;font-size:20px}.row{display:flex}.item{margin:0 -8px;padding:0 8px}</style><body><div class='row'><div class='item'>Article</div><div class='item'>Read</div></div></body>");
+    let page=build(&doc,400,&font,&font,&font,&font);let mut right=-1;
+    for command in &page.commands{if let Command::Text(run)=command{
+        if run.text=="Article"{right=run.x+run.width;}
+        if run.text=="Read"{assert!(run.x>=right+8);}
+    }}assert!(right>0);
 }

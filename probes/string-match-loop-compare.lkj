@@ -1,0 +1,13 @@
+fn words(value: &str) -> Vec<String> { vec![value.to_string()] }
+fn compare(value: &str, expected: &str, operator: u8) -> Option<bool> {
+    let original = value.to_string();
+    let actual = original.as_str();
+    let desired = expected.to_string();
+    let desired = desired.as_str();
+    Some(match operator {
+        1u8 => actual == desired,
+        2u8 => { let mut found = false; for item in words(actual) { if item == desired { found = true; } } found && !desired.is_empty() },
+        _ => false,
+    })
+}
+fn main() -> i32 { if compare("a", "a", 2u8).unwrap() { 1 } else { 0 } }

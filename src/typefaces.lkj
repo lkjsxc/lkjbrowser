@@ -1,0 +1,51 @@
+//! Runtime page typefaces. Optional mono files preserve existing four-face overrides.
+use crate::font::Font;
+use crate::net;
+
+pub struct Fonts {
+ pub normal:Font,pub bold:Font,pub italic:Font,pub bolditalic:Font,
+ pub mono:Font,pub monobold:Font,pub monoitalic:Font,pub monobolditalic:Font,
+}
+
+// Preserve the four-face selection and failure behavior used by the original UI.
+fn load_face(world:&mut World,filename:&str,fallback:&str,override_dir:&str)->Result<Font,String>{
+ if !override_dir.is_empty(){
+  return Font::parse(net::read_path(world,format!("{}/{}",override_dir,filename).as_str())?);
+ }
+ let candidates=vec![
+  format!("/usr/share/fonts/truetype/liberation/{}",filename),
+  format!("/usr/share/fonts/truetype/liberation2/{}",filename),
+  format!("/usr/share/fonts/truetype/dejavu/{}",fallback),
+  "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf".to_string(),
+ ];
+ for path in candidates{
+  if let Ok(bytes)=net::read_path(world,path.as_str()){return Font::parse(bytes);}
+ }
+ Err("No usable TrueType font found. Install Liberation Sans or pass --font-dir DIRECTORY.".to_string())
+}
+
+fn load_mono(world:&mut World,filename:&str,fallback:&str,sans:&str,sans_fallback:&str,override_dir:&str)->Result<Font,String>{
+ let mut candidates=Vec::<String>::new();
+ if !override_dir.is_empty(){candidates.push(format!("{}/{}",override_dir,filename));}
+ candidates.push(format!("/usr/share/fonts/truetype/liberation/{}",filename));
+ candidates.push(format!("/usr/share/fonts/truetype/liberation2/{}",filename));
+ candidates.push(format!("/usr/share/fonts/truetype/dejavu/{}",fallback));
+ for path in candidates{
+  if let Ok(bytes)=net::read_path(world,path.as_str()){return Font::parse(bytes);}
+ }
+ // Each fallback owns an independent Font and glyph cache. No Font clone or
+ // foreign font service is needed; existing four-file --font-dir users still work.
+ load_face(world,sans,sans_fallback,override_dir)
+}
+
+pub fn load(world:&mut World,directory:&str)->Result<Fonts,String>{
+ let normal=load_face(world,"LiberationSans-Regular.ttf","DejaVuSans.ttf",directory)?;
+ let bold=load_face(world,"LiberationSans-Bold.ttf","DejaVuSans-Bold.ttf",directory)?;
+ let italic=load_face(world,"LiberationSans-Italic.ttf","DejaVuSans-Oblique.ttf",directory)?;
+ let bolditalic=load_face(world,"LiberationSans-BoldItalic.ttf","DejaVuSans-BoldOblique.ttf",directory)?;
+ let mono=load_mono(world,"LiberationMono-Regular.ttf","DejaVuSansMono.ttf","LiberationSans-Regular.ttf","DejaVuSans.ttf",directory)?;
+ let monobold=load_mono(world,"LiberationMono-Bold.ttf","DejaVuSansMono-Bold.ttf","LiberationSans-Bold.ttf","DejaVuSans-Bold.ttf",directory)?;
+ let monoitalic=load_mono(world,"LiberationMono-Italic.ttf","DejaVuSansMono-Oblique.ttf","LiberationSans-Italic.ttf","DejaVuSans-Oblique.ttf",directory)?;
+ let monobolditalic=load_mono(world,"LiberationMono-BoldItalic.ttf","DejaVuSansMono-BoldOblique.ttf","LiberationSans-BoldItalic.ttf","DejaVuSans-BoldOblique.ttf",directory)?;
+ Ok(Fonts{normal,bold,italic,bolditalic,mono,monobold,monoitalic,monobolditalic})
+}

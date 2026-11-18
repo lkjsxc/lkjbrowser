@@ -7,6 +7,9 @@ use crate::html::{Document, trim, whitespace};
 pub const NONE: u8 = 0u8;
 pub const INLINE: u8 = 1u8;
 pub const BLOCK: u8 = 2u8;
+pub const INLINE_BLOCK: u8 = 3u8;
+pub const FLEX: u8 = 4u8;
+pub const INLINE_FLEX: u8 = 5u8;
 
 #[derive(Copy, Clone)]
 pub struct Style {
@@ -19,6 +22,7 @@ pub struct Style {
     pub line_height_scale: i32,
     pub bold: bool,
     pub italic: bool,
+    pub monospace: bool,
     pub underline: bool,
     pub pre: bool,
     pub margin_top: i32,
@@ -33,6 +37,37 @@ pub struct Style {
     pub border_color: u32,
     pub width: i32,
     pub max_width: i32,
+    // Layout resolves these against the containing block. 100% = 100000.
+    // Percentage width -1 is absent; margin/padding add to their pixel fields.
+    pub width_percent: i32,
+    pub max_width_percent: i32,
+    pub margin_percent: [i32; 4],
+    pub padding_percent: [i32; 4],
+    pub box_border_box: bool,
+    // none, disc, decimal, circle, square, lower/upper-alpha, lower/upper-roman.
+    pub list_style: u8,
+    pub visible: bool,
+    pub clip_empty: bool,
+    pub before_clear: u8,
+    pub after_clear: u8,
+    // static, relative, absolute, fixed, sticky.
+    pub position: u8,
+    // none, left, right; clear adds both as 3.
+    pub float_side: u8,
+    pub clear_side: u8,
+    pub flex_column: bool,
+    pub flex_grow: i32,
+    pub flex_basis: i32,
+    pub flex_basis_percent: i32,
+    pub order: i32,
+    pub column_gap: i32,
+    pub translate_x: i32,
+    pub translate_x_percent: i32,
+    // -8193 means auto (outside the permitted absolute-coordinate range).
+    pub inset_top: i32,
+    pub inset_right: i32,
+    pub inset_bottom: i32,
+    pub inset_left: i32,
     pub height: i32,
     pub auto_left: bool,
     pub auto_right: bool,
@@ -49,15 +84,25 @@ pub struct Rule {
     pub parts: Vec<String>,
     pub specificity: [usize; 3],
     pub declarations: Vec<Declaration>,
+    pub pseudo: u8,
+    pub key_tag: String,
+    pub key_id: String,
+    pub key_class: String,
 }
 
 pub fn initial() -> Style {
     Style {
         display: INLINE, color: 0xff263342u32, background: 0xffffffffu32, has_background: false,
-        font_size: 18, line_height: 0, line_height_scale: 1500, bold: false, italic: false, underline: false, pre: false,
+        font_size: 18, line_height: 0, line_height_scale: 1500, bold: false, italic: false, monospace: false, underline: false, pre: false,
         margin_top: 0, margin_right: 0, margin_bottom: 0, margin_left: 0,
         padding_top: 0, padding_right: 0, padding_bottom: 0, padding_left: 0,
         border_width: 0, border_color: 0xffd8e0e7u32, width: -1, max_width: -1, height: -1,
+        width_percent: -1, max_width_percent: -1, margin_percent: [0i32; 4], padding_percent: [0i32; 4],
+        box_border_box: false, list_style: 1u8,
+        visible: true, clip_empty: false, before_clear: 0u8, after_clear: 0u8, position: 0u8, float_side: 0u8, clear_side: 0u8,
+        flex_column: false, flex_grow: 0, flex_basis: -1, flex_basis_percent: -1, order: 0, column_gap: 0,
+        translate_x: 0, translate_x_percent: 0,
+        inset_top: -8193, inset_right: -8193, inset_bottom: -8193, inset_left: -8193,
         auto_left: false, auto_right: false, align: 0u8,
     }
 }
@@ -70,9 +115,12 @@ fn inherited(parent: Style) -> Style {
     result.line_height_scale = parent.line_height_scale;
     result.bold = parent.bold;
     result.italic = parent.italic;
+    result.monospace = parent.monospace;
     result.underline = parent.underline;
     result.pre = parent.pre;
     result.align = parent.align;
+    result.list_style = parent.list_style;
+    result.visible = parent.visible;
     result
 }
 
@@ -82,7 +130,8 @@ fn ua_style(tag: &str, parent: Style) -> Style {
         "#document" | "html" | "body" | "main" | "article" | "section" | "div" | "header" |
         "footer" | "nav" | "aside" | "address" | "form" | "figure" | "figcaption" | "details" |
         "summary" | "dl" | "dt" | "dd" | "fieldset" | "thead" | "tbody" | "tfoot" | "tr" => { s.display = BLOCK; },
-        "table" => { s.display = BLOCK; s.margin_bottom = 18; },
+        "center" => { s.display = BLOCK; s.align = 1u8; },
+        "table" => { s.display = BLOCK; s.margin_bottom = 18; s.align = 0u8; },
         "caption" => { s.display = BLOCK; s.bold = true; s.margin_bottom = 8; },
         "td" | "th" => { s.display = BLOCK; s.padding_top = 4; s.padding_bottom = 4;
             if tag == "th" { s.bold = true; } },
@@ -98,16 +147,18 @@ fn ua_style(tag: &str, parent: Style) -> Style {
             s.margin_top = 21; s.margin_bottom = 11; s.line_height = 30; s.line_height_scale = 0; },
         "h4" | "h5" | "h6" => { s.display = BLOCK; s.font_size = 19; s.bold = true;
             s.margin_top = 18; s.margin_bottom = 10; s.line_height = 27; s.line_height_scale = 0; },
-        "ul" | "ol" => { s.display = BLOCK; s.padding_left = 26; s.margin_bottom = 18; },
+        "ul" | "ol" => { s.display = BLOCK; s.padding_left = 26; s.margin_bottom = 18;
+            s.list_style = if tag == "ol" { 2u8 } else { 1u8 }; },
         "li" => { s.display = BLOCK; s.margin_bottom = 8; },
         "blockquote" => { s.display = BLOCK; s.margin_top = 10; s.margin_bottom = 20;
             s.padding_left = 22; s.padding_right = 22; s.padding_top = 16; s.padding_bottom = 8;
             s.background = 0xfff1f5f7u32; s.has_background = true; },
-        "pre" => { s.display = BLOCK; s.pre = true; s.font_size = 16; s.line_height = 24; s.line_height_scale = 0;
+        "pre" => { s.display = BLOCK; s.pre = true; s.monospace = true; s.font_size = 16; s.line_height = 24; s.line_height_scale = 0;
             s.padding_top = 16; s.padding_right = 18; s.padding_bottom = 16; s.padding_left = 18;
             s.margin_bottom = 18; s.background = 0xfff1f5f7u32; s.has_background = true; },
         "hr" => { s.display = BLOCK; s.margin_top = 18; s.margin_bottom = 18; s.border_width = 1; s.height = 0; },
         "a" => { s.color = 0xff1769a4u32; s.underline = true; },
+        "code" | "tt" | "kbd" | "samp" => { s.monospace = true; },
         "strong" | "b" => { s.bold = true; },
         "em" | "i" | "cite" => { s.italic = true; },
         "small" => { s.font_size = clamp((s.font_size * 5) / 6, 6, 160); },
@@ -182,12 +233,37 @@ pub fn length(value: &str, font_size: i32) -> Option<i32> {
 
 /// Zero viewport axes mean that viewport-relative units cannot be resolved.
 pub fn length_viewport(value: &str, font_size: i32, viewport_width: i32, viewport_height: i32) -> Option<i32> {
+    length_root(value, font_size, viewport_width, viewport_height, 18)
+}
+
+fn length_root(value: &str, font_size: i32, viewport_width: i32, viewport_height: i32, root_size: i32) -> Option<i32> {
+    length_inner(value, font_size, viewport_width, viewport_height, root_size, 0usize)
+}
+
+fn length_inner(value: &str, font_size: i32, viewport_width: i32, viewport_height: i32, root_size: i32, depth: usize) -> Option<i32> {
+    if depth > 8usize { return None; }
     let text = trim(value);
+    if (text.starts_with("min(") || text.starts_with("max(")) && text.ends_with(')') {
+        let inner = &text[4usize..text.len() - 1usize]; let mut values: Vec<i32> = Vec::new();
+        for item in inner.split(',') {
+            values.push(length_inner(item, font_size, viewport_width, viewport_height, root_size, depth + 1usize)?);
+        }
+        if values.len() < 2usize || values.len() > 8usize { return None; }
+        let mut result = values[0]; let mut i = 1usize;
+        while i < values.len() {
+            result = if text.starts_with("min(") { result.min(values[i]) } else { result.max(values[i]) };
+            i += 1usize;
+        }
+        return Some(result);
+    }
     let mut end = text.len();
     let mut scale = 1000i64;
+    let mut units = 1i64;
     if text.ends_with("px") { end -= 2usize; }
-    else if text.ends_with("rem") { end -= 3usize; scale = 18000; }
+    else if text.ends_with("rem") { end -= 3usize; scale = root_size as i64 * 1000i64; }
+    else if text.ends_with("pt") { end -= 2usize; scale = 4000i64; units = 3i64; }
     else if text.ends_with("em") { end -= 2usize; scale = font_size as i64 * 1000i64; }
+    else if text.ends_with("ex") { end -= 2usize; scale = font_size as i64 * 500i64; }
     else if text.ends_with('%') { end -= 1usize; scale = font_size as i64 * 10i64; }
     else if text.ends_with("vw") { if viewport_width <= 0 { return None; } end -= 2usize; scale = viewport_width as i64 * 10i64; }
     else if text.ends_with("vh") { if viewport_height <= 0 { return None; } end -= 2usize; scale = viewport_height as i64 * 10i64; }
@@ -196,8 +272,8 @@ pub fn length_viewport(value: &str, font_size: i32, viewport_width: i32, viewpor
     // Public callers can supply an i32-sized viewport or font-size axis.
     let magnitude = if parsed < 0 { -(parsed as i64) } else { parsed as i64 };
     let divisor = if scale < 0 { -scale } else { scale };
-    if divisor > 0i64 && magnitude > 8193000000i64 / divisor { return None; }
-    let scaled = (parsed as i64 * scale) / 1000000i64;
+    if divisor > 0i64 && magnitude > (8193000000i64 * units) / divisor { return None; }
+    let scaled = (parsed as i64 * scale) / (1000000i64 * units);
     if scaled < -8192i64 || scaled > 8192i64 { return None; }
     Some(scaled as i32)
 }
@@ -279,14 +355,14 @@ fn font_shorthand(value:&str,important:bool)->Option<Vec<Declaration>>{
     }
     if i>=tokens.len(){return None;}
     let size=tokens[i].clone();let raw=size.as_str();
-    if !(raw.ends_with("px") || raw.ends_with("em") || raw.ends_with('%') || raw.ends_with("vh") || raw.ends_with("vw")){return None;}
+    if !(raw.ends_with("px") || raw.ends_with("pt") || raw.ends_with("em") || raw.ends_with('%') || raw.ends_with("vh") || raw.ends_with("vw")){return None;}
     if length_viewport(raw,18,100,100)?<=0{return None;}
     i+=1usize;let mut line="normal".to_string();
     if i<tokens.len() && tokens[i]=="/"{
         i+=1usize;if i>=tokens.len(){return None;}line=tokens[i].clone();i+=1usize;
         if line!="normal"{
             if let Some(n)=number_milli(line.as_str()){if n<0{return None;}}
-            else if let Some(n)=box_length(line.as_str(),18,100,100){if n<0{return None;}}
+            else if let Some(n)=box_length(line.as_str(),18,100,100,18){if n<0{return None;}}
             else{return None;}
         }
     }
@@ -296,7 +372,9 @@ fn font_shorthand(value:&str,important:bool)->Option<Vec<Declaration>>{
     result.push(Declaration{name:"font-size".to_string(),value:size,important});
     result.push(Declaration{name:"font-weight".to_string(),value:weight,important});
     result.push(Declaration{name:"font-style".to_string(),value:posture,important});
-    result.push(Declaration{name:"line-height".to_string(),value:line,important});Some(result)
+    result.push(Declaration{name:"line-height".to_string(),value:line,important});
+    let mut family=String::new();while i<tokens.len(){if !family.is_empty(){family.push(' ');}family.push_str(tokens[i].as_str());i+=1usize;}
+    result.push(Declaration{name:"font-family".to_string(),value:family,important});Some(result)
 }
 
 pub fn declarations(source: &str) -> Vec<Declaration> {
@@ -350,38 +428,230 @@ fn strip_comments(source: &str) -> String {
     result
 }
 
-fn selector_parts(selector: &str) -> Vec<String> {
-    let mut result: Vec<String> = Vec::new();
-    let bytes = selector.as_bytes();
-    let mut at = 0usize;
+// Split selector lists and compounds without treating commas or whitespace in
+// attribute values and functional pseudo-classes as outer separators.
+fn selector_list(source: &str) -> Vec<String> {
+    let bytes = source.as_bytes(); let mut result = Vec::new();
+    let mut at = 0usize; let mut start = 0usize; let mut nesting = 0usize; let mut quote = 0u8;
     while at < bytes.len() {
-        while at < bytes.len() && whitespace(bytes[at]) { at += 1; }
+        let b = bytes[at];
+        if quote != 0u8 {
+            if b == 92u8 && at + 1usize < bytes.len() { at += 2usize; continue; }
+            if b == quote { quote = 0u8; }
+        } else if b == 34u8 || b == 39u8 { quote = b; }
+        else if b == 40u8 || b == 91u8 { nesting += 1usize; }
+        else if b == 41u8 || b == 93u8 { if nesting > 0usize { nesting -= 1usize; } }
+        else if b == 44u8 && nesting == 0usize { result.push(trim(&source[start..at]).to_string()); start = at + 1usize; }
+        at += 1usize;
+    }
+    result.push(trim(&source[start..]).to_string()); result
+}
+
+fn selector_key(parts: &[String]) -> (String, String, String) {
+    let mut tag=String::new();let mut id=String::new();let mut class=String::new();
+    if parts.is_empty(){return (tag,id,class);}
+    let part=parts[parts.len()-1usize].as_str();let bytes=part.as_bytes();let mut at=0usize;
+    if at<bytes.len() && selector_name_byte(bytes[at]){
+        while at<bytes.len() && selector_name_byte(bytes[at]){at+=1usize;}
+        tag=part[..at].to_ascii_lowercase();
+    }else if at<bytes.len() && bytes[at]==42u8{at+=1usize;}
+    while at<bytes.len() && (bytes[at]==35u8 || bytes[at]==46u8){
+        let kind=bytes[at];at+=1usize;let start=at;
+        while at<bytes.len() && selector_name_byte(bytes[at]){at+=1usize;}
+        if at==start{break;}
+        if kind==35u8 && id.is_empty(){id=part[start..at].to_string();}
+        if kind==46u8 && class.is_empty(){class=part[start..at].to_string();}
+    }
+    (tag,id,class)
+}
+
+fn make_rule(mut parts: Vec<String>, declarations: Vec<Declaration>) -> Rule {
+    let specificity=specificity(&parts);let mut pseudo=0u8;
+    if !parts.is_empty(){
+        let last=parts.len()-1usize;let owned_name=parts[last].clone();let name=owned_name.as_str();
+        let length=if name.ends_with("::before"){8usize}else if name.ends_with(":before"){7usize}
+            else if name.ends_with("::after"){7usize}else if name.ends_with(":after"){6usize}else{0usize};
+        if length>0usize{
+            pseudo=if name.ends_with("before"){1u8}else{2u8};
+            let stem=name[..name.len()-length].to_string();
+            parts[last]=if stem.is_empty(){"*".to_string()}else{stem};
+        }
+    }
+    let key=selector_key(&parts);
+    Rule{parts,specificity,declarations,pseudo,key_tag:key.0,key_id:key.1,key_class:key.2}
+}
+
+fn empty_clip(value: &str, size: i32, viewport_width: i32, viewport_height: i32, root_size: i32) -> Option<bool> {
+    if value=="auto" || value=="none"{return Some(false);}
+    if !value.starts_with("rect(") || !value.ends_with(')'){return None;}
+    let mut separated=String::new();
+    for ch in value[5usize..value.len()-1usize].chars(){if ch==','{separated.push(' ');}else{separated.push(ch);}}
+    let pieces=words(separated.as_str());if pieces.len()!=4usize{return None;}
+    let mut v=[0i32;4];let mut i=0usize;
+    while i<4usize{v[i]=box_length(pieces[i].as_str(),size,viewport_width,viewport_height,root_size)?;i+=1usize;}
+    Some(v[1]<=v[3] || v[2]<=v[0])
+}
+
+fn apply_empty_pseudo(content: &mut [bool; 2], display: &mut [bool; 2], clear: &mut [u8; 2],
+    index: usize, declarations: &[Declaration], important: bool) {
+    for declaration in declarations {
+        if declaration.important!=important{continue;}
+        let value=declaration.value.as_str();
+        if declaration.name=="content"{content[index]=value=="\"\"" || value=="''";}
+        else if declaration.name=="display"{display[index]=value=="block" || value=="table" || value=="flow-root";}
+        else if declaration.name=="clear"{
+            let side=match value{"none"=>Some(0u8),"left"=>Some(1u8),"right"=>Some(2u8),"both"=>Some(3u8),_=>None};
+            if let Some(side)=side{clear[index]=side;}
+        }
+    }
+}
+
+// Each rule belongs to one disjoint bucket chosen from its required rightmost
+// ID, class or tag. A node asks only its own buckets and the unkeyed rules.
+// This avoids checking every stylesheet rule against every text/element node.
+struct RuleIndex {
+    keys: std::collections::BTreeMap<String, usize>,
+    buckets: Vec<Vec<usize>>,
+    universal: Vec<usize>,
+}
+impl RuleIndex {
+    fn build(rules: &[Rule]) -> RuleIndex {
+        let mut result = RuleIndex { keys: std::collections::BTreeMap::new(), buckets: Vec::new(), universal: Vec::new() };
+        let mut i = 0usize;
+        while i < rules.len() {
+            let rule = &rules[i];
+            let key = if !rule.key_id.is_empty() { format!("#{}",rule.key_id) }
+                else if !rule.key_class.is_empty() { format!(".{}",rule.key_class) }
+                else if !rule.key_tag.is_empty() { format!("t{}",rule.key_tag) } else { String::new() };
+            if key.is_empty() { result.universal.push(i); i += 1usize; continue; }
+            let found = { match result.keys.get(&key) { Some(index) => *index, None => result.buckets.len() } };
+            if found == result.buckets.len() {
+                result.keys.insert(key, found); result.buckets.push(Vec::new());
+            }
+            result.buckets[found].push(i); i += 1usize;
+        }
+        result
+    }
+    fn append(&self, key: String, selected: &mut Vec<usize>) {
+        if let Some(index) = self.keys.get(&key) {
+            for rule in &self.buckets[*index] { selected.push(*rule); }
+        }
+    }
+    fn candidates(&self, doc: &Document, node: usize) -> Vec<usize> {
+        if doc.nodes[node].tag.starts_with('#') { return Vec::new(); }
+        let mut selected = self.universal.clone();
+        self.append(format!("t{}",doc.nodes[node].tag), &mut selected);
+        let id = doc.attribute(node,"id");
+        if !id.is_empty() { self.append(format!("#{}",id), &mut selected); }
+        let classes = words(doc.attribute(node,"class").as_str()); let mut at = 0usize;
+        while at < classes.len() {
+            let mut previous = 0usize; let mut repeated = false;
+            while previous < at { if classes[previous] == classes[at] { repeated = true; break; } previous += 1usize; }
+            if !repeated { self.append(format!(".{}",classes[at]), &mut selected); }
+            at += 1usize;
+        }
+        selected
+    }
+}
+
+fn monospace_family(value: &str) -> Option<bool> {
+    let lowered=value.to_ascii_lowercase();
+    for family in lowered.as_str().split(',') {
+        let mut name=trim(family);
+        if name.len()>=2usize && ((name.starts_with('"') && name.ends_with('"')) || (name.starts_with('\'') && name.ends_with('\''))) { name=&name[1usize..name.len()-1usize]; }
+        if name=="monospace" || name=="ui-monospace" || name=="courier" || name=="courier new"
+            || name=="consolas" || name=="menlo" || name=="monaco" || name=="liberation mono"
+            || name=="dejavu sans mono" || name=="lucida console" || name=="sfmono-regular"
+            || name=="cascadia code" || name=="source code pro" { return Some(true); }
+        if name=="sans-serif" || name=="system-ui" || name=="serif" || name=="arial"
+            || name=="verdana" || name=="helvetica" || name=="times new roman" { return Some(false); }
+    }
+    None
+}
+
+fn selector_parts(selector: &str) -> Vec<String> {
+    let mut result = Vec::new(); let bytes = selector.as_bytes(); let mut at = 0usize;
+    while at < bytes.len() {
+        while at < bytes.len() && whitespace(bytes[at]) { at += 1usize; }
         if at == bytes.len() { break; }
-        if bytes[at] == 62u8 { result.push(">".to_string()); at += 1; continue; }
-        let start = at;
-        while at < bytes.len() && !whitespace(bytes[at]) && bytes[at] != 62u8 { at += 1; }
+        if bytes[at] == 62u8 || bytes[at] == 43u8 || bytes[at] == 126u8 {
+            result.push(selector[at..at + 1usize].to_string()); at += 1usize; continue;
+        }
+        let start = at; let mut nesting = 0usize; let mut quote = 0u8;
+        while at < bytes.len() {
+            let b = bytes[at];
+            if quote != 0u8 {
+                if b == 92u8 && at + 1usize < bytes.len() { at += 2usize; continue; }
+                if b == quote { quote = 0u8; }
+            } else if b == 34u8 || b == 39u8 { quote = b; }
+            else if b == 40u8 || b == 91u8 { nesting += 1usize; }
+            else if b == 41u8 || b == 93u8 { if nesting > 0usize { nesting -= 1usize; } }
+            else if nesting == 0usize && (whitespace(b) || b == 62u8 || b == 43u8 || b == 126u8) { break; }
+            at += 1usize;
+        }
         result.push(selector[start..at].to_string());
     }
     result
 }
 
-fn specificity(parts: &[String]) -> [usize; 3] {
-    // Lexicographic ID, class and type counts; no finite weight trades one tier
-    // for another. Each count is bounded by the already allocated selector.
+fn closing_delimiter(bytes: &[u8], start: usize) -> usize {
+    let open = bytes[start]; let close = if open == 40u8 { 41u8 } else { 93u8 };
+    let mut at = start + 1usize; let mut depth = 1usize; let mut quote = 0u8;
+    while at < bytes.len() {
+        let b = bytes[at];
+        if quote != 0u8 {
+            if b == 92u8 && at + 1usize < bytes.len() { at += 2usize; continue; }
+            if b == quote { quote = 0u8; }
+        } else if b == 34u8 || b == 39u8 { quote = b; }
+        else if b == open { depth += 1usize; }
+        else if b == close { depth -= 1usize; if depth == 0usize { return at; } }
+        at += 1usize;
+    }
+    bytes.len()
+}
+
+fn compound_specificity(selector: &str, depth: usize) -> [usize; 3] {
     let mut result = [0usize; 3];
-    let mut p = 0usize;
-    while p < parts.len() {
-        let bytes = parts[p].as_bytes();
-        if !bytes.is_empty() && bytes[0] != 46u8 && bytes[0] != 35u8 && bytes[0] != 42u8 && bytes[0] != 62u8 {
-            result[2] += 1usize;
-        }
-        let mut i = 0usize;
-        while i < bytes.len() {
-            if bytes[i] == 35u8 { result[0] += 1usize; }
-            if bytes[i] == 46u8 { result[1] += 1usize; }
-            i += 1;
-        }
-        p += 1;
+    if depth > 8usize { return result; }
+    let bytes = selector.as_bytes(); let mut at = 0usize;
+    if at < bytes.len() && selector_name_byte(bytes[at]) {
+        result[2] += 1usize; while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1usize; }
+    } else if at < bytes.len() && bytes[at] == 42u8 { at += 1usize; }
+    while at < bytes.len() {
+        let b = bytes[at];
+        if b == 35u8 || b == 46u8 {
+            if b == 35u8 { result[0] += 1usize; } else { result[1] += 1usize; }
+            at += 1usize; while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1usize; }
+        } else if b == 91u8 {
+            result[1] += 1usize; let end = closing_delimiter(bytes, at); if end == bytes.len() { return result; } at = end + 1usize;
+        } else if b == 58u8 {
+            at += 1usize; let pseudo_element = at < bytes.len() && bytes[at] == 58u8;
+            if pseudo_element { at += 1usize; }
+            let start = at; while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1usize; }
+            let name = &selector[start..at];
+            if at < bytes.len() && bytes[at] == 40u8 {
+                let end = closing_delimiter(bytes, at); if end == bytes.len() { return result; }
+                if name == "not" || name == "is" {
+                    let mut highest = [0usize; 3];
+                    for item in selector_list(&selector[at + 1usize..end]) {
+                        let score = compound_specificity(item.as_str(), depth + 1usize);
+                        if specificity_greater(score, highest) { highest = score; }
+                    }
+                    result[0] += highest[0]; result[1] += highest[1]; result[2] += highest[2];
+                } else if name != "where" { result[1] += 1usize; }
+                at = end + 1usize;
+            } else if pseudo_element || name == "before" || name == "after" || name == "first-line" || name == "first-letter" { result[2] += 1usize; }
+            else { result[1] += 1usize; }
+        } else { at += 1usize; }
+    }
+    result
+}
+
+fn specificity(parts: &[String]) -> [usize; 3] {
+    let mut result = [0usize; 3];
+    for part in parts {
+        let score = compound_specificity(part.as_str(), 0usize);
+        result[0] += score[0]; result[1] += score[1]; result[2] += score[2];
     }
     result
 }
@@ -473,13 +743,9 @@ fn parse_rules(source:&str,viewport_width:i32,nesting:usize)->Vec<Rule>{
             }
             continue;
         }
-        let sb=selectors.as_bytes();let mut start=0usize;let mut i=0usize;
-        while i<=sb.len(){
-            if i==sb.len() || sb[i]==44u8{
-                let selector=trim(&selectors[start..i]);let parts=selector_parts(selector);
-                if !parts.is_empty(){let score=specificity(&parts);result.push(Rule{parts,specificity:score,declarations:declarations(&source[body_start..body_end])});}
-                start=i+1usize;
-            }i+=1usize;
+        for selector in selector_list(selectors) {
+            let parts=selector_parts(selector.as_str());
+            if !parts.is_empty(){result.push(make_rule(parts,declarations(&source[body_start..body_end])));}
         }
     }result
 }
@@ -493,52 +759,202 @@ fn selector_name_byte(b: u8) -> bool {
         || (b >= 48u8 && b <= 57u8) || b == 45u8 || b == 95u8
 }
 
-fn compound_matches(doc: &Document, node: usize, selector: &str) -> bool {
+fn previous_element(doc: &Document, node: usize) -> usize {
+    if node == 0usize { return 0usize; }
+    let parent = doc.nodes[node].parent; let mut previous = 0usize;
+    for child in &doc.nodes[parent].children {
+        if *child == node { return previous; }
+        if !doc.nodes[*child].tag.starts_with('#') { previous = *child; }
+    }
+    0usize
+}
+
+fn attribute_matches(doc: &Document, node: usize, source: &str) -> Option<bool> {
+    let source = trim(source); let bytes = source.as_bytes(); let mut at = 0usize;
+    while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1usize; }
+    if at == 0usize { return None; }
+    let name = source[..at].to_ascii_lowercase();
+    while at < bytes.len() && whitespace(bytes[at]) { at += 1usize; }
+    if at == bytes.len() { return Some(doc.has_attribute(node, name.as_str())); }
+    let operator = bytes[at]; at += 1usize;
+    if operator != 61u8 {
+        if operator != 126u8 && operator != 124u8 && operator != 94u8 && operator != 36u8 && operator != 42u8 { return None; }
+        if at == bytes.len() || bytes[at] != 61u8 { return None; } at += 1usize;
+    }
+    while at < bytes.len() && whitespace(bytes[at]) { at += 1usize; }
+    if at == bytes.len() { return None; }
+    let mut end = at;
+    if bytes[at] == 34u8 || bytes[at] == 39u8 {
+        let quote = bytes[at]; at += 1usize; end = at;
+        while end < bytes.len() && bytes[end] != quote { end += 1usize; }
+        if end == bytes.len() { return None; }
+    } else { while end < bytes.len() && !whitespace(bytes[end]) { end += 1usize; } }
+    let wanted = &source[at..end];
+    let after = if at > 0usize && (bytes[at - 1usize] == 34u8 || bytes[at - 1usize] == 39u8) { end + 1usize } else { end };
+    let flag = trim(&source[after..]);
+    if !flag.is_empty() && flag != "i" && flag != "I" && flag != "s" && flag != "S" { return None; }
+    if !doc.has_attribute(node, name.as_str()) { return Some(false); }
+    let original = doc.attribute(node, name.as_str());
+    let actual = if flag == "i" || flag == "I" { original.to_ascii_lowercase() } else { original };
+    let desired = if flag == "i" || flag == "I" { wanted.to_ascii_lowercase() } else { wanted.to_string() };
+    let actual = actual.as_str(); let desired = desired.as_str();
+    Some(match operator {
+        61u8 => actual == desired,
+        126u8 => { let mut found = false; for item in words(actual) { if item.as_str() == desired { found = true; } } found && !desired.is_empty() },
+        124u8 => actual == desired || (!desired.is_empty() && actual.starts_with(format!("{}-", desired).as_str())),
+        94u8 => !desired.is_empty() && actual.starts_with(desired),
+        36u8 => !desired.is_empty() && actual.ends_with(desired),
+        42u8 => !desired.is_empty() && actual.contains(desired),
+        _ => false,
+    })
+}
+
+fn sibling_index(doc: &Document, node: usize, reverse: bool, same_type: bool) -> usize {
+    if node == 0usize { return 0usize; }
+    let parent = doc.nodes[node].parent; let mut count = 0usize;
+    let children = &doc.nodes[parent].children;
+    let mut i = if reverse { children.len() } else { 0usize };
+    while (reverse && i > 0usize) || (!reverse && i < children.len()) {
+        if reverse { i -= 1usize; }
+        let child = children[i];
+        if !doc.nodes[child].tag.starts_with('#') && (!same_type || doc.nodes[child].tag == doc.nodes[node].tag) { count += 1usize; }
+        if child == node { return count; }
+        if !reverse { i += 1usize; }
+    }
+    0usize
+}
+
+fn nth_matches(expression: &str, index: usize) -> Option<bool> {
+    let lowered = expression.to_ascii_lowercase(); let mut clean = String::new();
+    for ch in lowered.as_str().chars() { if ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' { clean.push(ch); } }
+    if clean == "odd" { return Some(index % 2usize == 1usize); }
+    if clean == "even" { return Some(index % 2usize == 0usize); }
+    let text = clean.as_str();
+    if let Some(n) = text.find('n') {
+        let a = if n == 0usize { 1i64 } else if &text[..n] == "-" { -1i64 }
+            else if &text[..n] == "+" { 1i64 } else { text[..n].parse::<i32>().ok()? as i64 };
+        let b = if n + 1usize == text.len() { 0i64 } else { text[n + 1usize..].parse::<i32>().ok()? as i64 };
+        let difference = index as i64 - b;
+        if a == 0i64 { Some(difference == 0i64) } else { Some(difference % a == 0i64 && difference / a >= 0i64) }
+    } else { Some(text.parse::<i32>().ok()? as i64 == index as i64) }
+}
+
+fn compound_result(doc: &Document, node: usize, selector: &str, depth: usize) -> Option<bool> {
+    if depth > 8usize { return None; }
     let bytes = selector.as_bytes();
-    if bytes.is_empty() || doc.nodes[node].tag.starts_with('#') { return false; }
-    let mut at = 0usize;
-    if bytes[at] == 42u8 { at += 1; }
+    if bytes.is_empty() || doc.nodes[node].tag.starts_with('#') { return Some(false); }
+    let mut at = 0usize; let mut result = true;
+    if bytes[at] == 42u8 { at += 1usize; }
     else if selector_name_byte(bytes[at]) {
-        while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1; }
-        if !doc.nodes[node].tag.eq_ignore_ascii_case(&selector[..at]) { return false; }
+        while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1usize; }
+        result = doc.nodes[node].tag.eq_ignore_ascii_case(&selector[..at]);
+        if depth == 0usize && !result { return Some(false); }
     }
     while at < bytes.len() {
         let kind = bytes[at];
-        if kind != 46u8 && kind != 35u8 { return false; }
-        at += 1;
-        let start = at;
-        while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1; }
-        if at == start { return false; }
-        let value = &selector[start..at];
-        if kind == 35u8 {
-            if doc.attribute(node, "id") != value { return false; }
-        } else {
-            let classes = doc.attribute(node, "class");
-            let tokens = words(classes.as_str());
-            let mut found = false;
-            let mut i = 0usize;
-            while i < tokens.len() {
-                if tokens[i] == value { found = true; }
-                i += 1;
+        if kind == 46u8 || kind == 35u8 {
+            at += 1usize; let start = at;
+            while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1usize; }
+            if at == start { return None; }
+            let value = &selector[start..at];
+            if kind == 35u8 { result = result && doc.attribute_value_is(node, "id", value); }
+            else {
+                result = result && doc.has_class(node, value);
             }
-            if !found { return false; }
-        }
+            if depth == 0usize && !result { return Some(false); }
+        } else if kind == 91u8 {
+            let end = closing_delimiter(bytes, at); if end == bytes.len() { return None; }
+            let found = attribute_matches(doc, node, &selector[at + 1usize..end])?;
+            result = result && found; at = end + 1usize;
+            if depth == 0usize && !result { return Some(false); }
+        } else if kind == 58u8 {
+            at += 1usize; let start = at;
+            while at < bytes.len() && selector_name_byte(bytes[at]) { at += 1usize; }
+            if start == at { return None; }
+            let name = &selector[start..at];
+            let mut found = false;
+            if at < bytes.len() && bytes[at] == 40u8 {
+                let end = closing_delimiter(bytes, at); if end == bytes.len() { return None; }
+                let inner = &selector[at + 1usize..end];
+                if name == "not" || name == "is" || name == "where" {
+                    let items = selector_list(inner);
+                    if items.is_empty() { return None; }
+                    for item in items {
+                        let parts = selector_parts(item.as_str());
+                        if parts.len() != 1usize { return None; }
+                        let matches = compound_result(doc, node, parts[0].as_str(), depth + 1usize)?;
+                        found = found || matches;
+                    }
+                    if name == "not" { found = !found; }
+                } else if name == "nth-child" || name == "nth-last-child" || name == "nth-of-type" || name == "nth-last-of-type" {
+                    let index = sibling_index(doc, node, name == "nth-last-child" || name == "nth-last-of-type", name == "nth-of-type" || name == "nth-last-of-type");
+                    found = nth_matches(inner, index)?;
+                } else { return None; }
+                at = end + 1usize;
+            } else {
+                let tag = doc.nodes[node].tag.as_str();
+                if name == "root" { found = tag == "html"; }
+                else if name == "link" || name == "any-link" { found = (tag == "a" || tag == "area" || tag == "link") && doc.has_attribute(node, "href"); }
+                else if name == "checked" { found = (tag == "input" && doc.has_attribute(node, "checked")) || (tag == "option" && doc.has_attribute(node, "selected")); }
+                else if name == "disabled" || name == "enabled" {
+                    let control = tag == "button" || tag == "input" || tag == "select" || tag == "textarea" || tag == "option" || tag == "optgroup" || tag == "fieldset";
+                    found = control && (doc.has_attribute(node, "disabled") == (name == "disabled"));
+                } else if name == "first-child" || name == "first-of-type" { found = sibling_index(doc, node, false, name == "first-of-type") == 1usize; }
+                else if name == "last-child" || name == "last-of-type" { found = sibling_index(doc, node, true, name == "last-of-type") == 1usize; }
+                else if name == "only-child" || name == "only-of-type" {
+                    let same = name == "only-of-type"; found = sibling_index(doc, node, false, same) == 1usize && sibling_index(doc, node, true, same) == 1usize;
+                } else if name == "empty" {
+                    found = true;
+                    for child in &doc.nodes[node].children { if doc.nodes[*child].tag != "#text" || !doc.nodes[*child].text.is_empty() { found = false; } }
+                } else if name == "hover" || name == "focus" || name == "focus-visible" || name == "focus-within" || name == "active" || name == "visited" || name == "target" {
+                    // This computed snapshot has no dynamic selector state.
+                    found = false;
+                } else { return None; }
+            }
+            result = result && found;
+            if depth == 0usize && !result { return Some(false); }
+        } else { return None; }
     }
-    true
+    Some(result)
+}
+
+fn compound_matches(doc: &Document, node: usize, selector: &str) -> bool {
+    compound_result(doc, node, selector, 0usize).unwrap_or(false)
 }
 
 pub fn matches(doc: &Document, node: usize, rule: &Rule) -> bool {
-    if rule.parts.is_empty() { return false; }
-    let mut pos = rule.parts.len() - 1usize;
-    let mut current = node;
+    rule.pseudo == 0u8 && matches_origin(doc,node,rule)
+}
+
+fn matches_origin(doc: &Document, node: usize, rule: &Rule) -> bool {
+    if rule.parts.is_empty() || doc.nodes[node].tag.starts_with('#') { return false; }
+    if !rule.key_tag.is_empty() && doc.nodes[node].tag != rule.key_tag { return false; }
+    if !rule.key_id.is_empty() && !doc.attribute_value_is(node,"id",rule.key_id.as_str()) { return false; }
+    if !rule.key_class.is_empty() && !doc.has_class(node,rule.key_class.as_str()) { return false; }
+    let mut pos = rule.parts.len() - 1usize; let mut current = node;
     if !compound_matches(doc, current, rule.parts[pos].as_str()) { return false; }
     while pos > 0usize {
         pos -= 1usize;
-        if rule.parts[pos] == ">" {
+        let combinator = rule.parts[pos].as_str();
+        if combinator == ">" || combinator == "+" || combinator == "~" {
             if pos == 0usize || current == 0usize { return false; }
             pos -= 1usize;
-            current = doc.nodes[current].parent;
-            if !compound_matches(doc, current, rule.parts[pos].as_str()) { return false; }
+            if combinator == ">" {
+                current = doc.nodes[current].parent;
+                if !compound_matches(doc, current, rule.parts[pos].as_str()) { return false; }
+            } else {
+                current = previous_element(doc, current);
+                if combinator == "+" {
+                    if current == 0usize || !compound_matches(doc, current, rule.parts[pos].as_str()) { return false; }
+                } else {
+                    let mut found = false;
+                    while current > 0usize {
+                        if compound_matches(doc, current, rule.parts[pos].as_str()) { found = true; break; }
+                        current = previous_element(doc, current);
+                    }
+                    if !found { return false; }
+                }
+            }
         } else {
             let mut found = false;
             while current > 0usize {
@@ -551,33 +967,152 @@ pub fn matches(doc: &Document, node: usize, rule: &Rule) -> bool {
     true
 }
 
-fn box_values(value: &str, size: i32, viewport_width: i32, viewport_height: i32) -> Option<[i32; 4]> {
-    let tokens = words(value);
-    if tokens.len() == 0usize || tokens.len() > 4usize { return None; }
-    let mut values = [0i32; 4];
-    let mut i = 0usize;
-    while i < tokens.len() {
-        values[i] = if tokens[i] == "auto" { 0 } else { box_length(tokens[i].as_str(), size, viewport_width, viewport_height)? };
-        i += 1;
+fn box_length(value: &str, size: i32, viewport_width: i32, viewport_height: i32, root_size: i32) -> Option<i32> {
+    if trim(value).ends_with('%') { None } else { length_root(value, size, viewport_width, viewport_height, root_size) }
+}
+
+fn percentage(value: &str) -> Option<i32> {
+    let value = trim(value);
+    if !value.ends_with('%') { return None; }
+    let amount = number_milli(&value[..value.len() - 1usize])?;
+    if amount < -1000000 || amount > 1000000 { return None; }
+    Some(amount)
+}
+
+fn box_pair(value: &str, size: i32, viewport_width: i32, viewport_height: i32, root_size: i32) -> Option<(i32, i32)> {
+    if let Some(percent) = percentage(value) { Some((0, percent)) }
+    else { Some((box_length(value, size, viewport_width, viewport_height, root_size)?, 0)) }
+}
+
+fn list_kind(value: &str) -> Option<u8> {
+    match value {
+        "none" => Some(0u8), "disc" => Some(1u8), "decimal" => Some(2u8),
+        "circle" => Some(3u8), "square" => Some(4u8),
+        "lower-alpha" | "lower-latin" => Some(5u8), "upper-alpha" | "upper-latin" => Some(6u8),
+        "lower-roman" => Some(7u8), "upper-roman" => Some(8u8), _ => None,
     }
-    if tokens.len() == 1usize { values[1] = values[0]; values[2] = values[0]; values[3] = values[0]; }
-    if tokens.len() == 2usize { values[2] = values[0]; values[3] = values[1]; }
-    if tokens.len() == 3usize { values[3] = values[1]; }
-    Some(values)
 }
 
-fn box_length(value: &str, size: i32, viewport_width: i32, viewport_height: i32) -> Option<i32> {
-    if trim(value).ends_with('%') { None } else { length_viewport(value, size, viewport_width, viewport_height) }
+fn box_sides(value: &str, size: i32, viewport_width: i32, viewport_height: i32, root_size: i32, padding: bool) -> Option<([i32; 4], [i32; 4])> {
+    let tokens = words(value);
+    if tokens.is_empty() || tokens.len() > 4usize { return None; }
+    let mut pixels = [0i32; 4]; let mut percents = [0i32; 4]; let mut i = 0usize;
+    while i < tokens.len() {
+        let pair = if tokens[i] == "auto" && !padding { (0, 0) }
+            else { box_pair(tokens[i].as_str(), size, viewport_width, viewport_height, root_size)? };
+        if padding && (pair.0 < 0 || pair.1 < 0) { return None; }
+        pixels[i] = pair.0; percents[i] = pair.1; i += 1usize;
+    }
+    let mut i = tokens.len();
+    while i < 4usize {
+        let from = if tokens.len() == 1usize { 0usize }
+            else if tokens.len() == 2usize { i % 2usize } else { 1usize };
+        pixels[i] = pixels[from]; percents[i] = percents[from]; i += 1usize;
+    }
+    Some((pixels, percents))
 }
 
-fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32, viewport_width: i32, viewport_height: i32) {
+fn translated_x(value: &str, size: i32, viewport_width: i32, viewport_height: i32, root_size: i32) -> Option<(i32, i32)> {
+    let text = trim(value);
+    if text.starts_with("calc(") && text.ends_with(')') {
+        let tokens = words(&text[5usize..text.len() - 1usize]);
+        if tokens.len() != 3usize || (tokens[1] != "+" && tokens[1] != "-") { return None; }
+        let left = box_pair(tokens[0].as_str(), size, viewport_width, viewport_height, root_size)?;
+        let right = box_pair(tokens[2].as_str(), size, viewport_width, viewport_height, root_size)?;
+        let sign = if tokens[1] == "-" { -1 } else { 1 };
+        let pixels = left.0 + sign * right.0; let percent = left.1 + sign * right.1;
+        if pixels < -8192 || pixels > 8192 || percent < -1000000 || percent > 1000000 { return None; }
+        Some((pixels, percent))
+    } else { box_pair(text, size, viewport_width, viewport_height, root_size) }
+}
+
+fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32, viewport_width: i32, viewport_height: i32, root_size: i32) {
     let size = style.font_size;
     match name {
         "display" => match value {
             "none" => { style.display = NONE; },
             "block" | "list-item" => { style.display = BLOCK; },
             "inline" => { style.display = INLINE; },
+            "inline-block" => { style.display = INLINE_BLOCK; },
+            "flex" => { style.display = FLEX; },
+            "inline-flex" => { style.display = INLINE_FLEX; },
+            // Preserve a readable block fallback; no grid algorithm is claimed.
+            "grid" | "flow-root" | "table" | "table-row" | "table-cell" => { style.display = BLOCK; },
             _ => {},
+        },
+        "clip" => { if let Some(empty) = empty_clip(value,size,viewport_width,viewport_height,root_size) { style.clip_empty = empty; } },
+        "clip-path" => { if value == "none" { style.clip_empty = false; } else if value == "inset(100%)" { style.clip_empty = true; } },
+        "visibility" => {
+            if value == "visible" { style.visible = true; }
+            else if value == "hidden" || value == "collapse" { style.visible = false; }
+        },
+        "position" => {
+            let kind = match value { "static" => Some(0u8), "relative" => Some(1u8),
+                "absolute" => Some(2u8), "fixed" => Some(3u8), "sticky" => Some(4u8), _ => None };
+            if let Some(kind) = kind { style.position = kind; }
+        },
+        "float" | "clear" => {
+            let side = match value { "none" => Some(0u8), "left" => Some(1u8), "right" => Some(2u8),
+                "both" => if name == "clear" { Some(3u8) } else { None }, _ => None };
+            if let Some(side) = side { if name == "float" { style.float_side = side; } else { style.clear_side = side; } }
+        },
+        "flex-direction" => {
+            if value == "column" { style.flex_column = true; } else if value == "row" { style.flex_column = false; }
+        },
+        "flex-grow" => { if let Some(n) = number_milli(value) { if n >= 0 && n <= 1000000 { style.flex_grow = n; } } },
+        "flex-basis" => {
+            if value == "auto" { style.flex_basis = -1; style.flex_basis_percent = -1; }
+            else if let Some(p) = percentage(value) { if p >= 0 { style.flex_basis = -1; style.flex_basis_percent = p; } }
+            else if let Some(n) = box_length(value, size, viewport_width, viewport_height, root_size) {
+                if n >= 0 { style.flex_basis = n; style.flex_basis_percent = -1; }
+            }
+        },
+        "flex" => {
+            if value == "none" { style.flex_grow = 0; style.flex_basis = -1; style.flex_basis_percent = -1; }
+            else if value == "auto" { style.flex_grow = 1000; style.flex_basis = -1; style.flex_basis_percent = -1; }
+            else {
+                let tokens = words(value);
+                if !tokens.is_empty() && tokens.len() <= 3usize {
+                    if let Some(grow) = number_milli(tokens[0].as_str()) {
+                        if grow >= 0 && grow <= 1000000 {
+                            style.flex_grow = grow; style.flex_basis = 0; style.flex_basis_percent = -1;
+                            let basis = if tokens.len() == 3usize { 2usize } else { 1usize };
+                            if basis < tokens.len() && (tokens.len() == 3usize || number_milli(tokens[basis].as_str()).is_none()) {
+                                let part = tokens[basis].as_str();
+                                if part == "auto" { style.flex_basis = -1; }
+                                else if let Some(p) = percentage(part) { if p >= 0 { style.flex_basis = -1; style.flex_basis_percent = p; } }
+                                else if let Some(n) = box_length(part, size, viewport_width, viewport_height, root_size) { if n >= 0 { style.flex_basis = n; } }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "order" => { if let Ok(n) = value.parse::<i32>() { style.order = clamp(n, -1000000, 1000000); } },
+        "gap" | "column-gap" => {
+            let tokens = words(value);
+            if !tokens.is_empty() && tokens.len() <= 2usize {
+                let part = if name == "gap" && tokens.len() == 2usize { 1usize } else { 0usize };
+                if let Some(n) = box_length(tokens[part].as_str(), size, viewport_width, viewport_height, root_size) {
+                    if n >= 0 { style.column_gap = n; }
+                }
+            }
+        },
+        "top" | "right" | "bottom" | "left" | "inset-inline-start" | "inset-inline-end" => {
+            let n = if value == "auto" { Some(-8193) } else { box_length(value, size, viewport_width, viewport_height, root_size) };
+            if let Some(n) = n {
+                if name == "top" { style.inset_top = n; } else if name == "right" || name == "inset-inline-end" { style.inset_right = n; }
+                else if name == "bottom" { style.inset_bottom = n; } else { style.inset_left = n; }
+            }
+        },
+        "transform" | "-webkit-transform" => {
+            if value == "none" { style.translate_x = 0; style.translate_x_percent = 0; }
+            else if value.starts_with("translateX(") && value.ends_with(')') {
+                let inner = &value[11usize..value.len() - 1usize];
+                if let Some(pair) = translated_x(inner, size, viewport_width, viewport_height, root_size) {
+                    style.translate_x = pair.0; style.translate_x_percent = pair.1;
+                }
+            }
         },
         "color" => { if let Some(c) = color(value) { style.color = c; } },
         "background" | "background-color" => {
@@ -585,8 +1120,9 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32, viewport_
             else if let Some(c) = color(value) { style.background = c; style.has_background = true; }
         },
         "font-size" => {
-            if let Some(v) = length_viewport(value, parent_size, viewport_width, viewport_height) { style.font_size = clamp(v, 6, 160); }
+            if let Some(v) = length_root(value, parent_size, viewport_width, viewport_height, root_size) { style.font_size = clamp(v, 6, 160); }
         },
+        "font-family" => { if !value.contains("var(") { style.monospace = monospace_family(value).unwrap_or(false); } },
         "font-weight" => {
             if value == "bold" || value == "bolder" || value == "600" || value == "700" || value == "800" || value == "900" {
                 style.bold = true;
@@ -617,49 +1153,80 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32, viewport_
             else if let Some(n) = number_milli(value) {
                 style.line_height_scale = clamp(n, 100, 10000);
                 style.line_height = 0;
-            } else if let Some(v) = box_length(value, size, viewport_width, viewport_height) {
+            } else if let Some(v) = length_root(value, size, viewport_width, viewport_height, root_size) {
                 style.line_height = clamp(v, 6, 256);
                 style.line_height_scale = 0;
             }
         },
-        "margin" => {
-            if let Some(v) = box_values(value, size, viewport_width, viewport_height) {
-                style.margin_top = v[0]; style.margin_right = v[1];
-                style.margin_bottom = v[2]; style.margin_left = v[3];
-                let tokens = words(value);
-                let left = if tokens.len() == 4usize { 3usize }
-                    else if tokens.len() >= 2usize { 1usize } else { 0usize };
-                let right = if tokens.len() >= 2usize { 1usize } else { 0usize };
-                style.auto_left = tokens[left] == "auto";
-                style.auto_right = tokens[right] == "auto";
+        "margin" | "padding" => {
+            let padding = name == "padding";
+            if let Some(values) = box_sides(value, size, viewport_width, viewport_height, root_size, padding) {
+                let v = values.0;
+                if padding {
+                    style.padding_top = v[0]; style.padding_right = v[1];
+                    style.padding_bottom = v[2]; style.padding_left = v[3]; style.padding_percent = values.1;
+                } else {
+                    style.margin_top = v[0]; style.margin_right = v[1];
+                    style.margin_bottom = v[2]; style.margin_left = v[3]; style.margin_percent = values.1;
+                    let tokens = words(value);
+                    let left = if tokens.len() == 4usize { 3usize } else if tokens.len() >= 2usize { 1usize } else { 0usize };
+                    let right = if tokens.len() >= 2usize { 1usize } else { 0usize };
+                    style.auto_left = tokens[left] == "auto"; style.auto_right = tokens[right] == "auto";
+                }
             }
         },
-        "padding" => {
-            if let Some(v) = box_values(value, size, viewport_width, viewport_height) {
-                style.padding_top = clamp(v[0], 0, 8192); style.padding_right = clamp(v[1], 0, 8192);
-                style.padding_bottom = clamp(v[2], 0, 8192); style.padding_left = clamp(v[3], 0, 8192);
+        "margin-top" | "margin-right" | "margin-bottom" | "margin-left" |
+        "padding-top" | "padding-right" | "padding-bottom" | "padding-left" => {
+            let padding = name.starts_with("padding");
+            let side = if name.ends_with("top") { 0usize } else if name.ends_with("right") { 1usize }
+                else if name.ends_with("bottom") { 2usize } else { 3usize };
+            let auto = !padding && value == "auto";
+            let pair = if auto { Some((0, 0)) } else { box_pair(value, size, viewport_width, viewport_height, root_size) };
+            if let Some(v) = pair {
+                if !padding || (v.0 >= 0 && v.1 >= 0) {
+                    if padding {
+                        if side == 0usize { style.padding_top = v.0; }
+                        else if side == 1usize { style.padding_right = v.0; }
+                        else if side == 2usize { style.padding_bottom = v.0; }
+                        else { style.padding_left = v.0; }
+                        style.padding_percent[side] = v.1;
+                    } else {
+                        if side == 0usize { style.margin_top = v.0; }
+                        else if side == 1usize { style.margin_right = v.0; style.auto_right = auto; }
+                        else if side == 2usize { style.margin_bottom = v.0; }
+                        else { style.margin_left = v.0; style.auto_left = auto; }
+                        style.margin_percent[side] = v.1;
+                    }
+                }
             }
         },
-        "margin-top" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.margin_top = v; } },
-        "margin-bottom" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.margin_bottom = v; } },
-        "margin-left" => {
-            style.auto_left = value == "auto";
-            if style.auto_left { style.margin_left = 0; }
-            else if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.margin_left = v; }
+        "width" | "max-width" => {
+            let maximum = name == "max-width";
+            if (maximum && value == "none") || (!maximum && value == "auto") {
+                if maximum { style.max_width = -1; style.max_width_percent = -1; }
+                else { style.width = -1; style.width_percent = -1; }
+            } else if let Some(p) = percentage(value) {
+                if p >= 0 {
+                    if maximum { style.max_width = -1; style.max_width_percent = p; }
+                    else { style.width = -1; style.width_percent = p; }
+                }
+            } else if let Some(v) = box_length(value, size, viewport_width, viewport_height, root_size) {
+                if v >= 0 {
+                    if maximum { style.max_width = v; style.max_width_percent = -1; }
+                    else { style.width = v; style.width_percent = -1; }
+                }
+            }
         },
-        "margin-right" => {
-            style.auto_right = value == "auto";
-            if style.auto_right { style.margin_right = 0; }
-            else if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.margin_right = v; }
+        "box-sizing" => {
+            if value == "border-box" { style.box_border_box = true; }
+            else if value == "content-box" { style.box_border_box = false; }
         },
-        "padding-top" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.padding_top = clamp(v, 0, 8192); } },
-        "padding-right" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.padding_right = clamp(v, 0, 8192); } },
-        "padding-bottom" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.padding_bottom = clamp(v, 0, 8192); } },
-        "padding-left" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.padding_left = clamp(v, 0, 8192); } },
-        "width" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.width = clamp(v, 1, 8192); } },
-        "max-width" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.max_width = clamp(v, 1, 8192); } },
-        "height" | "min-height" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.height = clamp(v, 0, 8192); } },
-        "border-width" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height) { style.border_width = clamp(v, 0, 16); } },
+        "list-style-type" => { if let Some(kind) = list_kind(value) { style.list_style = kind; } },
+        "list-style" => {
+            for token in words(value) { if let Some(kind) = list_kind(token.as_str()) { style.list_style = kind; } }
+        },
+        "height" | "min-height" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height, root_size) { style.height = clamp(v, 0, 8192); } },
+        "border-width" => { if let Some(v) = box_length(value, size, viewport_width, viewport_height, root_size) { style.border_width = clamp(v, 0, 16); } },
         "border-color" => { if let Some(c) = color(value) { style.border_color = c; } },
         "border" => {
             if value == "none" || value == "0" { style.border_width = 0; }
@@ -667,7 +1234,7 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32, viewport_
                 let tokens = words(value);
                 let mut i = 0usize;
                 while i < tokens.len() {
-                    if let Some(v) = length_viewport(tokens[i].as_str(), size, viewport_width, viewport_height) { style.border_width = clamp(v, 0, 16); }
+                    if let Some(v) = length_root(tokens[i].as_str(), size, viewport_width, viewport_height, root_size) { style.border_width = clamp(v, 0, 16); }
                     if let Some(c) = color(tokens[i].as_str()) { style.border_color = c; }
                     i += 1;
                 }
@@ -678,13 +1245,72 @@ fn apply(style: &mut Style, name: &str, value: &str, parent_size: i32, viewport_
 }
 
 fn apply_declarations(style: &mut Style, values: &[Declaration], important: bool,
-    parent_size: i32, font_only: bool, viewport_width: i32, viewport_height: i32) {
+    parent_size: i32, font_only: bool, viewport_width: i32, viewport_height: i32, root_size: i32) {
     let mut i = 0usize;
     while i < values.len() {
         if values[i].important == important && (values[i].name == "font-size") == font_only {
-            apply(style, values[i].name.as_str(), values[i].value.as_str(), parent_size, viewport_width, viewport_height);
+            apply(style, values[i].name.as_str(), values[i].value.as_str(), parent_size, viewport_width, viewport_height, root_size);
         }
         i += 1;
+    }
+}
+
+// HTML presentational hints have lower priority than author rules and inline
+// declarations. They still matter on real pre-CSS documents and email archives.
+fn presentational_hints(doc: &Document, node: usize, style: &mut Style,
+    parent_size: i32, viewport_width: i32, viewport_height: i32, root_size: i32) {
+    let tag = doc.nodes[node].tag.as_str();
+    if tag == "table" {
+        let mut ancestor = doc.nodes[node].parent;
+        while ancestor > 0usize {
+            if doc.nodes[ancestor].tag == "table" { break; }
+            if doc.nodes[ancestor].tag == "center" { style.auto_left=true;style.auto_right=true;break; }
+            ancestor=doc.nodes[ancestor].parent;
+        }
+    }
+    let align = doc.attribute(node, "align").to_ascii_lowercase();
+    if !align.is_empty() {
+        if tag == "table" {
+            if align == "center" { style.auto_left = true; style.auto_right = true; }
+            else if align == "right" { style.auto_left = true; style.auto_right = false; }
+            else if align == "left" { style.auto_left = false; style.auto_right = false; }
+        } else { apply(style, "text-align", align.as_str(), parent_size, viewport_width, viewport_height, root_size); }
+    }
+    let background = doc.attribute(node, "bgcolor");
+    if let Some(value) = color(background.as_str()) { style.background = value; style.has_background = true; }
+    if tag == "table" || tag == "td" || tag == "th" || tag == "img" || tag == "col" {
+        let width = doc.attribute(node, "width");
+        if !width.is_empty() { apply(style, "width", width.as_str(), parent_size, viewport_width, viewport_height, root_size); }
+        let height = doc.attribute(node, "height");
+        if !height.is_empty() { apply(style, "height", height.as_str(), parent_size, viewport_width, viewport_height, root_size); }
+    }
+    if tag == "td" || tag == "th" {
+        let mut ancestor = doc.nodes[node].parent;
+        while ancestor > 0usize {
+            if doc.nodes[ancestor].tag == "table" {
+                if let Ok(n) = doc.attribute(ancestor,"cellpadding").as_str().parse::<i32>() {
+                    if n >= 0 && n <= 8192 { style.padding_top=n; style.padding_right=n; style.padding_bottom=n; style.padding_left=n; }
+                }
+                break;
+            }
+            ancestor = doc.nodes[ancestor].parent;
+        }
+    }
+    if tag == "font" {
+        let face=doc.attribute(node,"face");if !face.is_empty(){style.monospace=monospace_family(face.as_str()).unwrap_or(false);}
+        if let Some(value) = color(doc.attribute(node, "color").as_str()) { style.color = value; }
+        let size = doc.attribute(node, "size");
+        if let Ok(n) = size.as_str().parse::<i32>() {
+            let n = if size.starts_with('+') || size.starts_with('-') { 3 + clamp(n, -99, 99) } else { n };
+            style.font_size = match n { 1 => 10, 2 => 13, 3 => 16, 4 => 18, 5 => 24, 6 => 32,
+                _ => if n < 1 { 10 } else { 48 } };
+        }
+    }
+    if tag == "ul" || tag == "ol" || tag == "li" {
+        let kind = doc.attribute(node, "type");
+        let named = match kind.as_str() { "1" => Some(2u8), "a" => Some(5u8), "A" => Some(6u8),
+            "i" => Some(7u8), "I" => Some(8u8), _ => list_kind(kind.as_str()) };
+        if let Some(value) = named { style.list_style = value; }
     }
 }
 
@@ -694,22 +1320,25 @@ pub fn compute(doc: &Document) -> Vec<Style> {
 
 pub fn compute_viewport(doc: &Document, viewport_width: i32, viewport_height: i32) -> Vec<Style> {
     let rules = parse_viewport(doc.styles.as_str(), viewport_width);
+    let index = RuleIndex::build(&rules);
     let mut result: Vec<Style> = Vec::new();
     let mut node = 0usize;
+    let mut root_size = 18i32;
     while node < doc.nodes.len() {
         let parent = if node == 0usize { initial() } else { result[doc.nodes[node].parent] };
         let mut style = ua_style(doc.nodes[node].tag.as_str(), parent);
+        presentational_hints(doc, node, &mut style, parent.font_size, viewport_width, viewport_height, root_size);
         let mut matching: Vec<(usize, [usize; 3])> = Vec::new();
-        let mut i = 0usize;
-        while i < rules.len() {
-            if matches(doc, node, &rules[i]) { matching.push((i, rules[i].specificity)); }
-            i += 1;
+        let mut pseudo_content=[false;2];let mut pseudo_display=[false;2];let mut pseudo_clear=[0u8;2];
+        for i in index.candidates(doc,node) {
+            if matches_origin(doc,node,&rules[i]) { matching.push((i,rules[i].specificity)); }
         }
         let mut i = 1usize;
         while i < matching.len() {
             let entry = matching[i];
             let mut j = i;
-            while j > 0usize && specificity_greater(matching[j - 1usize].1, entry.1) {
+            while j > 0usize && (specificity_greater(matching[j - 1usize].1, entry.1)
+                || (matching[j - 1usize].1 == entry.1 && matching[j - 1usize].0 > entry.0)) {
                 matching[j] = matching[j - 1usize];
                 j -= 1usize;
             }
@@ -725,16 +1354,24 @@ pub fn compute_viewport(doc: &Document, viewport_width: i32, viewport_height: i3
             while phase < 2usize {
                 let mut i = 0usize;
                 while i < matching.len() {
-                    apply_declarations(&mut style, &rules[matching[i].0].declarations,
-                        phase == 1usize, parent.font_size, pass == 0usize, viewport_width, viewport_height);
+                    let rule=&rules[matching[i].0];
+                    if rule.pseudo==0u8 {
+                        apply_declarations(&mut style, &rule.declarations,
+                            phase == 1usize, parent.font_size, pass == 0usize, viewport_width, viewport_height, root_size);
+                    } else if pass==1usize {
+                        apply_empty_pseudo(&mut pseudo_content,&mut pseudo_display,&mut pseudo_clear,(rule.pseudo-1u8) as usize,&rule.declarations,phase==1usize);
+                    }
                     i += 1;
                 }
                 apply_declarations(&mut style, &inline, phase == 1usize,
-                    parent.font_size, pass == 0usize, viewport_width, viewport_height);
+                    parent.font_size, pass == 0usize, viewport_width, viewport_height, root_size);
                 phase += 1;
             }
             pass += 1;
         }
+        style.before_clear=if pseudo_content[0] && pseudo_display[0]{pseudo_clear[0]}else{0u8};
+        style.after_clear=if pseudo_content[1] && pseudo_display[1]{pseudo_clear[1]}else{0u8};
+        if doc.nodes[node].tag == "html" { root_size = style.font_size; }
         if doc.has_attribute(node, "hidden") { style.display = NONE; }
         result.push(style);
         node += 1;
@@ -774,7 +1411,7 @@ fn colors_and_lengths_are_checked() {
 
 
 #[test]
-fn relative_font_sizes_use_parent_and_box_percentages_are_ignored() {
+fn relative_font_sizes_use_parent_and_box_percentages_are_retained() {
     let doc = crate::html::parse("<style>body { font-size: 20px; line-height: 1.5; } h1 { font-size: 2em; } p { width: 100%; } small { font-size: 50%; }</style><body><h1>Title</h1><p>Text <small>small</small></p><p hidden>Hidden</p></body>");
     let styles = compute(&doc);
     let mut i = 0usize;
@@ -786,6 +1423,7 @@ fn relative_font_sizes_use_parent_and_box_percentages_are_ignored() {
         }
         if doc.nodes[i].tag == "p" {
             assert_eq!(styles[i].width, -1);
+            assert_eq!(styles[i].width_percent, 100000);
             if doc.has_attribute(i, "hidden") { assert_eq!(styles[i].display, NONE); }
         }
         i += 1;
@@ -794,7 +1432,7 @@ fn relative_font_sizes_use_parent_and_box_percentages_are_ignored() {
 
 #[test]
 fn unsupported_selectors_do_not_broaden_matches() {
-    let doc = crate::html::parse("<style>p:hover { color: red; } div + p { color: green; } [title] { font-size: 80px; }</style><p title='hello'>Readable</p>");
+    let doc = crate::html::parse("<style>p:hover { color: red; } div + p { color: green; } p:unknown-state { font-size: 80px; }</style><p title='hello'>Readable</p>");
     let styles = compute(&doc);
     let mut i = 0usize;
     while i < doc.nodes.len() {
@@ -1016,4 +1654,186 @@ fn bounded_media_conditions_preserve_source_order_and_exact_boundaries(){
     let doc=crate::html::parse("<style>#item{color:blue}@media screen and (min-width:900px){#item{color:red}@media all and (max-width:1100px){#item{font-size:24px}}}#item{color:green}</style><p id='item'>Text</p>");
     let styles=compute_viewport(&doc,1000,662);let mut i=0usize;
     while i<doc.nodes.len(){if doc.attribute(i,"id")=="item"{assert_eq!(styles[i].color,0xff008000u32);assert_eq!(styles[i].font_size,24);}i+=1usize;}
+}
+
+#[test]
+fn percentage_geometry_preserves_containing_block_values_and_cascade_resets() {
+    let doc = crate::html::parse("<style>#a{width:50%;max-width:100%;margin:2% auto 3%;padding:1% 8px;box-sizing:border-box}#b{width:50%;width:320px;max-width:90%;max-width:none;padding-left:4%;padding-left:9px}#c{width:80%;width:-1px;margin-left:12px;margin-left:broken;padding:2px;padding:-1%;}</style><div id='a'></div><div id='b'></div><div id='c'></div>");
+    let styles = compute_viewport(&doc, 1000, 760); let mut i = 0usize;
+    while i < doc.nodes.len() {
+        let s = styles[i]; let id = doc.attribute(i, "id");
+        if id == "a" {
+            assert_eq!(s.width_percent, 50000); assert_eq!(s.max_width_percent, 100000);
+            assert_eq!(s.margin_percent[0], 2000); assert_eq!(s.margin_percent[2], 3000);
+            assert_eq!(s.padding_percent[0], 1000); assert_eq!(s.padding_right, 8);
+            assert!(s.auto_left && s.auto_right && s.box_border_box);
+        }
+        if id == "b" {
+            assert_eq!(s.width, 320); assert_eq!(s.width_percent, -1);
+            assert_eq!(s.max_width, -1); assert_eq!(s.max_width_percent, -1);
+            assert_eq!(s.padding_left, 9); assert_eq!(s.padding_percent[3], 0);
+        }
+        if id == "c" {
+            assert_eq!(s.width_percent, 80000); assert_eq!(s.margin_left, 12);
+            assert_eq!(s.padding_left, 2); assert_eq!(s.padding_percent[0], 0);
+        }
+        i += 1usize;
+    }
+}
+
+#[test]
+fn rem_tracks_the_root_and_points_use_the_exact_css_ratio() {
+    let doc = crate::html::parse("<style>html{font-size:20px}body{font-size:12px}p{font-size:1.5rem;margin:2rem;line-height:150%}</style><html><body><p>Text</p></body></html>");
+    let styles = compute_viewport(&doc,1000,760); let mut i = 0usize;
+    while i < doc.nodes.len() {
+        if doc.nodes[i].tag == "p" { assert_eq!(styles[i].font_size,30); assert_eq!(styles[i].margin_left,40); assert_eq!(styles[i].line_height,45); }
+        i += 1usize;
+    }
+    assert_eq!(length("12pt",18),Some(16)); assert_eq!(length("72pt",18),Some(96));
+    assert_eq!(length_viewport("min(25vw,350px)",18,1000,760),Some(250));
+    assert_eq!(length_viewport("min(25vw,350px)",18,2000,760),Some(350));
+}
+
+#[test]
+fn legacy_document_hints_yield_to_author_css() {
+    let doc = crate::html::parse("<style>#t{width:70%;background-color:white}font{font-size:14px;color:blue}</style><table id='t' width='85%' bgcolor='#ff6600' align='center'><tr><td width='435'><font size='+2147483647' color='red'>Text</font></td></tr></table><h1 align='center'>Title</h1>");
+    let styles = compute(&doc); let mut i = 0usize;
+    while i < doc.nodes.len() {
+        let tag = doc.nodes[i].tag.as_str(); let s = styles[i];
+        if tag == "table" { assert_eq!(s.width_percent,70000); assert_eq!(s.background,0xffffffffu32); assert!(s.auto_left && s.auto_right); }
+        if tag == "td" { assert_eq!(s.width,435); }
+        if tag == "font" { assert_eq!(s.font_size,14); assert_eq!(s.color,0xff0000ffu32); }
+        if tag == "h1" { assert_eq!(s.align,1u8); }
+        i += 1usize;
+    }
+}
+
+#[test]
+fn menu_layout_values_and_list_types_are_inherited_as_needed() {
+    let doc=crate::html::parse("<style>.menu{display:flex;flex-direction:column;gap:2px 7px;visibility:hidden}.child{display:inline-block;flex:1 1 30%;order:-1;visibility:visible;position:fixed;top:0;left:0;transform:translateX(calc(-100% - 10px));float:right;clear:both}ul{list-style:none}ol{list-style-type:upper-roman}</style><div class='menu'><span class='child'>x</span></div><ul><li>Quiet</li></ul><ol><li>Ordered</li></ol>");
+    let styles=compute_viewport(&doc,1000,760);let mut i=0usize;
+    while i<doc.nodes.len(){
+        let s=styles[i];let c=doc.attribute(i,"class");
+        if c=="menu"{assert_eq!(s.display,FLEX);assert!(s.flex_column);assert_eq!(s.column_gap,7);assert!(!s.visible);}
+        if c=="child"{assert_eq!(s.display,INLINE_BLOCK);assert_eq!(s.flex_grow,1000);assert_eq!(s.flex_basis_percent,30000);assert_eq!(s.order,-1);assert!(s.visible);assert_eq!(s.position,3u8);assert_eq!(s.inset_top,0);assert_eq!(s.inset_left,0);assert_eq!(s.translate_x,-10);assert_eq!(s.translate_x_percent,-100000);assert_eq!(s.float_side,2u8);assert_eq!(s.clear_side,3u8);}
+        if doc.nodes[i].tag=="li"{let parent=doc.nodes[i].parent;assert_eq!(s.list_style,if doc.nodes[parent].tag=="ul"{0u8}else{8u8});}
+        i+=1usize;
+    }
+}
+
+#[test]
+fn static_selectors_preserve_quoted_values_and_initial_checkbox_state() {
+    let doc=crate::html::parse("<style>[data-note='a, b > c']{color:red}input:checked ~ .panel{display:block}input:not(:checked) ~ .closed{display:none}a[href^='https://' i]{font-weight:bold}div + p{font-size:25px}</style><input checked><div class='panel' data-note='a, b > c'>Panel</div> text <p>Next</p><input><div class='closed'>Hidden</div><a href='HTTPS://example.test/'>Link</a>");
+    let styles=compute(&doc);let mut i=0usize;
+    while i<doc.nodes.len(){
+        let s=styles[i];let c=doc.attribute(i,"class");
+        if c=="panel"{assert_eq!(s.color,0xffff0000u32);assert_eq!(s.display,BLOCK);}
+        if c=="closed"{assert_eq!(s.display,NONE);}
+        if doc.nodes[i].tag=="p"{assert_eq!(s.font_size,25);}
+        if doc.nodes[i].tag=="a"{assert!(s.bold);}
+        i+=1usize;
+    }
+}
+
+#[test]
+fn functional_and_structural_selectors_have_the_correct_specificity() {
+    let rules=parse(":where(#x,.c){color:red}:is(#x,.c){color:blue}:not(.c,#x){color:green}[data-key='#x.c']{color:black}");
+    assert_eq!(rules.len(),4usize);
+    assert_eq!(rules[0].specificity,[0usize,0usize,0usize]);
+    assert_eq!(rules[1].specificity,[1usize,0usize,0usize]);
+    assert_eq!(rules[2].specificity,[1usize,0usize,0usize]);
+    assert_eq!(rules[3].specificity,[0usize,1usize,0usize]);
+    let doc=crate::html::parse("<style>li:nth-child(2n+1){font-weight:bold}li:last-child{color:blue}li:not(:first-child){font-size:20px}</style><ul><li>A</li> <li>B</li><li>C</li></ul>");
+    let styles=compute(&doc);let mut item=0usize;let mut i=0usize;
+    while i<doc.nodes.len(){
+        if doc.nodes[i].tag=="li"{item+=1usize;assert_eq!(styles[i].bold,item%2usize==1usize);if item>1usize{assert_eq!(styles[i].font_size,20);}if item==3usize{assert_eq!(styles[i].color,0xff0000ffu32);}}
+        i+=1usize;
+    }assert_eq!(item,3usize);
+}
+
+#[test]
+fn invalid_functional_selectors_do_not_turn_into_broad_negations() {
+    let doc=crate::html::parse("<style>p:not(div:unsupported){font-size:100px}p:not([broken=]){color:red}p:is(.missing,div:unsupported){display:none}p::before{display:none}</style><p>Readable</p>");
+    let styles=compute(&doc);let mut i=0usize;
+    while i<doc.nodes.len(){if doc.nodes[i].tag=="p"{assert_eq!(styles[i].font_size,18);assert_eq!(styles[i].color,initial().color);assert_eq!(styles[i].display,BLOCK);}i+=1usize;}
+}
+
+#[test]
+fn empty_generated_clearance_respects_content_display_and_importance() {
+    let doc=crate::html::parse("<style>.box::before{content:\"\";display:block;clear:both;color:red}.box::after{content:\"\";display:table;clear:right}.off::after{content:none}#on::after{content:\"\"!important}.off::after{content:none!important}</style><div class='box' id='plain'>Text</div><div class='box off' id='off'>Text</div><div class='box off' id='on'>Text</div>");
+    let styles=compute(&doc);let mut i=0usize;
+    while i<doc.nodes.len(){
+        if doc.nodes[i].tag=="div"{
+            assert_eq!(styles[i].before_clear,3u8);assert_eq!(styles[i].color,initial().color);
+            let id=doc.attribute(i,"id");assert_eq!(styles[i].after_clear,if id=="off"{0u8}else{2u8});
+        }i+=1usize;
+    }
+}
+
+#[test]
+fn author_accessibility_clipping_is_distinguished_from_visible_small_text() {
+    let doc=crate::html::parse("<style>#hidden{position:absolute;width:1px;height:1px;clip:rect(1px,1px,1px,1px)}#visible{width:1px;clip:rect(0px,20px,20px,0px)}#reset{clip:rect(0,0,0,0);clip:auto}#inset{clip-path:inset(100%)}</style><a id='hidden'>Jump to content</a><span id='visible'>Small</span><span id='reset'>Reset</span><span id='inset'>Off</span>");
+    let styles=compute(&doc);let mut i=0usize;
+    while i<doc.nodes.len(){
+        let id=doc.attribute(i,"id");
+        if id=="hidden" || id=="inset"{assert!(styles[i].clip_empty);}
+        if id=="visible" || id=="reset"{assert!(!styles[i].clip_empty);}
+        i+=1usize;
+    }
+}
+
+#[test]
+fn cell_padding_hint_uses_the_closest_table_and_yields_to_css() {
+    let doc=crate::html::parse("<style>#override{padding-left:3px}</style><table cellpadding='10'><tr><td id='outer'>Outer<table cellpadding='0'><tr><td id='inner'>Inner<td id='override'>Styled</table><td id='sibling'>Sibling</table>");
+    let styles=compute(&doc);let mut i=0usize;
+    while i<doc.nodes.len(){
+        let id=doc.attribute(i,"id");let s=styles[i];
+        if id=="outer" || id=="sibling"{assert_eq!(s.padding_top,10);assert_eq!(s.padding_left,10);}
+        if id=="inner"{assert_eq!(s.padding_top,0);assert_eq!(s.padding_left,0);}
+        if id=="override"{assert_eq!(s.padding_top,0);assert_eq!(s.padding_left,3);}
+        i+=1usize;
+    }
+}
+
+#[test]
+fn indexed_candidates_equal_exhaustive_matches_and_keep_source_order() {
+    let doc=crate::html::parse("<style>*{color:black}.note{color:blue}[data-note]{color:red}p.note{font-size:20px}#chosen{font-weight:bold}section>p+span{color:green}:is(p,span):not(.off){line-height:2}.note::before{content:\"\";display:block;clear:both}</style><section><p id='chosen' class='note note' data-note='yes'>Text</p><span>Sibling</span><p class='off'>Other</p></section>");
+    let rules=parse(doc.styles.as_str());let index=RuleIndex::build(&rules);let mut node=0usize;
+    while node<doc.nodes.len(){
+        let mut expected=Vec::new();let mut i=0usize;
+        while i<rules.len(){if matches_origin(&doc,node,&rules[i]){expected.push(i);}i+=1usize;}
+        let mut actual=Vec::new();
+        for i in index.candidates(&doc,node){if matches_origin(&doc,node,&rules[i]){actual.push(i);}}
+        let mut i=1usize;
+        while i<actual.len(){let entry=actual[i];let mut j=i;while j>0usize && actual[j-1usize]>entry{actual[j]=actual[j-1usize];j-=1usize;}actual[j]=entry;i+=1usize;}
+        assert_eq!(actual.len(),expected.len());let mut i=0usize;while i<actual.len(){assert_eq!(actual[i],expected[i]);i+=1usize;}
+        node+=1usize;
+    }
+    let styles=compute(&doc);let mut i=0usize;
+    while i<doc.nodes.len(){if doc.attribute(i,"id")=="chosen"{assert_eq!(styles[i].color,0xffff0000u32);assert_eq!(styles[i].font_size,20);assert!(styles[i].bold);assert_eq!(styles[i].before_clear,3u8);}i+=1usize;}
+}
+
+#[test]
+fn monospace_defaults_inherit_and_author_families_reset_them() {
+    let doc=crate::html::parse("<style>#reset{font:16px Arial,sans-serif}#mono{font-family:'Liberation Mono',monospace}#sans{font-family:Arial,monospace}</style><pre><span id='inherited'>Fixed</span><code id='reset'>Reset</code></pre><p id='mono'>Mono</p><code id='sans'>Sans</code><font face='Courier New' id='legacy'>Legacy</font>");
+    let styles=compute(&doc);let mut i=0usize;
+    while i<doc.nodes.len(){
+        let id=doc.attribute(i,"id");
+        if id=="inherited" || id=="mono" || id=="legacy"{assert!(styles[i].monospace);}
+        if id=="reset" || id=="sans"{assert!(!styles[i].monospace);}
+        i+=1usize;
+    }
+}
+
+#[test]
+fn legacy_center_centers_the_table_box_without_centering_its_cells() {
+    let doc=crate::html::parse("<center><table id='outer' width='85%'><tr><td>Headline<table id='nested'><tr><td>Nested</table></table><table id='explicit' align='left' style='text-align:right'><tr><td>Right</table></center>");
+    let styles=compute(&doc);let mut i=0usize;
+    while i<doc.nodes.len(){
+        let id=doc.attribute(i,"id");let s=styles[i];
+        if id=="outer"{assert!(s.auto_left && s.auto_right);assert_eq!(s.align,0u8);}
+        if id=="nested"{assert_eq!(s.align,0u8);}
+        if id=="explicit"{assert!(!s.auto_left && !s.auto_right);assert_eq!(s.align,2u8);}
+        i+=1usize;
+    }
 }

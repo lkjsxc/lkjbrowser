@@ -33,7 +33,7 @@ the exact binary. Documentation and the capability inventory establish the absen
 a missing guessed spelling alone would not establish that.
 
 The direct connect API remains a runtime gap. The browser now uses an existing-capability
-workaround for **optional linked stylesheets only**: a same-executable native child,
+workaround for **optional linked/imported stylesheets only**: a same-executable native child,
 anonymous temporary files and a parent-enforced three-second deadline shared by the
 whole batch. At most four distinct URLs are fetched, each bounded to one MiB; cached
 results are applied in source order within the four-MiB aggregate CSS limit. The parent
@@ -71,14 +71,19 @@ it is distinct from the retired browser implementation blocker.
 | Rank | Kind / form | Sites | Consequence and supported route |
 | --- | --- | ---: | --- |
 | 11 | Source form: named function item as a Result callback | 1 resource-worker I/O helper | `result.map_err(io_error)` rejects with E_TYPE in `probes/function-item-map-err.lkj`; the explicit typed closure in `probes/function-item-map-err-workaround.lkj` is accepted. |
-| 12 | Source library forwarding: String.strip_prefix | 1 | Fixture server used `value.as_str().strip_prefix(...)`; negative `probes/string-strip-prefix.lkj`. |
+| 12 | Source library forwarding: String.strip_prefix and String.parse | 2 | Use an explicit `as_str()` view. Negatives: `probes/string-strip-prefix.lkj` and `probes/pages-net-string-parse.lkj`; the latter accepts in `pages-net-accepted.lkj`. |
 | 13 | Source library: shaping, bidi and fallback fonts | 1 text pipeline | Unicode decoding and cmap lookup work, but complex scripts and missing characters need reusable layout/fallback libraries. No new OS authority is needed for those algorithms. |
 | 14 | Source library and input authority: XKB/IME | 1 keyboard pipeline | Physical US-key text input is implemented. Full keyboard text needs the received keymap descriptor, a source keymap/text implementation and later IME protocol work. |
 | 15 | Runtime: writable shared region | 0 required; 1 proposed optimization | `file.map_writable()` rejects in `probes/writable-mapping.lkj`. The working browser uses seek/write plus release ownership, so this is not a first-window blocker. |
 | 16 | Runtime: IPv6/UDP | 1 HTTP address parser, 1 DNS design choice | The pin exposes numeric IPv4 TCP. This browser uses DNS over TCP; IPv6/UDP are not hidden in the bridge. |
+| 17 | Source form policy: string views in owned arrays | 2: image fixtures and list marker strings | Static `[&str; N]` rejects with E_BORROW in `image-view-array.lkj`; an owned `Vec<String>` is explicit and accepted in `image-owned-vec-workaround.lkj`. |
+| 18 | Source library: owned-array IntoIterator | 1 image fixture loop | `[String; N]` in a for loop rejects E_TRAIT in `image-owned-array-iteration.lkj`; the owned vector probe is accepted. |
+| 19 | Source inference: String/view comparison after a match and loop | 1 CSS attribute matcher | The thirteen-line `string-match-loop-compare.lkj` rejects E_TYPE. Its `item.as_str() == desired` counterpart accepts. Ordinary isolated String comparisons can work; this is the precise inference context. |
+| 20 | Source inference: late binding and collection element type | 2 stylesheet helpers | `pages-net-late-type.lkj` needs an explicit `String`; `pages-net-collection-type.lkj` needs `Vec<String>`. Both supported spellings are in `pages-net-accepted.lkj`. |
 
-Runtime font parsing, PNG/DEFLATE, HTTP client framing, HTML, layout and TLS/PKI were
-missing reusable components at the beginning of the run. They are now ordinary lkjscript modules here. They
+Runtime font parsing, PNG/DEFLATE, JPEG/GIF, gzip and text decoding, HTTP client framing,
+HTML, layout and TLS/PKI were missing reusable components at the beginning of their
+respective slices. They are now ordinary lkjscript modules here. They
 did not require another language or compiler changes. CFF outlines, additional PNG formats,
 full HTML recovery and wider CSS remain application/library work, detailed in the module docs.
 
@@ -158,3 +163,16 @@ OPINION: Package the now-working TLS/PKI modules as reviewed reusable lkjscript 
 work; keep their restricted profile and cryptographic assurance limits explicit. Shaping
 and keymaps remain source-library work. Keep browser implementation defects in this
 repository rather than presenting them as compiler defects.
+
+## Pages slice checkpoint
+
+The ten-page work retained the same published pin and unchanged byte/descriptor bridge.
+No new runtime capability was required for JPEG/GIF, compressed HTTP, text encodings,
+stylesheet imports, table spans, monospace typefaces or cached semantic layout.
+The small source restrictions above have rejecting witnesses and explicit accepted
+rewrites; none was hidden behind another language.
+
+The compiler stream owns deadline connect and Unix/descriptor capabilities. The lead
+said an exact published pin and probes would be handed over when ready. Until that
+handoff actually arrives, the rank 1–3 witnesses remain negative at this exact pin.
+A future capability's existence is not inferred from a branch or a proposed API name.

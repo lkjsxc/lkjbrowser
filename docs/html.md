@@ -1,101 +1,244 @@
 # HTML, CSS and document layout
 
 The document pipeline is written in lkjscript. It does not call a host HTML
-parser, CSS library, text layout engine, browser, or drawing library.
+parser, CSS library, text layout engine, browser, or drawing library. Its goal
+is readable, navigable documents within the explicit subset below.
 
-- html::parse(&str) builds an owned indexed tree, with attributes and decoded
-  text, plus the first title and embedded style text.
-- css::compute_viewport(&Document, width, height) applies the supported cascade,
+- `html::parse(&str)` builds an owned indexed tree with attributes, decoded text,
+  the first title and embedded style text.
+- `css::compute_viewport(&Document, width, height)` applies the supported cascade,
   width media conditions and viewport lengths. Parents precede children, so
-  inheritance is iterative; css::compute remains a compatibility wrapper.
-- layout::build_in_viewport accepts separate layout width and full viewport
-  dimensions, then creates document-relative boxes, text/image fragments and
-  anchors. The older layout::build entry remains a compatibility wrapper.
-- Painting uses each fragment's real font, size, x coordinate and baseline.
-  Layout and painting share Font::advance. Scrolling and chrome belong to main.
+  inheritance is iterative; `css::compute` remains a compatibility wrapper.
+- `layout::build_styled_faces` lays out the cached DOM and computed styles with
+  four proportional and four monospace faces, plus decoded image dimensions.
+  Compatibility entry points still support the earlier four-face callers.
+- Painting uses each fragment's actual font, size, x coordinate and baseline.
+  Layout and painting share `Font::advance`. Scrolling and browser chrome belong
+  to main.
 
-There are no heap-stored borrowed references in the DOM. Owned vectors, temporary
-checked views, strings, enums and scalar arithmetic were sufficient without a
+The browser retains the parsed DOM and computed styles across image-dimension
+relayouts. There are no heap-stored borrowed references in the DOM. Owned vectors,
+temporary checked views, strings, enums and scalar arithmetic suffice without a
 helper in another language.
 
-## Implemented subset
+## HTML subset
 
-HTML supports ordinary tags and text, quoted and unquoted attributes, comments
-and declarations, void elements, explicit closing tags, and selected optional
-closing rules for paragraphs and list items. Title, style and script contents
-are read as raw text. Scripts are neither executed nor displayed. Common named
-entities and decimal/hexadecimal numeric entities decode valid Unicode scalars.
-This is a forgiving document parser, not the full HTML5 tree builder.
+The parser accepts ordinary tags and text, quoted and unquoted attributes,
+comments and declarations, void elements and explicit closing tags. Selected
+optional closing rules cover paragraphs, list items, table cells, rows and row
+groups. Table closing searches stop at the nearest owning table, so a nested
+table does not accidentally close an outer cell. This is a forgiving document
+parser, not the complete HTML5 tree builder.
 
-CSS supports:
+Title, style and script contents are read as raw text. Scripts are neither
+executed nor displayed. Common named entities and decimal/hexadecimal numeric
+entities decode valid Unicode scalars. The `hidden` boolean attribute suppresses
+display. A closed `details` element exposes its first `summary`; the browser can
+toggle it and recompute styles/layout without JavaScript.
 
-- Type, universal, class and id selectors; compounds; descendants; children;
-  comma-separated lists. Unsupported selectors never broaden a match.
-- Specificity, source order, inline style and !important within this subset.
-- Display block, inline and none; text color and font size; bold and italic;
-  underline; left, center and right text alignment.
-- Block margin and padding shorthands/sides, horizontal auto margins, content
-  width and maximum width, a minimum content height, solid uniform borders and
-  opaque backgrounds.
-- Font sizes in px, em, rem (the initial 18 px root size) and percentages.
-  Relative font sizes use the parent's font size.
-- Pixel, em/rem and viewport vh/vw box lengths. Percentage box lengths are ignored
-  rather than incorrectly interpreted relative to the font.
-- The supported font shorthand fields: style, weight, size and line height, with
-  declaration order and importance retained. Font-family selection is absent.
-- Screen/all width media conditions, optional only, min/max-width in px/em/rem,
-  comma alternatives and nesting to eight levels. Unsupported conditions and
-  print media are skipped; media width is the actual window width.
-- Unitless and pixel line height. Unitless line height inherits as a ratio, so
-  changing a descendant's font size also changes its line spacing.
-- Opaque #rgb, #rrggbb, decimal rgb(r,g,b), and a small set of color names.
-- Preserved preformatted whitespace with soft wrapping to the available column.
+Presentational hints apply before author declarations: supported `width` and
+`height` attributes on images/table elements; `align` and `bgcolor`; legacy
+`font` size, color and face; and list `type`. Cells inherit numeric `cellpadding`
+from their nearest owning table. Legacy `center` centers a table's outside box;
+the table's contents start with normal text alignment unless their own hints or
+author styles override it.
 
-Inline fragments wrap using glyph advances and share a baseline even when sizes
-or faces differ. A word crossing a style boundary moves as one word when it fits
+## Selectors and cascade
+
+The selector matcher supports:
+
+- Type, universal, class and id selectors; compound selectors; descendants and
+  direct children; adjacent and general siblings; comma-separated lists.
+- Attribute presence, exact equality and the `~=`, `|=`, `^=`, `$=`, `*=`
+  operators, quoted values and the explicit ASCII-insensitive `i` flag.
+- `:root`, initial attribute-based `:checked`, `:disabled` and `:enabled`;
+  first/last/only child and type tests; `nth-child`, `nth-last-child`,
+  `nth-of-type` and `nth-last-of-type`.
+- `:not()`, `:is()` and `:where()` with compound-selector arguments.
+  Complex selector arguments inside these functions are not supported.
+- Specificity, source order, inline styles and `!important` within this subset.
+  `:is()` and `:not()` use the greatest argument specificity; `:where()`
+  contributes zero.
+
+Selector lists and compounds are split with awareness of quotes, brackets and
+parentheses. Unknown or malformed selectors fail closed, including unsupported
+syntax inside negation. Interactive pseudo-classes such as hover, focus, active,
+visited and target do not match the static style snapshot. Checkbox state is read
+from markup; this does not imply an implemented interactive form control.
+
+Rules are indexed by a required id, class or tag in their rightmost compound.
+Rules without such a key use a universal bucket. Each element considers only
+its applicable buckets; text and document nodes do not run selector matching.
+Matches are still ordered by specificity and source index, so indexing does not
+change cascade order. DOM class and attribute comparisons avoid allocating
+temporary strings in the hot matcher.
+
+## Properties and layout
+
+### Text and fonts
+
+Text color, font size, normal/bold weight, normal/italic style, underline and
+left/center/right alignment are implemented. The supported `font` shorthand
+expands style, weight, size, line-height and family while retaining declaration
+order and importance. Family selection distinguishes a proportional face from a
+monospace face using the generic monospace family and recognized common mono
+family names. It does not select arbitrary installed fonts or a separate serif
+face. The UA styles for `pre`, `code`, `tt`, `kbd` and `samp` select monospace.
+
+Eight independently owned runtime faces provide regular, bold, italic and bold
+italic for proportional and monospace text. The optional font directory retains
+the four required Liberation Sans files. Mono files are optional there, then
+looked up in the system; an independently loaded corresponding Sans face is the
+last fallback. This is startup face selection, not per-glyph font fallback.
+
+Font sizes accept px, pt, em, rem and percentages. Relative font sizes use the
+parent; rem uses the computed root size, initially 18 px. A point is 4/3 of a CSS
+pixel. Box lengths additionally support vw/vh; ex is an explicit approximation
+of half the computed font size, not a measured x-height. Supported line heights
+include unitless ratios, lengths and percentages. Ratios inherit as ratios so
+a descendant's font-size change also changes its line spacing.
+
+Inline text wraps using glyph advances and shares a baseline even when sizes or
+faces differ. A word crossing a style boundary moves as one word when it fits
 a new line; a longer word splits at character boundaries without losing text.
-Lists have hanging bullet or numeric markers on the first text baseline.
-Text and image fragments retain their link destination for hit testing.
+Preformatted whitespace is retained with soft wrapping to the available column.
+Text and image fragments retain link destinations for hit testing.
 
-Images use explicit HTML/CSS dimensions and scale down while preserving that
-ratio. The browser fetches PNG data as boxes enter the visible viewport. Loading
-an image does not rebuild layout, so reserved dimensions and the reading position
-remain stable even when no explicit dimensions were supplied.
+### Boxes, lists and document flow
 
-Tables have a bounded readable fallback: rows share intrinsic column widths,
-headers are bold, links/anchors survive, and colspan spans up to 64 columns.
-Crowded tables reduce inter-column gaps before shrinking columns; insufficient
-width selects a stacked fallback. This is not the full CSS table algorithm.
+Supported box properties include margin/padding shorthands and sides, horizontal
+auto margins, width and max-width, minimum ordinary block height, solid uniform
+borders, opaque backgrounds and content-box/border-box sizing. Width/max-width
+and margin/padding percentages are resolved from the containing block's width,
+including vertical margin/padding percentages. Replacing a percentage declaration
+with an absolute value or auto/none clears its earlier percentage component.
+Bounded two-argument `min()`/`max()` on supported lengths are accepted; this is
+not the full CSS math-expression model.
 
-Inline style elements and up to four distinct linked stylesheet URLs are applied
-in DOM order, including cached repeated links. Both HTML media attributes and CSS
-media blocks filter rules. Linked bodies have a one-MiB cap, the assembled CSS
-has a four-MiB cap, and one shared three-second owned-child deadline limits the
-whole external-sheet batch. HTTPS and local-file origin rules remain enforced.
-CSS imports and font downloads are not followed.
+List styles include none, disc, circle, square, decimal, lower/upper alpha and
+lower/upper Roman. Markers hang beside the first text baseline. List-style-position
+and list-style-image are not implemented. The curl corpus uses ordinary outside
+markers; its two-digit marker clipping was a layout gutter issue, not evidence
+for adding an inside-marker rule.
+
+`display` recognizes none, block, inline, list-item, inline-block, flex and
+inline-flex. Full atomic inline-block/inline-flex formatting is not implemented.
+Grid and CSS table display values have a readable block fallback; actual HTML
+tables use the dedicated bounded table algorithm described in
+[Table layout](tables.md).
+
+The finite flex implementation lays out ordinary rows or columns with order,
+basis, growth and a gap. Widths shrink to the available row, with a stacked
+fallback for a severely crowded row. Flex wrapping, alignment/distribution
+properties and the complete flex min-size/shrink algorithm are absent.
+
+Basic left/right floats use their declared or measured width and reserve a
+side exclusion area. Following text moves below a float if its remaining column
+would be unreadable. Clear-left/right/both is applied. The common empty
+`::before`/`::after` clearfix pattern contributes clearance when its cascaded
+content is an empty string and its display is block, table or flow-root.
+Other pseudo-element content and geometry are not generated.
+
+### Visibility and positioned controls
+
+Visibility is inherited; hidden ordinary content keeps its layout space while
+its text/decoration is not painted. Position keywords, simple inset lengths and
+a single `translateX()` are parsed. Translation accepts a length, percentage or
+the observed two-term `calc()` sum/difference. Absolute/fixed controls that are
+hidden, explicitly empty-clipped or wholly translated outside the viewport are
+excluded. This handles static closed drawers without placing their text before
+an article.
+
+Only explicit empty `clip:rect(...)` geometry and `clip-path:inset(100%)` are
+recognized for that exclusion. General clipping, transforms, stacking contexts
+and positioned containing-block layout are absent. Visible positioned content
+uses the readable flow fallback; relative and sticky positioning are not full
+positioning implementations.
+
+## Stylesheet resources and media
+
+Inline style elements, linked stylesheets and leading `@import` statements are
+expanded in source order. Imports accept quoted URLs or `url(...)` with an
+optional supported media condition. Relative imports resolve against the final
+redirected stylesheet URL. Cached repeated occurrences are still expanded at
+their own source positions; active URL cycles are skipped.
+
+The whole batch permits four distinct external stylesheet requests, including
+imports and failed requests, one MiB per external body, four MiB assembled CSS,
+and 1,024 expansion attempts. One shared three-second owned-child deadline bounds
+external loading. HTTPS and local-file origin restrictions remain enforced.
+Font downloads are not followed.
+
+HTML media attributes and CSS media blocks support screen/all, optional only,
+min/max-width in px/em/rem, comma alternatives and nesting to eight levels.
+Unsupported conditions, print media and general media negation are skipped.
+Media width is the actual window width; media em/rem use the initial font size,
+independent of author root-font declarations.
+
+## Images and tables
+
+PNG, supported JPEG profiles and the first composited GIF frame are decoded
+from lkjscript source as boxes enter the visible viewport. Decoded dimensions
+trigger layout with the retained DOM/styles so images without explicit dimensions
+can reserve their actual ratio. Explicit HTML/CSS dimensions remain inputs to
+layout and oversized images scale to the reading column. SVG root metadata can
+provide placeholder geometry, but SVG pixels are not painted. See
+[Image formats and evidence](images.md) for exact codec profiles and limits.
+
+HTML tables support a bounded grid with row groups, colspan/rowspan, intrinsic
+widths, legacy spacing/alignment and a readable stacked fallback. Table details,
+resource limits and regression evidence are maintained in [Table layout](tables.md).
 
 ## Deliberate boundaries
 
-There is no complete HTML error recovery, full CSS table/SVG layout, form-control
-implementation, JavaScript, generated content, CSS flex/grid, positioning,
-floats, or CSS font selection. Rowspan, collapsed borders and column styles are
-outside the table fallback. General media features and negation are unsupported.
+There is no complete HTML error recovery, JavaScript, full form-control
+implementation, general generated content, CSS grid, full positioning/flex/table
+layout, general alpha colors, custom-property substitution or complete CSS
+length/cascade model. Unsupported declarations preserve the earlier usable
+value where the implemented parser can establish invalidity.
 
-Vertical margins are additive, not collapsed. Inline margin/padding boxes and
-full inline-background geometry are absent. Line heights never overlap the
-font's ascent/descent. Widths stay within the reading column. Height is a
-minimum for ordinary blocks; images use their specified height.
+Vertical margins are additive rather than collapsed. Full inline box/background
+geometry is absent. Line heights never overlap the font's ascent/descent. Widths
+stay within the reading column. Height is a minimum for ordinary blocks; images
+use their specified height.
 
-Percentage box geometry, general alpha colors and the full CSS
-length/cascade model remain absent. Font sizes are constrained to 6..160 px,
-absolute box lengths to -8192..8192 px, padding to nonnegative values, and
-borders to 0..16 px. These are application policies, not language limits.
+Font sizes are constrained to 6..160 px, absolute box lengths to -8192..8192 px,
+padding to nonnegative values, and borders to 0..16 px. These are application
+policies, not language limits. There is no shaping, bidi reordering, kerning,
+per-glyph font fallback or Unicode line-breaking yet. The corpus and runtime
+font selection remain Latin-focused.
 
-There is no shaping, bidi reordering, kerning, font fallback, or Unicode
-line-breaking yet. Four runtime font files supply regular, bold, italic and
-bold italic faces for the Latin-focused fixtures.
+## Ten-page CSS/HTML evidence
 
-## Tests and evidence
+The isolated current CSS/HTML native gate passed **34 tests**: six HTML tests and
+28 CSS tests. These include optional table-close boundaries, nested tables,
+static selectors and specificity, percentage resets, root rem/point sizing,
+presentational hints, empty clearfixes, clipped controls, nearest-table
+cellpadding, monospace inheritance/resets and legacy centered tables.
+An indexed-versus-exhaustive matcher regression checks that candidate filtering
+preserves matches and equal-specificity source order.
+
+[The CSS review](../tests/pages-css-review.md) maps these changes to actual cached
+Python, SQLite, Wikipedia, curl, Git, Hacker News and Paul Graham source patterns.
+The final full application gates and real Weston captures are recorded by the
+main ten-page review; offline renders are diagnostic evidence only.
+
+A frozen Wikipedia measurement used 10,767 nodes and 1,949 rules with the same
+layout and font implementation. Computed-style time fell from 17,466,694
+microseconds before matcher optimizations to 1,774,554 microseconds including
+candidate-index construction. Command count, document height and encoded PNG byte
+count remained equal in that comparison. These measurements isolate CSS work;
+they are not end-to-end navigation timings or a claim of pixel hash equality.
+
+The matcher also exposed one pinned-compiler type-checking refusal:
+`probes/string-match-loop-compare.lkj` places a `String == &str` comparison inside
+a loop in a match arm returning `Option<bool>`. The 13-line probe is refused with
+E_TYPE; the accepted counterpart explicitly compares `item.as_str()`.
+A plain isolated comparison loop can be accepted, so this observation is limited
+to the minimized context. It needs no runtime primitive or external helper.
+The older language observations below are retained separately.
+
+## Earlier test and visual evidence
 
 The HTTPS public-page follow-up passed 55 focused native tests through
 src/layout_public_probe.lkj. Nine new regressions cover viewport/shorthand/media
@@ -186,3 +329,16 @@ and preserve the proven inactive payload state of the outer Err variant.
 The accepted block-owned discriminator rewrite demonstrates that no new
 capability, unsafe escape or external helper is necessary. Until the checker
 can establish this directly, keep the lexical-boundary rewrite explicit.
+
+### Contained flex margins and marker gutters
+
+The readable flex fallback clamps negative horizontal item margins to zero, retains
+intrinsic minimum box widths, and stacks items when those minima cannot fit. This is
+an explicit limitation of the partial flex model: it prevents intersecting item boxes
+and adjacent navigation labels running together. It does not claim full CSS negative
+margin or flex shrinking semantics. Percentages are resolved once against the parent,
+then the allocated item width becomes authoritative.
+
+Outside list markers reserve only the extra gutter needed to keep their full number
+inside a marginless viewport. A two-digit label therefore remains visible when the
+source removes the body margin; ordinary inset lists keep their existing geometry.

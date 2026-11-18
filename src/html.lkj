@@ -133,10 +133,35 @@ pub fn void_tag(tag: &str) -> bool {
 
 fn closes_paragraph(tag: &str) -> bool {
     match tag {
-        "address" | "article" | "aside" | "blockquote" | "div" | "dl" | "fieldset" |
-        "footer" | "form" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "header" |
-        "hr" | "main" | "nav" | "ol" | "p" | "pre" | "section" | "ul" => true,
+        "address" | "article" | "aside" | "blockquote" | "details" | "dialog" | "div" | "dl" | "fieldset" |
+        "figcaption" | "figure" | "footer" | "form" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "header" |
+        "hgroup" | "hr" | "main" | "menu" | "nav" | "ol" | "p" | "pre" | "search" | "section" | "table" | "ul" => true,
         _ => false,
+    }
+}
+
+// Close an omitted cell, row or row-group end tag within the nearest table.
+// Descendants close with their owner, but a nested table never closes an outer
+// cell. This is the table subset needed by ordinary HTML, not foster parenting.
+fn close_table_optional(doc: &Document, stack: &mut Vec<usize>, name: &str) {
+    let cell = name == "td" || name == "th";
+    let row = name == "tr";
+    let group = name == "tbody" || name == "thead" || name == "tfoot";
+    if !cell && !row && !group { return; }
+    let mut pos = stack.len();
+    while pos > 1usize {
+        pos -= 1usize;
+        let tag = doc.nodes[stack[pos]].tag.as_str();
+        if tag == "table" { break; }
+        let closes = if cell { tag == "td" || tag == "th" }
+            else if row { tag == "tr" }
+            else { tag == "tbody" || tag == "thead" || tag == "tfoot" };
+        if closes {
+            while stack.len() > pos { stack.pop(); }
+            break;
+        }
+        if cell && tag == "tr" { break; }
+        if row && (tag == "tbody" || tag == "thead" || tag == "tfoot") { break; }
     }
 }
 
@@ -146,6 +171,38 @@ impl Document {
         while i < self.nodes[node].attributes.len() {
             if self.nodes[node].attributes[i].name == name { return true; }
             i += 1;
+        }
+        false
+    }
+
+    // Allocation-free selector predicates. Rule matching asks these far more
+    // often than a caller needs an owned copy of an attribute value.
+    pub fn attribute_value_is(&self, node: usize, name: &str, value: &str) -> bool {
+        let mut i = 0usize;
+        while i < self.nodes[node].attributes.len() {
+            if self.nodes[node].attributes[i].name == name {
+                return self.nodes[node].attributes[i].value.as_str() == value;
+            }
+            i += 1usize;
+        }
+        false
+    }
+
+    pub fn has_class(&self, node: usize, class: &str) -> bool {
+        let mut i = 0usize;
+        while i < self.nodes[node].attributes.len() {
+            if self.nodes[node].attributes[i].name == "class" {
+                let value = self.nodes[node].attributes[i].value.as_str();
+                let bytes = value.as_bytes(); let mut at = 0usize;
+                while at < bytes.len() {
+                    while at < bytes.len() && whitespace(bytes[at]) { at += 1usize; }
+                    let start = at;
+                    while at < bytes.len() && !whitespace(bytes[at]) { at += 1usize; }
+                    if at > start && &value[start..at] == class { return true; }
+                }
+                return false;
+            }
+            i += 1usize;
         }
         false
     }
@@ -356,6 +413,7 @@ pub fn parse(source: &str) -> Document {
                 if t == "ul" || t == "ol" || t == "dl" { break; }
             }
         }
+        close_table_optional(&doc, &mut stack, name.as_str());
         let p = stack[stack.len() - 1usize];
         let is_void = void_tag(name.as_str());
         let id = add_node(&mut doc, p, name, String::new(), attributes);
@@ -404,4 +462,46 @@ fn malformed_and_optional_tags_stay_a_tree() {
 #[test]
 fn numeric_entities_preserve_unicode() {
     assert_eq!(decode_entities("caf&#233; &#x1f642; &unknown;"), "café 🙂 &unknown;");
+}
+
+#[test]
+fn optional_table_cells_rows_and_groups_keep_document_order() {
+    let doc = parse("<table id='t'><thead><tr><th>A<th>B<tbody><tr><td><b>one<td>two<tr><td>three<td>four<tfoot><tr><td>last<td>end</table>");
+    let mut rows = 0usize; let mut cells = 0usize; let mut groups = 0usize;
+    let mut at = 1usize;
+    while at < doc.nodes.len() {
+        let tag = doc.nodes[at].tag.as_str();
+        let parent = doc.nodes[doc.nodes[at].parent].tag.as_str();
+        if tag == "thead" || tag == "tbody" || tag == "tfoot" { assert_eq!(parent, "table"); groups += 1usize; }
+        if tag == "tr" { assert!(parent == "thead" || parent == "tbody" || parent == "tfoot"); rows += 1usize; }
+        if tag == "td" || tag == "th" { assert_eq!(parent, "tr"); cells += 1usize; }
+        at += 1usize;
+    }
+    assert_eq!(groups, 3usize); assert_eq!(rows, 4usize); assert_eq!(cells, 8usize);
+    assert_eq!(doc.text_content(0usize), "ABonetwothreefourlastend");
+}
+
+#[test]
+fn optional_table_close_does_not_cross_a_nested_table() {
+    let doc = parse("<table id='outer'><tr><td id='a'>a<table id='inner'><tr><td>x<td>y</table>z<td id='b'>b</table>");
+    let mut a = 0usize; let mut b = 0usize; let mut inner = 0usize; let mut at = 1usize;
+    while at < doc.nodes.len() {
+        let id = doc.attribute(at, "id");
+        if id == "a" { a = at; } if id == "b" { b = at; } if id == "inner" { inner = at; }
+        at += 1usize;
+    }
+    assert!(a > 0usize && b > a && inner > a);
+    assert_eq!(doc.nodes[a].parent, doc.nodes[b].parent);
+    assert_eq!(doc.nodes[inner].parent, a);
+    assert_eq!(doc.text_content(a), "axyz");
+}
+
+#[test]
+fn block_table_start_closes_an_omitted_paragraph_end() {
+    let doc = parse("<div><p>Before<table><tr><td>Inside</table><p>After</div>");
+    let mut at = 1usize;
+    while at < doc.nodes.len() {
+        if doc.nodes[at].tag == "table" { assert_eq!(doc.nodes[doc.nodes[at].parent].tag, "div"); }
+        at += 1usize;
+    }
 }
