@@ -10,7 +10,7 @@ These are independent test programs, not browser runtime dependencies.
 
 Build the normal pinned browser and its byte/descriptor bridge first. GCC, Xvfb, libX11.so.6 and libXtst.so.6 must be present. The unpacked Weston 13 dependency tree must include the X11 backend, kiosk shell and screenshooter. Pass its root as the optional argument; the default is `.deps/root`.
 
-The shared compiler gate must be free. On this workspace the lane is bounded to CPUs 24–31 at nice 10:
+The capture script acquires and releases the shared compiler gate itself, retaining ownership through the wide documented build. It refuses to run if another task holds the directory. Run it directly; do not wrap it in an already-held gate. On this workspace the lane is bounded to CPUs 24–31 at nice 10:
 
 ```sh
 taskset -c 24-31 nice -n 10 bash tools/address-proof/capture.sh /home/coder/workspace/lkjbrowser/.deps/root

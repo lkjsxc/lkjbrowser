@@ -82,8 +82,9 @@ Ctrl+C, Ctrl+X and Ctrl+V use the compositor's plain-text clipboard through
 `wl_data_device`. Cut removes text only after compositor ownership is confirmed.
 Paste removes line breaks, turns tabs into spaces, and trims surrounding whitespace.
 Unavailable clipboard authority leaves text unchanged; there is no internal clipboard
-substitute. Transfers are limited to one MiB and five seconds, and invalid UTF-8,
-failed, incomplete or stale transfers do not insert partial text.
+substitute. Clipboard payloads are limited to one MiB. Paste has a five-second total
+deadline; bridge descriptor transfers have a five-second inactivity deadline.
+Invalid UTF-8, failed, incomplete or stale transfers do not insert partial text.
 [The interaction and visual contract](docs/address-editing.md) records the exact behavior.
 
 Keyboard text still uses the US physical-key layout; both left/right Shift, Ctrl

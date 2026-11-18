@@ -86,10 +86,12 @@ Wayland.available(slot:u32) -> bool
 Wayland.present(slot:u32) -> Result<(),String>
 Wayland.poll(timeout_ms:usize) -> Result<Vec<Event>,String>
 Wayland.clipboard_available() -> bool
+Wayland.keyboard_has_focus() -> bool
 Wayland.clipboard_copy(text:&str) -> Result<bool,String>
 Wayland.clipboard_paste() -> Result<bool,String>
 Wayland.clipboard_pending() -> bool
 Wayland.take_clipboard() -> Option<String>
+Wayland.has_deferred_input() -> bool
 wayland::cursor_bytes() -> Vec<u8>  // exactly 2304 bytes
 wayland::frame_file_size(width:usize,height:usize) -> usize
 wayland::key_ascii(evdev_code:u32, shift:bool) -> u8
@@ -145,8 +147,11 @@ capabilities and pointer/keyboard events, and independently checks the client's
 configure acknowledgements, pong, cursor request, and shm descriptor flag.
 The client verifies motion/click coordinates, wheel distance, both key states,
 resize, focus loss/restoration, both Alt keys, close, and focused clipboard calls
-with no advertised data-device manager. [The original observed results](wayland-input-proof.log)
-record the earlier input proof; the address slice records its current run separately.
+with no advertised data-device manager. Ten button presses delivered in one poll
+also preserve the compositor timestamps and prove the 400 ms multi-click boundary,
+fourth-click reset, and 32-bit clock wrap. The peer waits for explicit acknowledgements
+of the focus and timing checks before closing. [The observed results](wayland-input-proof.log)
+record the current input proof.
 This is a test-only protocol peer; actual window presentation is independently
 proved with Weston above. Headless Weston has no physical input seat, so no
 claim is made that physical keyboard/mouse hardware was tested.

@@ -10,7 +10,57 @@ if test "$#" -gt 0; then deps=$(realpath "$1"); fi
 test -x "$deps/usr/bin/weston"
 test -x target/lkjbrowser
 test -x target/byte-descriptor-bridge
-test ! -d /home/coder/workspace/prompts/talk/lkjscript-gate.lock || { echo "lkjscript serial gate is occupied" >&2; exit 75; }
+serial_gate=/home/coder/workspace/prompts/talk/lkjscript-gate.lock
+serial_owner="$serial_gate/address-proof-$$"
+serial_owned=0 serial_marked=0 serial_identity=
+xpid= wpid= spid= qpid= bpid= tpid= lpid= restore_binaries=0
+cleanup_width(){
+    set +e
+    wayland_auth_close
+    for pid in "$lpid" "$qpid" "$bpid" "$tpid" "$spid" "$wpid" "$xpid"; do
+        if test -n "$pid"; then kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; fi
+    done
+    lpid= qpid= bpid= tpid= spid= wpid= xpid=
+    set -e
+}
+release_gate(){
+    if test "$serial_owned" != 1; then return 0; fi
+    if test -n "$serial_identity" &&
+       test "$(stat -Lc '%d:%i' "$serial_gate" 2>/dev/null)" != "$serial_identity"; then
+        echo "Shared gate identity changed; refusing to remove another owner's gate" >&2
+        return 1
+    fi
+    if test "$serial_marked" = 1 && ! test -f "$serial_owner"; then
+        echo "Shared gate ownership marker changed; leaving the gate untouched" >&2
+        return 1
+    fi
+    rm -f "$serial_owner" || return 1
+    rmdir "$serial_gate" || return 1
+    serial_owned=0
+}
+cleanup(){
+    local status=$?
+    trap - EXIT HUP INT TERM
+    cleanup_width
+    set +e
+    if test "$restore_binaries" = 1; then
+        cp "$run/byte-descriptor-bridge" target/byte-descriptor-bridge || status=1
+        cp "$run/lkjbrowser" target/lkjbrowser || status=1
+    fi
+    release_gate || status=1
+    exit "$status"
+}
+if ! mkdir "$serial_gate"; then
+    echo "lkjscript serial gate is occupied" >&2
+    exit 75
+fi
+serial_owned=1
+# Install cleanup before any ownership bookkeeping or compiler invocation can fail.
+trap cleanup EXIT
+trap 'exit 130' HUP INT TERM
+serial_identity=$(stat -Lc '%d:%i' "$serial_gate")
+printf 'pid=%s source=%s\n' "$$" "$PWD" >"$serial_owner"
+serial_marked=1
 gcc -std=c11 -O2 -Wall -Wextra -Werror tools/address-proof/clipboard-peer.c -o target/address-clipboard-peer
 gcc -std=c11 -O2 -Wall -Wextra -Werror tools/address-proof/xinput.c -Wl,-l:libX11.so.6 -Wl,-l:libXtst.so.6 -o target/address-xinput
 proof=$(mktemp -d "$root/review/address-editing.XXXXXX")
@@ -36,25 +86,6 @@ long='https://example.test/alpha/beta/gamma/delta/epsilon/zeta/eta/theta/iota/ka
 printf '%s' "$long" >"$proof/long-address.txt"
 export LD_LIBRARY_PATH="$deps/usr/lib/x86_64-linux-gnu:$deps/usr/lib/x86_64-linux-gnu/weston"
 export WESTON_MODULE_MAP="x11-backend.so=$deps/usr/lib/x86_64-linux-gnu/libweston-13/x11-backend.so;kiosk-shell.so=$deps/usr/lib/x86_64-linux-gnu/weston/kiosk-shell.so"
-xpid= wpid= spid= qpid= bpid= tpid= lpid= restore_binaries=0
-cleanup_width(){
-    set +e
-    wayland_auth_close
-    for pid in "$lpid" "$qpid" "$bpid" "$tpid" "$spid" "$wpid" "$xpid"; do
-        if test -n "$pid"; then kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; fi
-    done
-    lpid= qpid= bpid= tpid= spid= wpid= xpid=
-    set -e
-}
-cleanup(){
-    cleanup_width
-    if test "$restore_binaries" = 1; then
-        cp "$run/byte-descriptor-bridge" target/byte-descriptor-bridge
-        cp "$run/lkjbrowser" target/lkjbrowser
-    fi
-}
-trap cleanup EXIT
-trap 'exit 130' HUP INT TERM
 wait_pattern(){
     local file=$1 pattern=$2 pid=$3
     for ((attempt=0;attempt<200;attempt++)); do
@@ -185,7 +216,6 @@ for width in 1440 480; do
     wait "$tpid";tpid=
     # Exercise the documented build -> launcher upgrade on the same private compositor.
     if test "$width" = 1440; then
-        test ! -d /home/coder/workspace/prompts/talk/lkjscript-gate.lock
         restore_binaries=1
         cp "$run/legacy-byte-descriptor-bridge" target/byte-descriptor-bridge
         cmp "$run/legacy-byte-descriptor-bridge" target/byte-descriptor-bridge
