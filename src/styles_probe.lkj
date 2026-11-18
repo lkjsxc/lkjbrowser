@@ -1,0 +1,23 @@
+//! Isolated stylesheet batch probe with the same-executable worker path.
+mod crypto;
+mod net;
+mod png;
+mod html;
+mod css;
+mod resources;
+
+fn run(world:&mut World)->Result<(),String>{
+    let args=world.args();
+    if !args.is_empty() && args[0usize]==b"--fetch-style"[..].to_vec(){return resources::style_worker(world,&args);}
+    if args.len()!=5usize{return Err("usage: styles-probe SOURCE BASE OUTPUT TRUST WIDTH".to_string());}
+    let path=net::text(&args[0usize]);let base=net::text(&args[1usize]);let output=net::text(&args[2usize]);let trust=net::text(&args[3usize]);let width=net::text(&args[4usize]).as_str().parse::<i32>().unwrap();
+    let bytes=net::read_path(world,path.as_str())?;let source=net::text(&bytes);
+    let mut clock=world.clock();let start=clock.nanoseconds().unwrap();
+    let result=resources::stylesheets(world,source.as_str(),base.as_str(),"",base.starts_with("file://"),trust.as_str(),width);
+    let duration=clock.nanoseconds().unwrap()-start;
+    net::write_path(world,output.as_str(),result.as_bytes())?;
+    world.stdout().write(format!("STYLES_OK bytes={} elapsed_us={}\n",result.len(),duration/1000usize).as_bytes());Ok(())
+}
+pub fn main(mut world:World){
+    if let Err(problem)=run(&mut world){world.stderr().write(format!("STYLES_ERROR {}\n",problem).as_bytes());world.set_exit_status(1u8);}
+}

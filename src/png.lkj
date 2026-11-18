@@ -174,7 +174,20 @@ fn inflate_limited(data: &[u8], limit: usize, block_limit: usize) -> Result<Vec<
     if flags & 32u8 != 0u8 { return Err("zlib preset dictionary is not allowed in PNG".to_string()); }
     let window = 1usize << ((cmf >> 4) + 8u8);
     let expected_adler = u32be(data, data.len() - 4usize);
-    let mut bits = Bits { data: data[2usize..data.len() - 4usize].to_vec(), at: 0usize, bit: 0u8 };
+    let (output, consumed) = deflate_stream(&data[2usize..data.len() - 4usize], limit, block_limit, window)?;
+    if consumed != data.len() - 6usize { return Err("trailing bytes in zlib stream".to_string()); }
+    if adler32(&output) != expected_adler { return Err("zlib Adler-32 mismatch".to_string()); }
+    Ok(output)
+}
+
+/// Decode one raw RFC 1951 stream, returning its consumed byte count. A caller
+/// such as gzip owns the envelope, checksum, member count and trailing-data policy.
+pub fn inflate_raw(data: &[u8], limit: usize) -> Result<(Vec<u8>,usize),String> {
+    deflate_stream(data, limit, 8192usize, 32768usize)
+}
+
+fn deflate_stream(data: &[u8], limit: usize, block_limit: usize, window: usize) -> Result<(Vec<u8>,usize),String> {
+    let mut bits = Bits { data: data.to_vec(), at: 0usize, bit: 0u8 };
     let mut output = Vec::<u8>::new();
     let mut final_block = false;
     let mut blocks = 0usize;
@@ -218,9 +231,7 @@ fn inflate_limited(data: &[u8], limit: usize, block_limit: usize) -> Result<Vec<
         } else { return Err("reserved DEFLATE block type".to_string()); }
     }
     bits.align();
-    if bits.at != bits.data.len() { return Err("trailing bytes in zlib stream".to_string()); }
-    if adler32(&output) != expected_adler { return Err("zlib Adler-32 mismatch".to_string()); }
-    Ok(output)
+    Ok((output, bits.at))
 }
 
 fn abs_i(v: i32) -> i32 { if v < 0i32 { -v } else { v } }

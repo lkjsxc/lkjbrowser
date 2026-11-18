@@ -1,0 +1,23 @@
+//! Native content/network verification entry; independent fixture peers are test-only.
+mod crypto;
+mod net;
+mod png;
+
+fn run(world:&mut World)->Result<(),String>{
+    let args=world.args();
+    if args.len()!=4usize{return Err("usage: content-probe fetch URL OUTPUT TRUST | decode INPUT OUTPUT CONTENT_TYPE".to_string());}
+    let operation=net::text(&args[0]);let input=net::text(&args[1]);let output=net::text(&args[2]);let extra=net::text(&args[3]);
+    let bytes=if operation=="fetch"{
+        let response=net::fetch_with_trust(world,input.as_str(),"",true,extra.as_str())?;
+        if response.status!=200u16{return Err(format!("HTTP {}",response.status));}
+        response.body
+    }else if operation=="decode"{
+        let bytes=net::read_path(world,input.as_str())?;
+        net::document_text(&bytes,extra.as_str())?.as_bytes().to_vec()
+    }else{return Err("Unknown content probe operation".to_string());};
+    net::write_path(world,output.as_str(),&bytes)?;
+    world.stdout().write(format!("CONTENT_OK {} bytes\n",bytes.len()).as_bytes());Ok(())
+}
+pub fn main(mut world:World){
+    if let Err(problem)=run(&mut world){world.stderr().write(format!("CONTENT_ERROR {}\n",problem).as_bytes());world.set_exit_status(1u8);}
+}

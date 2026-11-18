@@ -1,6 +1,11 @@
 //! Owned same-executable subresource fetches. No foreign TLS/runtime helper.
 //! The parent's absolute deadline also bounds a child blocked inside Connector.connect.
 use crate::net;
+use crate::{html,css};
+const ALL_STYLES_LIMIT:usize=4194304usize;
+const STYLE_URL_LIMIT:usize=8192usize;
+struct Sheet {url:String,text:String}
+struct CachedSheet {requested:String,url:String,text:String}
 const STYLE_LIMIT:usize=1048576usize;
 fn io_error(e:i64)->String{format!("resource worker I/O error {}",e)}
 pub fn style_worker(world:&mut World,args:&[Vec<u8>])->Result<(),String>{
@@ -13,12 +18,18 @@ pub fn style_worker(world:&mut World,args:&[Vec<u8>])->Result<(),String>{
         return Err("The stylesheet did not have a CSS content type".to_string());
     }
     if response.body.len()>STYLE_LIMIT{return Err("The stylesheet exceeds one MiB".to_string());}
+    let text=net::document_text(&response.body,response.content_type.as_str())?;
+    if text.len()>STYLE_LIMIT{return Err("The decoded stylesheet exceeds one MiB".to_string());}
+    if response.url.len()>STYLE_URL_LIMIT{return Err("The stylesheet URL exceeds eight KiB".to_string());}
+    let size=response.url.len();
+    let header=[b'C',b'S',b'S',b'2',(size>>24) as u8,(size>>16) as u8,(size>>8) as u8,size as u8];
     let mut output=world.stdout_file().map_err(|e:i64|->String{io_error(e)})?;
-    output.write_all(b"CSS1").map_err(|e:i64|->String{io_error(e)})?;
-    output.write_all(&response.body).map_err(|e:i64|->String{io_error(e)})?;
+    output.write_all(&header).map_err(|e:i64|->String{io_error(e)})?;
+    output.write_all(response.url.as_bytes()).map_err(|e:i64|->String{io_error(e)})?;
+    output.write_all(text.as_bytes()).map_err(|e:i64|->String{io_error(e)})?;
     Ok(())
 }
-pub fn stylesheet(world:&mut World,url:&str,dns:&str,allow_file:bool,trust_file:&str,deadline:usize)->Result<String,String>{
+fn fetched_stylesheet(world:&mut World,url:&str,dns:&str,allow_file:bool,trust_file:&str,deadline:usize)->Result<Sheet,String>{
     let mut clock=world.clock();
     if clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})? >= deadline{return Err("timeout".to_string());}
     let executable=world.executable().map_err(|e:i64|->String{io_error(e)})?;
@@ -47,10 +58,182 @@ pub fn stylesheet(world:&mut World,url:&str,dns:&str,allow_file:bool,trust_file:
     let mut bytes=Vec::new();let mut block=[0u8;4096];
     loop{
         let n=output.read(&mut block).map_err(|e:i64|->String{io_error(e)})?;if n==0usize{break;}
-        if bytes.len()+n>STYLE_LIMIT+4usize{return Err("invalid worker size".to_string());}
+        if bytes.len()+n>STYLE_LIMIT+STYLE_URL_LIMIT+8usize{return Err("invalid worker size".to_string());}
         bytes.extend_from_slice(&block[..n]);
     }
-    if bytes.len()<4usize || &bytes[..4usize]!=b"CSS1"{return Err("invalid worker result".to_string());}
+    if bytes.len()<8usize || &bytes[..4usize]!=b"CSS2"{return Err("invalid worker result".to_string());}
+    let length=((bytes[4usize] as usize)<<24)|((bytes[5usize] as usize)<<16)|((bytes[6usize] as usize)<<8)|bytes[7usize] as usize;
+    if length>STYLE_URL_LIMIT || length>bytes.len()-8usize || bytes.len()-8usize-length>STYLE_LIMIT{return Err("invalid worker size".to_string());}
     if clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})? >= deadline{return Err("timeout".to_string());}
-    Ok(net::text(&bytes[4usize..]))
+    let address=net::text(&bytes[8usize..8usize+length]);
+    Ok(Sheet{url:address,text:net::text(&bytes[8usize+length..])})
+}
+
+pub fn stylesheet(world:&mut World,url:&str,dns:&str,allow_file:bool,trust_file:&str,deadline:usize)->Result<String,String>{
+    Ok(fetched_stylesheet(world,url,dns,allow_file,trust_file,deadline)?.text)
+}
+
+fn white(b:u8)->bool{html::whitespace(b)}
+fn lower(b:u8)->u8{if b>=65u8 && b<=90u8{b+32u8}else{b}}
+fn prefix(bytes:&[u8],at:usize,word:&[u8])->bool{
+    if at>bytes.len() || word.len()>bytes.len()-at{return false;}
+    let mut i=0usize;while i<word.len(){if lower(bytes[at+i])!=word[i]{return false;}i+=1usize;}true
+}
+fn space(bytes:&[u8],mut at:usize)->usize{
+    loop{
+        while at<bytes.len() && white(bytes[at]){at+=1usize;}
+        if at+1usize>=bytes.len() || bytes[at]!=b'/' || bytes[at+1usize]!=b'*'{return at;}
+        at+=2usize;
+        while at+1usize<bytes.len() && !(bytes[at]==b'*' && bytes[at+1usize]==b'/'){at+=1usize;}
+        if at+1usize>=bytes.len(){return bytes.len();}
+        at+=2usize;
+    }
+}
+fn keyword(bytes:&[u8],at:usize,word:&[u8])->bool{
+    if !prefix(bytes,at,word){return false;}let end=at+word.len();
+    end==bytes.len() || white(bytes[end]) || bytes[end]==b'"' || bytes[end]==b'\'' || bytes[end]==b'/' || bytes[end]==b'('
+}
+fn statement_end(bytes:&[u8],mut at:usize)->Option<usize>{
+    let mut quote=0u8;let mut depth=0usize;
+    while at<bytes.len(){
+        let b=bytes[at];
+        if quote!=0u8{
+            if b==b'\\'{if at+1usize>=bytes.len(){return None;}at+=2usize;continue;}
+            if b==quote{quote=0u8;}at+=1usize;continue;
+        }
+        if b==b'"' || b==b'\''{quote=b;at+=1usize;continue;}
+        if b==b'/' && at+1usize<bytes.len() && bytes[at+1usize]==b'*'{at=space(bytes,at);continue;}
+        if b==b'('{depth+=1usize;}
+        else if b==b')'{if depth==0usize{return None;}depth-=1usize;}
+        else if b==b';' && depth==0usize{return Some(at+1usize);}
+        else if b==b'{' || b==b'}'{return None;}
+        at+=1usize;
+    }
+    None
+}
+fn quoted(source:&str,at:usize)->Option<(String,usize)>{
+    let bytes=source.as_bytes();if at>=bytes.len() || !(bytes[at]==b'"' || bytes[at]==b'\''){return None;}
+    let quote=bytes[at];let start=at+1usize;let mut end=start;
+    while end<bytes.len() && bytes[end]!=quote{
+        // Escaped URL tokens require a full CSS tokenizer and are not fetched by this subset.
+        if bytes[end]==b'\\' || bytes[end]==10u8 || bytes[end]==13u8 || bytes[end]==12u8{return None;}
+        end+=1usize;
+    }
+    if end==bytes.len(){None}else{Some((source[start..end].to_string(),end+1usize))}
+}
+fn import_rule(source:&str)->Option<(String,String)>{
+    let bytes=source.as_bytes();let mut at=space(bytes,0usize);
+    if !keyword(bytes,at,b"@import"){return None;}at=space(bytes,at+7usize);
+    let url:String;
+    if at<bytes.len() && (bytes[at]==b'"' || bytes[at]==b'\''){
+        let pair=quoted(source,at)?;url=pair.0;at=pair.1;
+    }else{
+        if !prefix(bytes,at,b"url"){return None;}at=space(bytes,at+3usize);
+        if at>=bytes.len() || bytes[at]!=b'('{return None;}at=space(bytes,at+1usize);
+        if at<bytes.len() && (bytes[at]==b'"' || bytes[at]==b'\''){
+            let pair=quoted(source,at)?;url=pair.0;at=space(bytes,pair.1);
+        }else{
+            let start=at;
+            while at<bytes.len() && bytes[at]!=b')' && !white(bytes[at]){
+                if bytes[at]==b'\\' || bytes[at]==b'"' || bytes[at]==b'\'' || bytes[at]==b'(' || bytes[at]<32u8{return None;}at+=1usize;
+            }
+            url=source[start..at].to_string();at=space(bytes,at);
+        }
+        if at>=bytes.len() || bytes[at]!=b')'{return None;}at+=1usize;
+    }
+    if url.is_empty(){return None;}
+    let media=html::trim(&source[at..]).to_ascii_lowercase();
+    Some((url,media))
+}
+fn allowed(page_secure:bool,allow_file:bool,base:&str,url:&str)->bool{
+    if (page_secure || base.starts_with("https://")) && !url.starts_with("https://"){return false;}
+    if url.starts_with("file://") && !(allow_file && (base.starts_with("file://") || base=="about:welcome")){return false;}
+    true
+}
+
+struct Batch {
+    deadline:usize,dns:String,trust:String,width:i32,page_secure:bool,allow_file:bool,
+    fetched:Vec<CachedSheet>,active:Vec<String>,output:String,expansions:usize,
+}
+impl Batch {
+    fn append(&mut self,text:&str){
+        if self.output.len()+text.len()+1usize<=ALL_STYLES_LIMIT{self.output.push_str(text);self.output.push('\n');}
+    }
+    fn expand(&mut self,world:&mut World,text:&str,base:&str){
+        let bytes=text.as_bytes();let mut at=0usize;
+        loop{
+            at=space(bytes,at);
+            if keyword(bytes,at,b"@charset"){
+                if let Some(end)=statement_end(bytes,at){at=end;continue;}
+                break;
+            }
+            if !keyword(bytes,at,b"@import"){break;}
+            let end=match statement_end(bytes,at){Some(end)=>end,None=>break};
+            let rule=import_rule(&text[at..end-1usize]);
+            if let Some((href,media))=rule{
+                if media.is_empty() || css::media_matches(media.as_str(),self.width){self.load(world,base,href.as_str());}
+            }
+            at=end;
+        }
+        self.append(&text[at..]);
+    }
+    fn load(&mut self,world:&mut World,base:&str,href:&str){
+        if href.is_empty() || self.expansions>=1024usize{return;}
+        let resolved=net::resolve(base,href);
+        let url=resolved.as_str().split_once('#').map(|(head,_)|head).unwrap_or(resolved.as_str()).to_string();
+        if !allowed(self.page_secure,self.allow_file,base,url.as_str()) || self.active.contains(&url){return;}
+        self.expansions+=1usize;
+        let mut found=false;let mut text=String::new();let mut final_url=url.clone();
+        for cached in &self.fetched{if cached.requested==url{found=true;text=cached.text.clone();final_url=cached.url.clone();break;}}
+        if !found{
+            if self.fetched.len()>=4usize{return;}
+            let local=self.allow_file && (base.starts_with("file://") || base=="about:welcome");
+            match fetched_stylesheet(world,url.as_str(),self.dns.as_str(),local,self.trust.as_str(),self.deadline){
+                Ok(sheet)=>{text=sheet.text;final_url=sheet.url;}
+                Err(problem)=>{world.stdout().write(format!("STYLES {} url={}\n",problem,url).as_bytes());}
+            }
+            self.fetched.push(CachedSheet{requested:url.clone(),url:final_url.clone(),text:text.clone()});
+        }
+        if self.active.contains(&final_url){return;}
+        // Cache failures as empty sheets, and expand successful bytes anew at each
+        // source occurrence. Both request and redirected URL take part in cycle checks.
+        self.active.push(url);self.active.push(final_url.clone());
+        self.expand(world,text.as_str(),final_url.as_str());
+        self.active.pop();self.active.pop();
+    }
+}
+pub fn stylesheets(world:&mut World,source:&str,base:&str,dns:&str,allow_file:bool,trust:&str,viewport_width:i32)->String{
+    let document=html::parse(source);let mut clock=world.clock();let deadline=clock.nanoseconds().unwrap()+3000000000usize;
+    let mut batch=Batch{deadline,dns:dns.to_string(),trust:trust.to_string(),width:viewport_width,
+        page_secure:base.starts_with("https://"),allow_file,fetched:Vec::new(),active:Vec::new(),output:String::new(),expansions:0usize};
+    let mut n=0usize;
+    while n<document.nodes.len(){
+        let media=document.attribute(n,"media").to_ascii_lowercase();
+        let applies=media.is_empty() || css::media_matches(media.as_str(),viewport_width);
+        if document.nodes[n].tag=="style" && applies{
+            let text=document.text_content(n);batch.expand(world,text.as_str(),base);
+        }else if document.nodes[n].tag=="link" && applies{
+            let rel=document.attribute(n,"rel").to_ascii_lowercase();let mut sheet=false;
+            for token in css::words(rel.as_str()){if token=="stylesheet"{sheet=true;}}
+            if sheet{let href=document.attribute(n,"href");batch.load(world,base,href.as_str());}
+        }
+        n+=1usize;
+    }
+    batch.output
+}
+
+#[test]
+fn import_syntax_and_source_policy(){
+    let parsed=import_rule("@import url(\"basic.css\") screen and (min-width: 600px)").unwrap();
+    assert_eq!(parsed.0,"basic.css".to_string());assert_eq!(parsed.1,"screen and (min-width: 600px)".to_string());
+    assert_eq!(import_rule("@IMPORT 'a.css'").unwrap().0,"a.css".to_string());
+    assert_eq!(import_rule("@import url( a.css )").unwrap().0,"a.css".to_string());
+    assert!(import_rule("@important 'a.css'").is_none());
+    assert!(import_rule("@import url(\"a.css\"").is_none());
+    assert!(import_rule("@import url(a b.css)").is_none());
+    assert!(!allowed(true,true,"https://host/a.css","http://host/b.css"));
+    assert!(!allowed(false,true,"https://host/a.css","http://host/b.css"));
+    assert!(!allowed(false,true,"http://host/a.css","file:///private.css"));
+    assert!(allowed(false,true,"file:///page.html","file:///sheet.css"));
+    assert!(!allowed(false,false,"file:///page.html","file:///sheet.css"));
 }

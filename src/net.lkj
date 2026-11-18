@@ -1,5 +1,7 @@
 //! URL loading, DNS over TCP and HTTP/1.1. No external networking helper.
 use std::str::trim_ascii;
+pub mod content;
+pub fn document_text(bytes:&[u8],content_type:&str)->Result<String,String>{content::document_text(bytes,content_type)}
 const LIMIT: usize = 16777216usize;
 use crate::crypto::transport::Stream;
 use crate::crypto::{tls,x509};
@@ -300,7 +302,7 @@ pub fn lookup(world:&mut World,host:&str,dns:&str)->Result<String,String>{
     dns_answer(&response,id)
 }
 pub struct Headers {
-    pub status:u16,pub length:Option<usize>,pub chunked:bool,pub location:String,pub content_type:String
+    pub status:u16,pub length:Option<usize>,pub chunked:bool,pub location:String,pub content_type:String,pub encoding:String
 }
 pub fn parse_headers(bytes:&[u8])->Result<Headers,String>{
     let content=match std::str::from_utf8(bytes){Ok(s)=>s,Err(_)=>return Err("Non-ASCII HTTP header".to_string())};
@@ -316,7 +318,7 @@ pub fn parse_headers(bytes:&[u8])->Result<Headers,String>{
     }
     let status=(sb[9]-b'0') as u16*100u16+(sb[10]-b'0') as u16*10u16+(sb[11]-b'0') as u16;
     if status<100u16 || status>599u16{return Err("Invalid HTTP status range".to_string());}
-    let mut headers=Headers{status,length:None,chunked:false,location:String::new(),content_type:"text/html".to_string()};
+    let mut headers=Headers{status,length:None,chunked:false,location:String::new(),content_type:"text/html".to_string(),encoding:String::new()};
     for line in lines {
         if line.is_empty(){continue;}
         let (name,value)=match line.split_once(':'){Some(pair)=>pair,None=>return Err("Invalid HTTP header line".to_string())};
@@ -334,10 +336,13 @@ pub fn parse_headers(bytes:&[u8])->Result<Headers,String>{
             headers.chunked=true;
         } else if lower=="location" {headers.location=value.to_string();}
         else if lower=="content-type" {headers.content_type=value.to_string();}
-        else if lower=="content-encoding" && !value.eq_ignore_ascii_case("identity") {
-            return Err("The server sent compressed content despite Accept-Encoding: identity".to_string());
+        else if lower=="content-encoding" {
+            if value.is_empty(){return Err("The HTTP content encoding is empty".to_string());}
+            if !headers.encoding.is_empty(){headers.encoding.push(',');}
+            headers.encoding.push_str(value);
         }
     }
+    content::validate_codings(headers.encoding.as_str())?;
     if headers.chunked && headers.length.is_some(){return Err("Ambiguous HTTP body framing (both length and transfer coding)".to_string());}
     Ok(headers)
 }
@@ -414,7 +419,7 @@ fn request(world:&mut World,url:&Url,dns:&str,trust_file:&str,trace:bool,body_li
         Transport::Secure(connection)
     }else{Transport::Plain(stream)};
     let host=if (secure && url.port==443u16) || (!secure && url.port==80u16){url.host.clone()}else{format!("{}:{}",url.host,url.port)};
-    let request=format!("GET {} HTTP/1.1\r\nHost: {}\r\nUser-Agent: lkjbrowser/0.1\r\nAccept: text/html,text/plain,*/*;q=0.5\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n",url.path,host);
+    let request=format!("GET {} HTTP/1.1\r\nHost: {}\r\nUser-Agent: lkjbrowser/0.1\r\nAccept: text/html,text/plain,*/*;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: close\r\n\r\n",url.path,host);
     stream.send(request.as_bytes())?;
     let mut bytes=Vec::new();let mut buffer=[0u8;8192];
     let mut end=0usize;
@@ -441,18 +446,23 @@ fn request(world:&mut World,url:&Url,dns:&str,trust_file:&str,trace:bool,body_li
         if body.len()>wire_limit{return Err("HTTP body exceeds its byte limit".to_string());}
         if headers.status==204u16 || headers.status==304u16{stream.close();return Ok((headers,Vec::new()));}
         if headers.chunked{
-            if decoder.feed(&body)?{stream.close();return Ok((headers,decoder.output));}
+            if decoder.feed(&body)?{stream.close();return decoded_response(headers,decoder.output,body_limit);}
         }else if let Some(n)=headers.length{
-            if body.len()>=n{body.truncate(n);stream.close();return Ok((headers,body));}
+            if body.len()>=n{body.truncate(n);stream.close();return decoded_response(headers,body,body_limit);}
         }
         let n=stream.receive(&mut buffer)?;
         if n==0{
             if headers.chunked || headers.length.is_some(){return Err("Incomplete HTTP response body".to_string());}
-            return Ok((headers,body));
+            return decoded_response(headers,body,body_limit);
         }
         if body.len()+n>wire_limit{return Err("HTTP body exceeds its byte limit".to_string());}
         body.extend_from_slice(&buffer[..n]);
     }
+}
+fn decoded_response(headers:Headers,body:Vec<u8>,limit:usize)->Result<(Headers,Vec<u8>),String>{
+    if headers.encoding.is_empty() || headers.encoding.eq_ignore_ascii_case("identity"){return Ok((headers,body));}
+    let decoded=content::decode(&body,headers.encoding.as_str(),limit)?;
+    Ok((headers,decoded))
 }
 pub fn fetch(world:&mut World,address:&str,dns:&str)->Result<Response,String>{
     fetch_authorized(world,address,dns,true)
@@ -477,7 +487,7 @@ fn fetch_impl(world:&mut World,address:&str,dns:&str,mut allow_file:bool,trust_f
             if !allow_file{return Err("Web pages cannot open local files. To open a local file yourself, enter its address above.".to_string());}
             let path=decode_path(u.path.as_str())?;
             let body=read_path_limit(world,path.as_str(),body_limit)?;
-            return Ok(Response{url:current,status:200u16,content_type:"text/html; charset=utf-8".to_string(),body});
+            return Ok(Response{url:current,status:200u16,content_type:"text/html".to_string(),body});
         }
         // Receiving any HTTP hop removes local-file authority for the rest of this redirect chain.
         allow_file=false;
@@ -535,4 +545,13 @@ fn incremental_chunks(){
     while n<packet.len(){assert!(!decoder.feed(&packet[..n]).unwrap());n+=1;}
     assert!(decoder.feed(&packet[..]).unwrap());
     assert_eq!(decoder.output,b"abcde"[..].to_vec());
+}
+
+#[test]
+fn content_encoding_headers(){
+    let headers=parse_headers(b"HTTP/1.1 200 OK\r\nContent-Encoding: GZip\r\nContent-Encoding: deflate\r\nContent-Length: 12\r\n\r\n").unwrap();
+    assert_eq!(headers.encoding,"GZip,deflate".to_string());
+    assert_eq!(headers.length,Some(12usize));
+    assert!(parse_headers(b"HTTP/1.1 200 OK\r\nContent-Encoding: br\r\n\r\n").is_err());
+    assert!(parse_headers(b"HTTP/1.1 200 OK\r\nContent-Encoding: \r\n\r\n").is_err());
 }

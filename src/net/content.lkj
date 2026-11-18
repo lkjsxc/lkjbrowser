@@ -1,0 +1,260 @@
+//! HTTP content decoding in lkjscript, after framing and authenticated transport.
+//! gzip: RFC 1952; DEFLATE/zlib: the shared source implementation in png.
+//! Text: a documented UTF-8/UTF-16/windows-1252 subset of the WHATWG encodings.
+use crate::png;
+use std::str::trim_ascii;
+
+fn le32(bytes:&[u8],at:usize)->u32{
+    bytes[at] as u32 | (bytes[at+1usize] as u32)<<8 | (bytes[at+2usize] as u32)<<16 | (bytes[at+3usize] as u32)<<24
+}
+fn crc32(bytes:&[u8])->u32{
+    let mut crc=0xffffffffu32;let mut i=0usize;
+    while i<bytes.len(){
+        crc^=bytes[i] as u32;let mut n=0usize;
+        while n<8usize{crc=if crc&1u32!=0u32{(crc>>1)^0xedb88320u32}else{crc>>1};n+=1usize;}
+        i+=1usize;
+    }
+    crc^0xffffffffu32
+}
+fn zero_end(bytes:&[u8],mut at:usize,start:usize)->Result<usize,String>{
+    loop{
+        if at>=bytes.len(){return Err("The gzip header is incomplete".to_string());}
+        if at-start>=65536usize{return Err("The gzip header exceeds 64 KiB".to_string());}
+        let b=bytes[at];at+=1usize;if b==0u8{return Ok(at);}
+    }
+}
+pub fn gzip(bytes:&[u8],limit:usize)->Result<Vec<u8>,String>{
+    if bytes.is_empty(){return Err("The gzip response is empty".to_string());}
+    let mut at=0usize;let mut members=0usize;let mut output=Vec::new();
+    while at<bytes.len(){
+        if members>=16usize{return Err("The gzip response exceeds sixteen members".to_string());}
+        members+=1usize;let start=at;
+        if bytes.len()-at<18usize{return Err("The gzip response is incomplete".to_string());}
+        if bytes[at]!=31u8 || bytes[at+1usize]!=139u8 || bytes[at+2usize]!=8u8{
+            return Err("The gzip response has an invalid header".to_string());
+        }
+        let flags=bytes[at+3usize];
+        if flags&224u8!=0u8{return Err("The gzip header has reserved flags".to_string());}
+        at+=10usize;
+        if flags&4u8!=0u8{
+            if bytes.len()-at<2usize{return Err("The gzip extra field is incomplete".to_string());}
+            let length=bytes[at] as usize+(bytes[at+1usize] as usize)*256usize;at+=2usize;
+            if length>bytes.len()-at{return Err("The gzip extra field is incomplete".to_string());}
+            at+=length;
+        }
+        if flags&8u8!=0u8{at=zero_end(bytes,at,start)?;}
+        if flags&16u8!=0u8{at=zero_end(bytes,at,start)?;}
+        if at-start>65536usize{return Err("The gzip header exceeds 64 KiB".to_string());}
+        if flags&2u8!=0u8{
+            if bytes.len()-at<2usize{return Err("The gzip header checksum is incomplete".to_string());}
+            let expected=bytes[at] as u32+(bytes[at+1usize] as u32)*256u32;
+            if crc32(&bytes[start..at])&65535u32!=expected{return Err("The gzip header checksum does not match".to_string());}
+            at+=2usize;
+        }
+        let (decoded,consumed)=png::inflate_raw(&bytes[at..],limit-output.len())?;
+        if consumed>bytes.len()-at{return Err("The gzip stream is incomplete".to_string());}
+        at+=consumed;
+        if bytes.len()-at<8usize{return Err("The gzip trailer is incomplete".to_string());}
+        if crc32(&decoded)!=le32(bytes,at){return Err("The gzip content checksum does not match".to_string());}
+        if decoded.len() as u32!=le32(bytes,at+4usize){return Err("The gzip content size does not match".to_string());}
+        at+=8usize;output.extend_from_slice(&decoded);
+    }
+    Ok(output)
+}
+
+pub fn validate_codings(value:&str)->Result<(),String>{
+    if value.is_empty(){return Ok(());}
+    let mut count=0usize;
+    for part in value.split(','){
+        count+=1usize;if count>4usize{return Err("The response exceeds four content encoding layers".to_string());}
+        let coding=trim_ascii(part);
+        if coding.is_empty(){return Err("The HTTP content encoding is empty".to_string());}
+        if !(coding.eq_ignore_ascii_case("identity") || coding.eq_ignore_ascii_case("gzip")
+            || coding.eq_ignore_ascii_case("x-gzip") || coding.eq_ignore_ascii_case("deflate")){
+            return Err(format!("This browser cannot decode the server's {} content encoding",coding));
+        }
+    }
+    Ok(())
+}
+pub fn decode(bytes:&[u8],value:&str,limit:usize)->Result<Vec<u8>,String>{
+    if bytes.len()>limit{return Err("The response exceeds its byte limit".to_string());}
+    validate_codings(value)?;
+    let mut codings:Vec<String>=Vec::new();for part in value.split(','){codings.push(trim_ascii(part).to_ascii_lowercase());}
+    let mut output=bytes.to_vec();let mut i=codings.len();
+    while i>0usize{
+        i-=1usize;let coding=codings[i].as_str();
+        if coding=="gzip" || coding=="x-gzip"{output=gzip(&output,limit)?;}
+        else if coding=="deflate"{output=png::inflate(&output,limit)?;}
+    }
+    Ok(output)
+}
+
+fn unquote(value:&str)->String{
+    let text=trim_ascii(value);let bytes=text.as_bytes();
+    if bytes.len()>=2usize && ((bytes[0usize]==34u8 && bytes[bytes.len()-1usize]==34u8)
+        || (bytes[0usize]==39u8 && bytes[bytes.len()-1usize]==39u8)){
+        return trim_ascii(&text[1usize..text.len()-1usize]).to_ascii_lowercase();
+    }
+    text.to_ascii_lowercase()
+}
+pub fn charset(content_type:&str)->String{
+    for field in content_type.split(';'){
+        if let Some((name,value))=field.split_once('='){
+            if trim_ascii(name).eq_ignore_ascii_case("charset"){return unquote(value);}
+        }
+    }
+    String::new()
+}
+fn white(b:u8)->bool{b==9u8 || b==10u8 || b==12u8 || b==13u8 || b==32u8}
+fn lower(b:u8)->u8{if b>=65u8 && b<=90u8{b+32u8}else{b}}
+fn at_word(bytes:&[u8],at:usize,word:&[u8])->bool{
+    if at>bytes.len() || word.len()>bytes.len()-at{return false;}
+    let mut i=0usize;while i<word.len(){if lower(bytes[at+i])!=word[i]{return false;}i+=1usize;}true
+}
+fn ascii(bytes:&[u8])->String{
+    let mut value=String::new();for b in bytes{if *b>=128u8{return String::new();}value.push(lower(*b) as char);}value
+}
+fn meta_charset(bytes:&[u8])->String{
+    let limit=bytes.len().min(1024usize);let bytes=&bytes[..limit];let mut at=0usize;
+    while at<bytes.len(){
+        if at_word(bytes,at,b"<!--"){
+            at+=4usize;while at+3usize<=bytes.len() && !at_word(bytes,at,b"-->"){at+=1usize;}at=(at+3usize).min(bytes.len());continue;
+        }
+        if !at_word(bytes,at,b"<meta"){at+=1usize;continue;}
+        at+=5usize;if at>=bytes.len() || !(white(bytes[at]) || bytes[at]==b'/' || bytes[at]==b'>'){continue;}
+        let mut encoding=String::new();let mut content=String::new();let mut pragma=String::new();let mut ended=false;
+        while at<bytes.len(){
+            while at<bytes.len() && (white(bytes[at]) || bytes[at]==b'/'){at+=1usize;}
+            if at>=bytes.len(){break;}
+            if bytes[at]==b'>'{at+=1usize;ended=true;break;}
+            let start=at;
+            while at<bytes.len() && !white(bytes[at]) && bytes[at]!=b'=' && bytes[at]!=b'>'{at+=1usize;}
+            let name=ascii(&bytes[start..at]);
+            while at<bytes.len() && white(bytes[at]){at+=1usize;}
+            let mut value=String::new();
+            if at<bytes.len() && bytes[at]==b'='{
+                at+=1usize;while at<bytes.len() && white(bytes[at]){at+=1usize;}
+                if at>=bytes.len(){break;}
+                let quote=bytes[at];
+                if quote==34u8 || quote==39u8{
+                    at+=1usize;let begin=at;while at<bytes.len() && bytes[at]!=quote{at+=1usize;}
+                    if at>=bytes.len(){break;}value=ascii(&bytes[begin..at]);at+=1usize;
+                }else{
+                    let begin=at;while at<bytes.len() && !white(bytes[at]) && bytes[at]!=b'>'{at+=1usize;}value=ascii(&bytes[begin..at]);
+                }
+            }else if at==start{at+=1usize;}
+            if name=="charset" && encoding.is_empty(){encoding=value;}
+            else if name=="content" && content.is_empty(){content=value;}
+            else if name=="http-equiv" && pragma.is_empty(){pragma=value;}
+        }
+        if ended{
+            if !encoding.is_empty(){return unquote(encoding.as_str());}
+            if trim_ascii(pragma.as_str())=="content-type"{let declared=charset(content.as_str());if !declared.is_empty(){return declared;}}
+        }
+    }
+    String::new()
+}
+fn utf16(bytes:&[u8],little:bool)->String{
+    let mut result=String::new();let mut at=0usize;
+    while at+1usize<bytes.len(){
+        let value=if little{bytes[at] as u32+(bytes[at+1usize] as u32)*256u32}
+            else{(bytes[at] as u32)*256u32+bytes[at+1usize] as u32};at+=2usize;
+        let mut code=value;
+        if value>=0xd800u32 && value<=0xdbffu32{
+            if at+1usize<bytes.len(){
+                let next=if little{bytes[at] as u32+(bytes[at+1usize] as u32)*256u32}
+                    else{(bytes[at] as u32)*256u32+bytes[at+1usize] as u32};
+                if next>=0xdc00u32 && next<=0xdfffu32{code=0x10000u32+(value-0xd800u32)*1024u32+next-0xdc00u32;at+=2usize;}
+                else{code=0xfffdu32;}
+            }else{code=0xfffdu32;}
+        }else if value>=0xdc00u32 && value<=0xdfffu32{code=0xfffdu32;}
+        result.push(char::from_u32(code).unwrap_or('\u{fffd}'));
+    }
+    if at<bytes.len(){result.push('\u{fffd}');}result
+}
+fn windows1252(bytes:&[u8])->String{
+    let high=[0x20acu32,0x81u32,0x201au32,0x192u32,0x201eu32,0x2026u32,0x2020u32,0x2021u32,
+        0x2c6u32,0x2030u32,0x160u32,0x2039u32,0x152u32,0x8du32,0x17du32,0x8fu32,
+        0x90u32,0x2018u32,0x2019u32,0x201cu32,0x201du32,0x2022u32,0x2013u32,0x2014u32,
+        0x2dcu32,0x2122u32,0x161u32,0x203au32,0x153u32,0x9du32,0x17eu32,0x178u32];
+    let mut result=String::new();for b in bytes{
+        let code=if *b>=128u8 && *b<=159u8{high[(*b-128u8) as usize]}else{*b as u32};
+        result.push(char::from_u32(code).unwrap_or('\u{fffd}'));
+    }result
+}
+pub fn document_text(bytes:&[u8],content_type:&str)->Result<String,String>{
+    if bytes.len()>=3usize && bytes[0usize]==239u8 && bytes[1usize]==187u8 && bytes[2usize]==191u8{
+        return Ok(crate::net::text(&bytes[3usize..]));
+    }
+    if bytes.len()>=2usize{
+        if bytes[0usize]==255u8 && bytes[1usize]==254u8{return Ok(utf16(&bytes[2usize..],true));}
+        if bytes[0usize]==254u8 && bytes[1usize]==255u8{return Ok(utf16(&bytes[2usize..],false));}
+    }
+    let mut encoding=charset(content_type);let mut meta=false;
+    if encoding.is_empty() && content_type.to_ascii_lowercase().starts_with("text/html"){
+        encoding=meta_charset(bytes);meta=true;
+    }
+    if meta && (encoding=="utf-16" || encoding=="utf-16le" || encoding=="utf-16be"){encoding="utf-8".to_string();}
+    if encoding.is_empty(){
+        // Preserve valid modern UTF-8 without a declaration; legacy unlabelled bytes
+        // use windows-1252 rather than turning ordinary punctuation into replacement glyphs.
+        let valid=std::str::from_utf8(bytes).is_ok();
+        return Ok(if valid{crate::net::text(bytes)}else{windows1252(bytes)});
+    }
+    match encoding.as_str(){
+        "utf-8" | "utf8" | "unicode-1-1-utf-8" => Ok(crate::net::text(bytes)),
+        "utf-16" | "utf-16le" => Ok(utf16(bytes,true)),
+        "utf-16be" => Ok(utf16(bytes,false)),
+        "windows-1252" | "cp1252" | "x-cp1252" | "iso-8859-1" | "iso8859-1" |
+        "iso_8859-1" | "iso_8859-1:1987" | "iso88591" | "latin1" | "latin-1" | "l1" |
+        "us-ascii" | "ascii" | "iso-ir-100" | "cp819" | "ibm819" | "csisolatin1" => Ok(windows1252(bytes)),
+        _=>Err(format!("This browser cannot decode the page's {} character encoding",encoding)),
+    }
+}
+
+#[test]
+fn gzip_known_answer_and_limit(){
+    let encoded=[31u8,139u8,8u8,0u8,0u8,0u8,0u8,0u8,0u8,3u8,11u8,201u8,72u8,85u8,40u8,44u8,205u8,76u8,206u8,86u8,72u8,42u8,202u8,47u8,207u8,83u8,72u8,203u8,175u8,80u8,200u8,42u8,205u8,45u8,40u8,86u8,200u8,47u8,75u8,45u8,82u8,40u8,201u8,72u8,85u8,200u8,73u8,172u8,170u8,84u8,72u8,201u8,79u8,215u8,227u8,10u8,25u8,28u8,138u8,1u8,142u8,112u8,127u8,88u8,180u8,0u8,0u8,0u8];
+    let expected=b"The quick brown fox jumps over the lazy dog.\nThe quick brown fox jumps over the lazy dog.\nThe quick brown fox jumps over the lazy dog.\nThe quick brown fox jumps over the lazy dog.\n";
+    assert_eq!(crc32(b"123456789"),0xcbf43926u32);
+    assert_eq!(gzip(&encoded,180usize).unwrap(),expected[..].to_vec());
+    assert!(gzip(&encoded,179usize).is_err());
+    let mut truncated=0usize;while truncated<encoded.len(){assert!(gzip(&encoded[..truncated],180usize).is_err());truncated+=1usize;}
+    let mut bad=encoded[..].to_vec();bad[60usize]^=1u8;assert!(gzip(&bad,180usize).is_err());
+    bad=encoded[..].to_vec();bad[64usize]^=1u8;assert!(gzip(&bad,180usize).is_err());
+    bad=encoded[..].to_vec();bad[3usize]=32u8;assert!(gzip(&bad,180usize).is_err());
+    let mut joined=encoded[..].to_vec();joined.extend_from_slice(&encoded);
+    assert_eq!(gzip(&joined,360usize).unwrap().len(),360usize);assert!(gzip(&joined,359usize).is_err());
+}
+#[test]
+fn content_codings_are_reversed_and_bounded(){
+    assert_eq!(decode(b"abc","identity",3usize).unwrap(),b"abc"[..].to_vec());
+    assert!(decode(b"abc","identity",2usize).is_err());
+    assert!(validate_codings("gzip, br").is_err());
+    assert!(validate_codings("gzip,").is_err());
+    assert!(validate_codings("identity,identity,identity,identity,identity").is_err());
+    assert!(validate_codings("GZip, deflate").is_ok());
+    let zlib=[120u8,156u8,11u8,201u8,72u8,85u8,40u8,44u8,205u8,76u8,206u8,86u8,72u8,42u8,202u8,47u8,207u8,83u8,72u8,203u8,175u8,80u8,200u8,42u8,205u8,45u8,40u8,86u8,200u8,47u8,75u8,45u8,82u8,40u8,201u8,72u8,85u8,200u8,73u8,172u8,170u8,84u8,72u8,201u8,79u8,215u8,227u8,10u8,25u8,28u8,138u8,1u8,226u8,212u8,64u8,69u8];
+    assert_eq!(decode(&zlib,"deflate",180usize).unwrap().len(),180usize);
+    assert!(decode(&zlib[2usize..zlib.len()-4usize],"deflate",180usize).is_err());
+}
+#[test]
+fn text_declarations_bom_and_legacy_punctuation(){
+    assert_eq!(document_text(b"caf\xe9 \x93yes\x94 \x80","text/html; charset=ISO-8859-1").unwrap(),"café “yes” €".to_string());
+    assert_eq!(document_text(b"<meta charset=windows-1252>caf\xe9","text/html").unwrap(),"<meta charset=windows-1252>café".to_string());
+    assert_eq!(document_text(b"\xef\xbb\xbfcaf\xc3\xa9","text/html; charset=windows-1252").unwrap(),"café".to_string());
+    assert_eq!(document_text(b"<meta charset=windows-1252>\xc3\xa9","text/html; charset=utf-8").unwrap(),"<meta charset=windows-1252>é".to_string());
+    assert_eq!(document_text(b"\xff\xfeA\x00=\xd8\x00\xde","text/html").unwrap(),"A😀".to_string());
+    assert_eq!(document_text(b"\xfe\xff\x00A\xd8=\xde\x00","text/html").unwrap(),"A😀".to_string());
+    assert_eq!(document_text(b"A\x00\x00\xd8B\x00x","text/plain; charset=UTF-16LE").unwrap(),"A\u{fffd}B\u{fffd}".to_string());
+    assert!(document_text(b"abc","text/html; charset=shift_jis").is_err());
+}
+#[test]
+fn meta_scan_handles_comments_pragma_order_and_bounds(){
+    assert_eq!(meta_charset(b"<!--<meta charset=bad>--><meta content='text/html; charset=windows-1252' http-equiv='CONTENT-TYPE'>"),"windows-1252".to_string());
+    assert_eq!(meta_charset(b"<meta content='text/html; charset=windows-1252'>"),String::new());
+    assert_eq!(meta_charset(b"<metatag charset=bad><meta charset='utf-8'>"),"utf-8".to_string());
+    assert_eq!(meta_charset(b"<meta charset='utf-8"),String::new());
+    assert_eq!(document_text(b"\xe9","text/html").unwrap(),"é".to_string());
+    assert_eq!(document_text(b"<meta charset=utf-16>abc","text/html").unwrap(),"<meta charset=utf-16>abc".to_string());
+}

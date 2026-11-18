@@ -1,0 +1,4 @@
+pub fn probe(value:&str)->usize{
+ let mut codings=Vec::new();for part in value.split(','){codings.push(std::str::trim_ascii(part).to_ascii_lowercase());}
+ let mut total=0usize;let mut i=codings.len();while i>0usize{i-=1usize;total+=codings[i].as_str().len();}total
+}
