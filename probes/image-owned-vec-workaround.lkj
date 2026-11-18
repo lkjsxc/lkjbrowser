@@ -1,0 +1,1 @@
+fn main(){let names=vec!["JPEG".to_string(),"GIF".to_string()];let mut count=0usize;for name in names{count+=name.len();}assert_eq!(count,7usize);}

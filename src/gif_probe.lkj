@@ -1,0 +1,20 @@
+mod png;
+mod gif;
+fn read(world:&mut World,path:&str)->Result<Vec<u8>,String>{
+ let split=path.rfind('/').ok_or("input path must be absolute".to_string())?;
+ let mut directory=world.directory(&path[..split]).map_err(|e:i64|->String{format!("input directory {}",e)})?;
+ let mut file=directory.open_regular(&path[split+1usize..]).map_err(|e:i64|->String{format!("input file {}",e)})?;
+ file.read_to_end().map_err(|e:i64|->String{format!("input read {}",e)})
+}
+fn run(world:&mut World)->Result<(),String>{
+ let args=world.args();if args.len()!=2usize{return Err("expected INPUT.gif OUTPUT.png".to_string());}
+ let path=std::str::from_utf8(&args[0usize]).unwrap();let output=std::str::from_utf8(&args[1usize]).unwrap();
+ let bytes=read(world,path)?;let image=gif::decode(&bytes)?;
+ let encoded=png::encode(image.width,image.height,&image.pixels)?;
+ let split=output.rfind('/').unwrap();let mut directory=world.directory(&output[..split]).map_err(|e:i64|->String{format!("output directory {}",e)})?;
+ directory.create(&output[split+1usize..]).map_err(|e:i64|->String{format!("output file {}",e)})?.write_all(&encoded).map_err(|e:i64|->String{format!("output write {}",e)})?;
+ world.stdout().write(format!("GIF {}x{} pixels={}\n",image.width,image.height,image.pixels.len()).as_bytes());Ok(())
+}
+pub fn main(mut world:World){
+ if let Err(problem)=run(&mut world){world.stderr().write(format!("{}\n",problem).as_bytes());world.set_exit_status(1u8);}
+}

@@ -1,0 +1,2 @@
+// A static string literal still has a view type at this pin.
+fn main(){let names=["JPEG","GIF"];assert_eq!(names.len(),2usize);}

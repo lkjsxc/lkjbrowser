@@ -1,0 +1,109 @@
+//! Raster dispatch and bounded intrinsic metadata for an unpainted SVG placeholder.
+use crate::png::Image;
+pub fn decode(data:&[u8])->Result<Image,String>{
+ if data.len()>=8usize && &data[..8usize]==b"\x89PNG\r\n\x1a\n"{return crate::png::decode(data);}
+ if data.len()>=2usize && data[0usize]==255u8 && data[1usize]==216u8{return crate::jpeg::decode(data);}
+ if data.len()>=6usize && (&data[..6usize]==b"GIF87a" || &data[..6usize]==b"GIF89a"){return crate::gif::decode(data);}
+ Err("Image format is not supported; expected PNG, JPEG or GIF".to_string())
+}
+fn space(b:u8)->bool{b==32u8 || b==9u8 || b==10u8 || b==13u8}
+fn name(b:u8)->bool{(b>=65u8&&b<=90u8)||(b>=97u8&&b<=122u8)||(b>=48u8&&b<=57u8)||b==45u8||b==58u8||b==95u8}
+fn matches(data:&[u8],at:usize,value:&[u8])->bool{
+ if at>data.len() || value.len()>data.len()-at{return false;}
+ let mut n=0usize;while n<value.len(){if data[at+n]!=value[n]{return false;}n+=1usize;}true
+}
+// Decimal fixed point avoids accepting infinity/NaN or overflowing a dimension.
+// Exponents, percentages and relative units need CSS context and are left absent.
+fn decimal(value:&str)->Option<i64>{
+ let text=std::str::trim_ascii(value);let data=text.as_bytes();if data.is_empty(){return None;}
+ let mut at=0usize;let mut sign=1i64;
+ if data[at]==45u8{sign= -1i64;at+=1usize;}else if data[at]==43u8{at+=1usize;}
+ let mut number=0i64;let mut digits=0usize;let mut point=false;let mut factor=100i64;
+ while at<data.len(){
+  let b=data[at];if b==46u8 && !point{point=true;at+=1usize;continue;}
+  if b<48u8 || b>57u8{return None;}
+  if point{number+=(b-48u8) as i64*factor;factor/=10i64;}
+  else{if number>8192000i64{return None;}number=number*10i64+(b-48u8) as i64*1000i64;}
+  digits+=1usize;at+=1usize;
+ }
+ if digits==0usize{None}else{Some(sign*number)}
+}
+fn length(value:&str)->Option<i64>{
+ let text=std::str::trim_ascii(value);
+ let raw=if text.ends_with("px"){&text[..text.len()-2usize]}else{text};
+ let result=decimal(raw)?;if result<=0i64 || result>8192000i64{None}else{Some(result)}
+}
+fn viewbox(value:&str)->Option<(i64,i64)>{
+ let bytes=value.as_bytes();let mut at=0usize;let mut numbers=Vec::<i64>::new();
+ while at<bytes.len(){
+  while at<bytes.len() && (space(bytes[at]) || bytes[at]==44u8){at+=1usize;}
+  if at==bytes.len(){break;}
+  let start=at;while at<bytes.len() && !space(bytes[at]) && bytes[at]!=44u8{at+=1usize;}
+  numbers.push(decimal(&value[start..at])?);if numbers.len()>4usize{return None;}
+ }
+ if numbers.len()!=4usize || numbers[2usize]<=0i64 || numbers[3usize]<=0i64
+  || numbers[2usize]>8192000i64 || numbers[3usize]>8192000i64{return None;}
+ Some((numbers[2usize],numbers[3usize]))
+}
+fn dimensions(width:i64,height:i64)->Option<(i32,i32)>{
+ if width<=0i64 || height<=0i64 || width>8192000i64 || height>8192000i64{return None;}
+ Some((((width+500i64)/1000i64).max(1i64) as i32,((height+500i64)/1000i64).max(1i64) as i32))
+}
+/// Reads only the root SVG's positive px/bare dimensions or viewBox ratio.
+/// This does not decode, execute, fetch dependencies, or paint SVG content.
+/// Returns None for absent/invalid metadata. At most 64 KiB of the header is read.
+pub fn svg_dimensions(data:&[u8])->Option<(i32,i32)>{
+ let count=data.len().min(65536usize);let data=&data[..count];let mut at=0usize;
+ if matches(data,0usize,&[239u8,187u8,191u8]){at=3usize;}
+ loop{
+  while at<data.len() && space(data[at]){at+=1usize;}
+  if matches(data,at,b"<!--"){
+   at+=4usize;while at+3usize<=data.len() && !matches(data,at,b"-->"){at+=1usize;}
+   if !matches(data,at,b"-->"){return None;}at+=3usize;continue;
+  }
+  if matches(data,at,b"<?"){
+   at+=2usize;while at+2usize<=data.len() && !matches(data,at,b"?>"){at+=1usize;}
+   if !matches(data,at,b"?>"){return None;}at+=2usize;continue;
+  }
+  if matches(data,at,b"<!DOCTYPE"){
+   at+=9usize;let mut quote=0u8;let mut brackets=0usize;
+   while at<data.len(){
+    let b=data[at];at+=1usize;
+    if quote!=0u8{if b==quote{quote=0u8;}}
+    else if b==34u8 || b==39u8{quote=b;}
+    else if b==91u8{brackets+=1usize;if brackets>16usize{return None;}}
+    else if b==93u8{if brackets==0usize{return None;}brackets-=1usize;}
+    else if b==62u8 && brackets==0usize{break;}
+   }
+   continue;
+  }
+  break;
+ }
+ if !matches(data,at,b"<svg"){return None;}at+=4usize;
+ if at>=data.len() || (name(data[at])){return None;}
+ let mut width=None;let mut height=None;let mut view=None;let mut attributes=0usize;
+ loop{
+  while at<data.len() && space(data[at]){at+=1usize;}
+  if at>=data.len(){return None;}
+  if data[at]==62u8 || matches(data,at,b"/>"){break;}
+  let start=at;while at<data.len() && name(data[at]){at+=1usize;}
+  if at==start{return None;}let key=std::str::from_utf8(&data[start..at]).ok()?;
+  while at<data.len() && space(data[at]){at+=1usize;}
+  if at>=data.len() || data[at]!=61u8{return None;}at+=1usize;
+  while at<data.len() && space(data[at]){at+=1usize;}
+  if at>=data.len() || (data[at]!=34u8 && data[at]!=39u8){return None;}
+  let quote=data[at];at+=1usize;let begin=at;
+  while at<data.len() && data[at]!=quote{at+=1usize;}
+  if at==data.len(){return None;}
+  let value=std::str::from_utf8(&data[begin..at]).ok()?;at+=1usize;
+  if key=="width"{width=length(value);}else if key=="height"{height=length(value);}else if key=="viewBox"{view=viewbox(value);}
+  attributes+=1usize;if attributes>256usize{return None;}
+ }
+ match (width,height,view){
+  (Some(w),Some(h),_)=>dimensions(w,h),
+  (Some(w),None,Some((vw,vh)))=>dimensions(w,w*vh/vw),
+  (None,Some(h),Some((vw,vh)))=>dimensions(h*vw/vh,h),
+  (None,None,Some((w,h)))=>dimensions(w,h),
+  _=>None,
+ }
+}

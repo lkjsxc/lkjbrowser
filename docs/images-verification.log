@@ -1,0 +1,24 @@
+JPEG reference l-0-baseline: maximum channel error 1, sum 159 / 2139 channels
+JPEG reference l-0-progressive: maximum channel error 1, sum 159 / 2139 channels
+JPEG reference l-restart-1: maximum channel error 1, sum 138 / 2139 channels
+JPEG reference l-restart-3: maximum channel error 1, sum 138 / 2139 channels
+JPEG reference rgb-0-baseline: maximum channel error 3, sum 393 / 2139 channels
+JPEG reference rgb-0-progressive: maximum channel error 3, sum 393 / 2139 channels
+JPEG reference rgb-1-baseline: maximum channel error 3, sum 397 / 2139 channels
+JPEG reference rgb-1-progressive: maximum channel error 3, sum 397 / 2139 channels
+JPEG reference rgb-2-baseline: maximum channel error 3, sum 510 / 2139 channels
+JPEG reference rgb-2-progressive: maximum channel error 3, sum 510 / 2139 channels
+JPEG reference rgb-restart-1: maximum channel error 3, sum 380 / 2139 channels
+JPEG reference rgb-restart-3: maximum channel error 3, sum 380 / 2139 channels
+JPEG reference rgb-noise-baseline: maximum channel error 3, sum 588 / 2139 channels
+JPEG reference rgb-noise-progressive: maximum channel error 3, sum 588 / 2139 channels
+JPEG reference rgb-direct-baseline: maximum channel error 1, sum 178 / 2139 channels
+JPEG reference rgb-direct-progressive: maximum channel error 1, sum 178 / 2139 channels
+JPEG reference rgb-progressive-restart: maximum channel error 3, sum 588 / 2139 channels
+GIF reference palette: 39x27, every visible/alpha pixel exact
+GIF reference local-palette: 39x27, every visible/alpha pixel exact
+GIF reference transparent: 39x27, every visible/alpha pixel exact
+GIF reference interlaced: 39x27, every visible/alpha pixel exact
+GIF reference dictionary: 137x103, every visible/alpha pixel exact
+GIF reference animation: 17x13, every visible/alpha pixel exact
+PASS raster codec checks: 3246 decisions (including every-prefix and mutation cases)

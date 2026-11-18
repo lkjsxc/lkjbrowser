@@ -1,0 +1,439 @@
+//! JPEG Huffman DCT decoding in ordinary lkjscript.
+//! ITU-T T.81, Annexes B, C, F and G: https://www.w3.org/Graphics/JPEG/itu-t81.pdf
+//! No image library or foreign helper participates in runtime decoding.
+
+use crate::png::Image;
+
+const MAX_FILE: usize = 33554432usize;
+const MAX_AXIS: usize = 4096usize;
+const MAX_PIXELS: usize = 8388608usize;
+const MAX_BLOCKS: usize = 400000usize;
+const ZIG: [usize;64] = [
+ 0usize,1usize,8usize,16usize,9usize,2usize,3usize,10usize,
+ 17usize,24usize,32usize,25usize,18usize,11usize,4usize,5usize,
+ 12usize,19usize,26usize,33usize,40usize,48usize,41usize,34usize,
+ 27usize,20usize,13usize,6usize,7usize,14usize,21usize,28usize,
+ 35usize,42usize,49usize,56usize,57usize,50usize,43usize,36usize,
+ 29usize,22usize,15usize,23usize,30usize,37usize,44usize,51usize,
+ 58usize,59usize,52usize,45usize,38usize,31usize,39usize,46usize,
+ 53usize,60usize,61usize,54usize,47usize,55usize,62usize,63usize,
+];
+// round(16384 * C(u) * cos((2*x+1)*u*pi/16)), C(0)=1/sqrt(2).
+const BASIS: [i64;64] = [
+ 11585i64,16069i64,15137i64,13623i64,11585i64,9102i64,6270i64,3196i64,
+ 11585i64,13623i64,6270i64,-3196i64,-11585i64,-16069i64,-15137i64,-9102i64,
+ 11585i64,9102i64,-6270i64,-16069i64,-11585i64,3196i64,15137i64,13623i64,
+ 11585i64,3196i64,-15137i64,-9102i64,11585i64,13623i64,-6270i64,-16069i64,
+ 11585i64,-3196i64,-15137i64,9102i64,11585i64,-13623i64,-6270i64,16069i64,
+ 11585i64,-9102i64,-6270i64,16069i64,-11585i64,-3196i64,15137i64,-13623i64,
+ 11585i64,-13623i64,6270i64,3196i64,-11585i64,16069i64,-15137i64,9102i64,
+ 11585i64,-16069i64,15137i64,-13623i64,11585i64,-9102i64,6270i64,-3196i64,
+];
+
+fn error(message:&str)->String { format!("JPEG: {}",message) }
+fn word(data:&[u8],at:usize)->usize { (data[at] as usize)*256usize+data[at+1usize] as usize }
+fn rounded(value:i64,divisor:i64)->i64 {
+ if value<0i64 { -((-value+divisor/2i64)/divisor) } else { (value+divisor/2i64)/divisor }
+}
+fn clamp(value:i64)->u8 { if value<0i64{0u8}else if value>255i64{255u8}else{value as u8} }
+fn marker(data:&[u8],at:&mut usize)->Result<u8,String>{
+ if *at>=data.len() || data[*at]!=255u8{return Err(error("expected a marker"));}
+ while *at<data.len() && data[*at]==255u8{*at+=1usize;}
+ if *at>=data.len() || data[*at]==0u8{return Err(error("truncated or stuffed marker"));}
+ let value=data[*at];*at+=1usize;Ok(value)
+}
+fn segment(data:&[u8],at:&mut usize)->Result<(usize,usize),String>{
+ if *at>data.len() || data.len()-*at<2usize{return Err(error("truncated segment length"));}
+ let length=word(data,*at);
+ if length<2usize || length>data.len()-*at{return Err(error("invalid segment length"));}
+ let start=*at+2usize;*at+=length;Ok((start,*at))
+}
+
+struct Bits { at:usize,value:u8,left:u8 }
+impl Bits {
+ fn read(&mut self,data:&[u8],count:u8)->Result<u32,String>{
+  if count>16u8{return Err(error("invalid entropy bit count"));}
+  let mut result=0u32;let mut n=0u8;
+  while n<count{
+   if self.left==0u8{
+    if self.at>=data.len(){return Err(error("truncated entropy data"));}
+    self.value=data[self.at];self.at+=1usize;
+    if self.value==255u8{
+     if self.at>=data.len() || data[self.at]!=0u8{return Err(error("marker before the scan was complete"));}
+     self.at+=1usize;
+    }
+    self.left=8u8;
+   }
+   self.left-=1u8;result=(result<<1u32)|((self.value>>self.left)&1u8) as u32;n+=1u8;
+  }
+  Ok(result)
+ }
+ fn align(&mut self)->Result<(),String>{
+  if self.left>0u8{
+   let mask=((1u16<<self.left)-1u16) as u8;
+   if self.value&mask!=mask{return Err(error("entropy padding is not all ones"));}
+  }
+  self.left=0u8;Ok(())
+ }
+}
+
+#[derive(Clone)]
+struct Huffman { first:[u32;17],offset:[usize;17],count:[usize;17],values:Vec<u8> }
+impl Huffman {
+ fn empty()->Huffman{Huffman{first:[0u32;17],offset:[0usize;17],count:[0usize;17],values:Vec::new()}}
+ fn read(&self,data:&[u8],bits:&mut Bits)->Result<u8,String>{
+  if self.values.is_empty(){return Err(error("missing Huffman table"));}
+  let mut code=0u32;let mut length=1usize;
+  while length<=16usize{
+   code=(code<<1u32)|bits.read(data,1u8)?;
+   let first=self.first[length];let count=self.count[length] as u32;
+   if code>=first && code-first<count{return Ok(self.values[self.offset[length]+(code-first) as usize]);}
+   length+=1usize;
+  }
+  Err(error("invalid Huffman code"))
+ }
+}
+
+struct Component {
+ id:u8,h:usize,v:usize,table:usize,cols:usize,rows:usize,actual_cols:usize,actual_rows:usize,
+ coefficients:Vec<i32>,samples:Vec<u8>,quant:[u16;64],has_quant:bool,seen:[i32;64],predictor:i32,
+}
+struct Frame { width:usize,height:usize,hmax:usize,vmax:usize,mcu_cols:usize,mcu_rows:usize,
+ progressive:bool,components:Vec<Component> }
+#[derive(Copy,Clone)]
+struct ScanComponent { index:usize,dc:usize,ac:usize }
+struct Scan { components:Vec<ScanComponent>,start:usize,end:usize,high:u8,low:u8 }
+
+fn read_frame(data:&[u8],start:usize,end:usize,progressive:bool)->Result<Frame,String>{
+ if end-start<6usize{return Err(error("short frame header"));}
+ if data[start]!=8u8{return Err(error("only 8-bit samples are supported"));}
+ let height=word(data,start+1usize);let width=word(data,start+3usize);let count=data[start+5usize] as usize;
+ if count!=1usize && count!=3usize{return Err(error("only grayscale and three-component images are supported"));}
+ if end-start!=6usize+count*3usize{return Err(error("invalid frame header length"));}
+ if width==0usize || height==0usize || width>MAX_AXIS || height>MAX_AXIS || width*height>MAX_PIXELS{
+  return Err(error("dimensions exceed the 4096-axis / 8-Mpixel policy"));
+ }
+ let mut components=Vec::<Component>::new();let mut hmax=1usize;let mut vmax=1usize;let mut total=0usize;
+ let mut i=0usize;
+ while i<count{
+  let at=start+6usize+i*3usize;let id=data[at];let h=(data[at+1usize]>>4u8) as usize;let v=(data[at+1usize]&15u8) as usize;
+  let table=data[at+2usize] as usize;
+  if h==0usize || h>4usize || v==0usize || v>4usize || table>3usize{return Err(error("invalid sampling or quantization selector"));}
+  let mut previous=0usize;while previous<components.len(){if components[previous].id==id{return Err(error("duplicate component identifier"));}previous+=1usize;}
+  hmax=hmax.max(h);vmax=vmax.max(v);total+=h*v;
+  components.push(Component{id,h,v,table,cols:0usize,rows:0usize,actual_cols:0usize,actual_rows:0usize,
+   coefficients:Vec::new(),samples:Vec::new(),quant:[0u16;64],has_quant:false,seen:[-1i32;64],predictor:0i32});
+  i+=1usize;
+ }
+ if total>10usize{return Err(error("sampling exceeds ten blocks per MCU"));}
+ let mcu_cols=(width+8usize*hmax-1usize)/(8usize*hmax);
+ let mcu_rows=(height+8usize*vmax-1usize)/(8usize*vmax);
+ let mut blocks=0usize;i=0usize;
+ while i<components.len(){
+  let component=&mut components[i];
+  if hmax%component.h!=0usize || vmax%component.v!=0usize{return Err(error("fractional sampling ratios are unsupported"));}
+  component.cols=mcu_cols*component.h;component.rows=mcu_rows*component.v;
+  component.actual_cols=(width*component.h+8usize*hmax-1usize)/(8usize*hmax);
+  component.actual_rows=(height*component.v+8usize*vmax-1usize)/(8usize*vmax);
+  blocks+=component.cols*component.rows;
+  if blocks>MAX_BLOCKS{return Err(error("decoded coefficient allocation exceeds policy"));}
+  component.coefficients=vec![0i32;component.cols*component.rows*64usize];i+=1usize;
+ }
+ Ok(Frame{width,height,hmax,vmax,mcu_cols,mcu_rows,progressive,components})
+}
+
+fn receive(data:&[u8],bits:&mut Bits,count:u8)->Result<i32,String>{
+ if count==0u8{return Ok(0i32);}
+ let value=bits.read(data,count)? as i32;
+ let threshold=1i32<<(count-1u8);
+ Ok(if value<threshold{value+1i32-(1i32<<count)}else{value})
+}
+fn checked_coefficient(value:i32)->Result<i32,String>{
+ if value< -32767i32 || value>32767i32{Err(error("coefficient magnitude exceeds policy"))}else{Ok(value)}
+}
+fn refine(data:&[u8],bits:&mut Bits,component:&mut Component,at:usize,bit:i32)->Result<(),String>{
+ if bits.read(data,1u8)?!=0u32{
+  let value=component.coefficients[at];let magnitude=if value<0i32{-value}else{value};
+  if magnitude&bit==0i32{component.coefficients[at]=checked_coefficient(if value<0i32{value-bit}else{value+bit})?;}
+ }
+ Ok(())
+}
+fn decode_block(data:&[u8],bits:&mut Bits,component:&mut Component,base:usize,
+ dc:&Huffman,ac:&Huffman,scan:&Scan,progressive:bool,eob:&mut usize)->Result<(),String>{
+ if !progressive || scan.start==0usize{
+  if scan.high==0u8{
+   let size=dc.read(data,bits)?;
+   if size>11u8{return Err(error("invalid DC category"));}
+   component.predictor=checked_coefficient(component.predictor+receive(data,bits,size)?)?;
+   component.coefficients[base]=checked_coefficient(component.predictor*(1i32<<scan.low))?;
+  }else{
+   let bit=(bits.read(data,1u8)? as i32)<<scan.low;
+   component.coefficients[base]|=bit;
+  }
+  if progressive{return Ok(());}
+ }
+ let mut k=if progressive{scan.start}else{1usize};
+ if scan.high==0u8{
+  if *eob>0usize{*eob-=1usize;return Ok(());}
+  while k<=scan.end{
+   let symbol=ac.read(data,bits)?;let run=(symbol>>4u8) as usize;let size=symbol&15u8;
+   if size==0u8{
+    if run==15usize{
+     k+=16usize;if k>scan.end+1usize{return Err(error("zero run exceeds the coefficient band"));}
+    }else{
+     if !progressive && run!=0usize{return Err(error("invalid sequential end-of-block symbol"));}
+     *eob=(1usize<<run)+bits.read(data,run as u8)? as usize-1usize;
+     return Ok(());
+    }
+   }else{
+    if size>10u8{return Err(error("invalid AC category"));}
+    k+=run;if k>scan.end{return Err(error("AC coefficient exceeds the band"));}
+    component.coefficients[base+ZIG[k]]=checked_coefficient(receive(data,bits,size)?*(1i32<<scan.low))?;
+    k+=1usize;
+   }
+  }
+ }else{
+  let bit=1i32<<scan.low;
+  if *eob==0usize{
+   while k<=scan.end{
+    let symbol=ac.read(data,bits)?;let mut run=(symbol>>4u8) as usize;let size=symbol&15u8;let mut new_value=0i32;
+    if size==0u8{
+     if run<15usize{*eob=(1usize<<run)+bits.read(data,run as u8)? as usize;break;}
+     run=16usize;
+    }else{
+     if size!=1u8{return Err(error("invalid refinement category"));}
+     new_value=if bits.read(data,1u8)?==0u32{-bit}else{bit};
+    }
+    while k<=scan.end{
+     let at=base+ZIG[k];
+     if component.coefficients[at]!=0i32{refine(data,bits,component,at,bit)?;}
+     else{if run==0usize{break;}run-=1usize;}
+     k+=1usize;
+    }
+    if new_value!=0i32{
+     if k>scan.end{return Err(error("refinement coefficient exceeds the band"));}
+     component.coefficients[base+ZIG[k]]=new_value;k+=1usize;
+    }else if run!=0usize{return Err(error("refinement zero run exceeds the band"));}
+   }
+  }
+  if *eob>0usize{
+   while k<=scan.end{let at=base+ZIG[k];if component.coefficients[at]!=0i32{refine(data,bits,component,at,bit)?;}k+=1usize;}
+   *eob-=1usize;
+  }
+ }
+ Ok(())
+}
+
+fn read_scan(data:&[u8],start:usize,end:usize,frame:&mut Frame,
+ quant:&Vec<[u16;64]>,has_quant:&[bool;4])->Result<Scan,String>{
+ if end-start<4usize{return Err(error("short scan header"));}
+ let count=data[start] as usize;
+ if count==0usize || count>frame.components.len() || end-start!=4usize+2usize*count{return Err(error("invalid scan header"));}
+ let mut components=Vec::<ScanComponent>::new();let mut i=0usize;
+ while i<count{
+  let id=data[start+1usize+2usize*i];let selectors=data[start+2usize+2usize*i];
+  let dc=(selectors>>4u8) as usize;let ac=(selectors&15u8) as usize;
+  if dc>3usize || ac>3usize{return Err(error("invalid Huffman selector"));}
+  let mut index=0usize;while index<frame.components.len() && frame.components[index].id!=id{index+=1usize;}
+  if index==frame.components.len(){return Err(error("unknown scan component"));}
+  let mut n=0usize;while n<components.len(){if components[n].index==index{return Err(error("duplicate scan component"));}n+=1usize;}
+  components.push(ScanComponent{index,dc,ac:ac+4usize});i+=1usize;
+ }
+ let at=start+1usize+2usize*count;let first=data[at] as usize;let last=data[at+1usize] as usize;
+ let high=data[at+2usize]>>4u8;let low=data[at+2usize]&15u8;
+ if !frame.progressive{
+  if first!=0usize || last!=63usize || high!=0u8 || low!=0u8{return Err(error("invalid sequential scan parameters"));}
+ }else{
+  if first>last || last>63usize || (first==0usize && last!=0usize) || (first>0usize && count!=1usize)
+   || high>13u8 || low>13u8 || (high!=0u8 && high!=low+1u8){return Err(error("invalid progressive scan parameters"));}
+ }
+ i=0usize;while i<components.len(){
+  let component=&mut frame.components[components[i].index];
+  if !has_quant[component.table]{return Err(error("missing quantization table"));}
+  if component.has_quant && component.quant!=quant[component.table]{return Err(error("component quantization changed between scans"));}
+  component.quant=quant[component.table];component.has_quant=true;component.predictor=0i32;
+  if first>0usize && component.seen[0usize]<0i32{return Err(error("AC scan precedes DC scan"));}
+  let mut k=first;while k<=last{
+   if (high==0u8 && component.seen[k]!= -1i32) || (high!=0u8 && component.seen[k]!=high as i32){
+    return Err(error("duplicate or out-of-order coefficient scan"));
+   }
+   component.seen[k]=low as i32;k+=1usize;
+  }
+  i+=1usize;
+ }
+ Ok(Scan{components,start:first,end:last,high,low})
+}
+
+fn scan_data(data:&[u8],at:usize,frame:&mut Frame,scan:&Scan,tables:&Vec<Huffman>,interval:usize)->Result<usize,String>{
+ let interleaved=scan.components.len()>1usize;
+ let index=scan.components[0usize].index;
+ let columns=if interleaved{frame.mcu_cols}else{frame.components[index].actual_cols};
+ let rows=if interleaved{frame.mcu_rows}else{frame.components[index].actual_rows};
+ let count=columns*rows;let mut bits=Bits{at,value:0u8,left:0u8};
+ let mut eob=0usize;let mut mcu=0usize;let mut restart=0u8;
+ while mcu<count{
+  if interval>0usize && mcu>0usize && mcu%interval==0usize{
+   if eob!=0usize{return Err(error("end-of-band run crosses a restart"));}
+   bits.align()?;
+   if marker(data,&mut bits.at)?!=208u8+restart{return Err(error("wrong restart marker"));}
+   restart=(restart+1u8)%8u8;
+   let mut i=0usize;while i<frame.components.len(){frame.components[i].predictor=0i32;i+=1usize;}
+  }
+  let mx=mcu%columns;let my=mcu/columns;let mut s=0usize;
+  while s<scan.components.len(){
+   let selected=scan.components[s];let component=&mut frame.components[selected.index];
+   let hc=if interleaved{component.h}else{1usize};let vc=if interleaved{component.v}else{1usize};
+   let mut y=0usize;while y<vc{let mut x=0usize;while x<hc{
+    let bx=mx*hc+x;let by=my*vc+y;
+    let base=(by*component.cols+bx)*64usize;
+    decode_block(data,&mut bits,component,base,&tables[selected.dc],&tables[selected.ac],scan,frame.progressive,&mut eob)?;
+    x+=1usize;}y+=1usize;}
+   s+=1usize;
+  }
+  mcu+=1usize;
+ }
+ if eob!=0usize{return Err(error("end-of-band run exceeds the scan"));}
+ bits.align()?;Ok(bits.at)
+}
+
+fn samples(component:&mut Component){
+ let stride=component.cols*8usize;component.samples=vec![0u8;stride*component.rows*8usize];
+ let mut by=0usize;while by<component.actual_rows{let mut bx=0usize;while bx<component.actual_cols{
+  let base=(by*component.cols+bx)*64usize;let mut constant=true;let mut k=1usize;
+  while k<64usize{if component.coefficients[base+k]!=0i32{constant=false;break;}k+=1usize;}
+  if constant{
+   let value=clamp(rounded(component.coefficients[base] as i64*component.quant[0usize] as i64,8i64)+128i64);
+   let mut y=0usize;while y<8usize{let mut x=0usize;while x<8usize{component.samples[(by*8usize+y)*stride+bx*8usize+x]=value;x+=1usize;}y+=1usize;}
+  }else{
+   let mut intermediate=[0i64;64];let mut v=0usize;
+   while v<8usize{let mut x=0usize;while x<8usize{
+    let mut value=0i64;let mut u=0usize;while u<8usize{
+     let n=v*8usize+u;
+     value+=component.coefficients[base+n] as i64*component.quant[n] as i64*BASIS[x*8usize+u];u+=1usize;
+    }
+    intermediate[v*8usize+x]=rounded(value,16384i64);x+=1usize;
+   }v+=1usize;}
+   let mut y=0usize;while y<8usize{let mut x=0usize;while x<8usize{
+    let mut value=0i64;let mut v=0usize;while v<8usize{value+=intermediate[v*8usize+x]*BASIS[y*8usize+v];v+=1usize;}
+    component.samples[(by*8usize+y)*stride+bx*8usize+x]=clamp(rounded(value,65536i64)+128i64);x+=1usize;
+   }y+=1usize;}
+  }
+  bx+=1usize;}by+=1usize;}
+}
+// Centered bilinear chroma expansion avoids nearest-sample color stair-steps.
+fn sample(component:&Component,x:usize,y:usize,hmax:usize,vmax:usize,width:usize,height:usize)->i64{
+ let sx=((2usize*x+1usize)*component.h) as i64-hmax as i64;
+ let sy=((2usize*y+1usize)*component.v) as i64-vmax as i64;
+ let dx=2usize*hmax;let dy=2usize*vmax;
+ let px=if sx<0i64{0usize}else{sx as usize};let py=if sy<0i64{0usize}else{sy as usize};
+ let x0=px/dx;let y0=py/dy;let fx=px%dx;let fy=py%dy;
+ let maxx=(width*component.h+hmax-1usize)/hmax-1usize;
+ let maxy=(height*component.v+vmax-1usize)/vmax-1usize;
+ let x1=(x0+1usize).min(maxx);let y1=(y0+1usize).min(maxy);let stride=component.cols*8usize;
+ let top=component.samples[y0*stride+x0] as usize*(dx-fx)+component.samples[y0*stride+x1] as usize*fx;
+ let bottom=component.samples[y1*stride+x0] as usize*(dx-fx)+component.samples[y1*stride+x1] as usize*fx;
+ ((top*(dy-fy)+bottom*fy+dx*dy/2usize)/(dx*dy)) as i64
+}
+fn image(mut frame:Frame,adobe:i32,jfif:bool)->Result<Image,String>{
+ let mut i=0usize;while i<frame.components.len(){
+  if frame.components[i].seen[0usize]<0i32{return Err(error("component has no DC scan"));}
+  samples(&mut frame.components[i]);i+=1usize;
+ }
+ let rgb=frame.components.len()==3usize && (adobe==0i32 ||
+  (!jfif && frame.components[0usize].id==82u8 && frame.components[1usize].id==71u8 && frame.components[2usize].id==66u8));
+ if adobe>1i32{return Err(error("unsupported Adobe color transform"));}
+ let mut pixels=Vec::<u32>::new();let mut y=0usize;while y<frame.height{let mut x=0usize;while x<frame.width{
+  let first=sample(&frame.components[0usize],x,y,frame.hmax,frame.vmax,frame.width,frame.height);
+  let mut r=first as u8;let mut g=r;let mut b=r;
+  if frame.components.len()==3usize{
+   let second=sample(&frame.components[1usize],x,y,frame.hmax,frame.vmax,frame.width,frame.height);
+   let third=sample(&frame.components[2usize],x,y,frame.hmax,frame.vmax,frame.width,frame.height);
+   if rgb{g=second as u8;b=third as u8;}else{
+    let cb=second-128i64;let cr=third-128i64;
+    r=clamp(first+rounded(91881i64*cr,65536i64));
+    g=clamp(first-rounded(22554i64*cb+46802i64*cr,65536i64));
+    b=clamp(first+rounded(116130i64*cb,65536i64));
+   }
+  }
+  pixels.push(0xff000000u32|((r as u32)<<16u32)|((g as u32)<<8u32)|b as u32);x+=1usize;
+ }y+=1usize;}
+ Ok(Image{width:frame.width,height:frame.height,pixels})
+}
+
+/// Decodes bounded baseline, extended-sequential 8-bit, and progressive Huffman JPEG.
+/// RGB/YCbCr and grayscale are supported; CMYK, arithmetic coding, EXIF orientation,
+/// ICC profiles and lossless JPEG are explicit limitations.
+pub fn decode(data:&[u8])->Result<Image,String>{
+ if data.len()<4usize || data.len()>MAX_FILE || data[0usize]!=255u8 || data[1usize]!=216u8{return Err(error("missing SOI or input exceeds 32 MiB"));}
+ let mut quant=vec![[0u16;64];4usize];let mut has_quant=[false;4];
+ let mut tables=Vec::<Huffman>::new();let mut i=0usize;while i<8usize{tables.push(Huffman::empty());i+=1usize;}
+ let mut frame=None;let mut at=2usize;let mut interval=0usize;let mut scans=0usize;let mut markers=0usize;
+ let mut adobe= -1i32;let mut jfif=false;let mut work=0usize;
+ loop{
+  markers+=1usize;if markers>4096usize{return Err(error("too many marker segments"));}
+  let tag=marker(data,&mut at)?;
+  if tag==217u8{
+   if scans==0usize{return Err(error("image has no scans"));}
+   return match frame{Some(value)=>image(value,adobe,jfif),None=>Err(error("image has no frame"))};
+  }
+  if tag==216u8 || (tag>=208u8 && tag<=215u8) || tag==1u8{return Err(error("unexpected standalone marker"));}
+  let (start,end)=segment(data,&mut at)?;
+  match tag{
+   192u8|193u8|194u8=>{
+    if frame.is_some(){return Err(error("multiple frames are unsupported"));}
+    frame=Some(read_frame(data,start,end,tag==194u8)?);
+   },
+   219u8=>{
+    let mut p=start;while p<end{
+     let selector=data[p];p+=1usize;let precision=selector>>4u8;let id=(selector&15u8) as usize;
+     if precision>1u8 || id>3usize{return Err(error("invalid quantization table selector"));}
+     let size=if precision==0u8{64usize}else{128usize};if end-p<size{return Err(error("short quantization table"));}
+     let mut k=0usize;while k<64usize{
+      let value=if precision==0u8{data[p] as u16}else{word(data,p) as u16};p+=if precision==0u8{1usize}else{2usize};
+      if value==0u16{return Err(error("zero quantization value"));}
+      quant[id][ZIG[k]]=value;k+=1usize;
+     }
+     has_quant[id]=true;
+    }
+   },
+   196u8=>{
+    let mut p=start;while p<end{
+     if end-p<17usize{return Err(error("short Huffman table"));}
+     let selector=data[p];p+=1usize;let class=selector>>4u8;let id=(selector&15u8) as usize;
+     if class>1u8 || id>3usize{return Err(error("invalid Huffman table selector"));}
+     let mut table=Huffman::empty();let mut code=0u32;let mut total=0usize;let mut length=1usize;
+     while length<=16usize{
+      let count=data[p] as usize;p+=1usize;
+      table.first[length]=code;table.offset[length]=total;table.count[length]=count;total+=count;
+      if code+count as u32>=(1u32<<length){return Err(error("oversubscribed Huffman table or forbidden all-ones code"));}
+      code=(code+count as u32)<<1u32;length+=1usize;
+     }
+     if total==0usize || total>256usize || total>end-p{return Err(error("invalid Huffman table size"));}
+     table.values=data[p..p+total].to_vec();p+=total;tables[id+class as usize*4usize]=table;
+    }
+   },
+   221u8=>{if end-start!=2usize{return Err(error("invalid restart interval length"));}interval=word(data,start);},
+   218u8=>{
+    scans+=1usize;if scans>256usize{return Err(error("too many scans"));}
+    match frame{
+     Some(ref mut value)=>{
+      let scan=read_scan(data,start,end,value,&quant,&has_quant)?;
+      let mut selected=0usize;while selected<scan.components.len(){
+       let component=&value.components[scan.components[selected].index];
+       work+=component.cols*component.rows*(scan.end-scan.start+1usize);selected+=1usize;
+      }
+      if work>268435456usize{return Err(error("scan work exceeds coefficient-visit policy"));}
+      at=scan_data(data,at,value,&scan,&tables,interval)?;
+     },
+     None=>return Err(error("scan precedes frame")),
+    }
+   },
+   224u8=>{if end-start>=5usize && &data[start..start+5usize]==b"JFIF\0"{jfif=true;}},
+   238u8=>{
+    if end-start>=12usize && &data[start..start+5usize]==b"Adobe"{adobe=data[start+11usize] as i32;}
+   },
+   225u8..=237u8|239u8|254u8=>{},
+   _=>return Err(error("unsupported marker or coding process")),
+  }
+ }
+}

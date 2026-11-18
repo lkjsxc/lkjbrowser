@@ -1,0 +1,110 @@
+//! Offline raster-codec corpus and adversarial verification. No public network.
+mod png;
+mod jpeg;
+mod gif;
+mod images;
+fn read(world:&mut World,path:&str)->Vec<u8>{
+ let split=path.rfind('/').unwrap();let mut directory=world.directory(&path[..split]).unwrap();
+ directory.open_regular(&path[split+1usize..]).unwrap().read_to_end().unwrap()
+}
+fn hash(pixels:&[u32])->u64{
+ let mut value=14695981039346656037u64;
+ for pixel in pixels{let mut shift=0u32;while shift<32u32{
+  value=(value^((*pixel>>shift)&255u32) as u64).wrapping_mul(1099511628211u64);shift+=8u32;
+ }}
+ value
+}
+fn find(data:&[u8],tag:u8)->usize{
+ let mut at=0usize;while at+1usize<data.len(){if data[at]==255u8 && data[at+1usize]==tag{return at;}at+=1usize;}
+ panic!("required fixture marker is absent")
+}
+fn main(mut world:World){
+ let args=world.args();assert_eq!(args.len(),1usize);
+ let root=std::str::from_utf8(&args[0usize]).unwrap().to_string();
+ let names=vec!["l-0-baseline".to_string(),"l-0-progressive".to_string(),"l-restart-1".to_string(),"l-restart-3".to_string(),
+  "rgb-0-baseline".to_string(),"rgb-0-progressive".to_string(),"rgb-1-baseline".to_string(),"rgb-1-progressive".to_string(),"rgb-2-baseline".to_string(),"rgb-2-progressive".to_string(),"rgb-restart-1".to_string(),"rgb-restart-3".to_string(),"rgb-noise-baseline".to_string(),"rgb-noise-progressive".to_string(),"rgb-direct-baseline".to_string(),"rgb-direct-progressive".to_string(),"rgb-progressive-restart".to_string()];
+ assert_eq!(images::svg_dimensions(b"<svg width='200' height='40'/>"),Some((200i32,40i32)));
+ assert_eq!(images::svg_dimensions(b"<?xml version='1.0'?><!-- <svg width='1' height='1'> --><svg viewBox='0 0 300 60'/>"),Some((300i32,60i32)));
+ assert_eq!(images::svg_dimensions(b"<svg width='200px' viewBox='0,0,100,25'/>"),Some((200i32,50i32)));
+ assert_eq!(images::svg_dimensions(b"<svg height='30' viewBox='0 0 100 25'/>"),Some((120i32,30i32)));
+ assert_eq!(images::svg_dimensions(b"<svg width='100%' viewBox='0 0 100 25'/>"),Some((100i32,25i32)));
+ assert_eq!(images::svg_dimensions(b"<svg width='1.25' height='.5'/>"),Some((1i32,1i32)));
+ assert!(images::svg_dimensions(b"<html><svg width='200' height='40'/></html>").is_none());
+ assert!(images::svg_dimensions(b"<!-- <svg width='2' height='3'/> -->").is_none());
+ assert!(images::svg_dimensions(b"<svg width='999999999999999999999' height='40'/>").is_none());
+ assert!(images::svg_dimensions(b"<svg width='NaN' height='40'/>").is_none());
+ assert!(images::svg_dimensions(b"<svg width='-1' height='40'/>").is_none());
+ assert!(images::svg_dimensions(b"<svg viewBox='0 0 0 1'/>").is_none());
+ assert!(images::svg_dimensions(b"<svg width='200' height='40'").is_none());
+ assert!(images::decode(b"<svg width='200' height='40'/>").is_err());
+ let mut decisions=14usize;
+ for name in names{
+  let bytes=read(&mut world,format!("{}/tests/images/jpeg/{}.jpg",root,name).as_str());
+  let reference=read(&mut world,format!("{}/tests/images/jpeg/{}.rgb",root,name).as_str());
+  let image=images::decode(&bytes).unwrap();assert_eq!(image.width,31usize);assert_eq!(image.height,23usize);assert_eq!(image.pixels.len()*3usize,reference.len());
+  let mut largest=0i32;let mut total=0usize;let mut p=0usize;
+  while p<image.pixels.len(){let pixel=image.pixels[p];let mut c=0usize;while c<3usize{
+   let value=((pixel>>((2usize-c)*8usize))&255u32) as i32;let expected=reference[p*3usize+c] as i32;
+   let difference=if value<expected{expected-value}else{value-expected};largest=largest.max(difference);total+=difference as usize;c+=1usize;
+  }assert_eq!(pixel>>24u32,255u32);p+=1usize;}
+  world.stdout().write(format!("JPEG reference {}: maximum channel error {}, sum {} / {} channels\n",name,largest,total,reference.len()).as_bytes());
+  assert!(largest<=4i32);assert!(total<reference.len());decisions+=1usize;
+  if name=="l-0-baseline" || name=="l-0-progressive"{
+   let mut end=0usize;while end<bytes.len(){assert!(jpeg::decode(&bytes[..end]).is_err());end+=1usize;decisions+=1usize;}
+  }
+  if name=="rgb-0-baseline" || name=="rgb-0-progressive"{
+   let mut n=0usize;while n<96usize{
+    let mut changed=bytes.clone();let at=(n*997usize+27usize)%changed.len();changed[at]^=1u8<<((n%8usize) as u32);
+    if let Ok(decoded)=jpeg::decode(&changed){assert_eq!(decoded.pixels.len(),decoded.width*decoded.height);assert!(decoded.width<=4096usize && decoded.height<=4096usize);}
+    decisions+=1usize;n+=1usize;
+   }
+  }
+  if name=="rgb-0-baseline"{
+   let sof=find(&bytes,192u8);let dqt=find(&bytes,219u8);let dht=find(&bytes,196u8);
+   let mut changed=bytes.clone();changed[sof+4usize]=12u8;assert!(jpeg::decode(&changed).is_err());decisions+=1usize;
+   changed=bytes.clone();changed[sof+5usize]=255u8;changed[sof+6usize]=255u8;assert!(jpeg::decode(&changed).is_err());decisions+=1usize;
+   changed=bytes.clone();changed[dqt+5usize]=0u8;assert!(jpeg::decode(&changed).is_err());decisions+=1usize;
+   changed=bytes.clone();changed[dht+5usize]=255u8;assert!(jpeg::decode(&changed).is_err());decisions+=1usize;
+   changed=bytes.clone();changed[sof+1usize]=195u8;assert!(jpeg::decode(&changed).is_err());decisions+=1usize;
+  }
+  if name=="rgb-restart-1"{
+   let rst=find(&bytes,208u8);let mut changed=bytes.clone();changed[rst+1usize]=213u8;assert!(jpeg::decode(&changed).is_err());decisions+=1usize;
+  }
+ }
+ let cmyk=read(&mut world,format!("{}/tests/images/jpeg/unsupported-cmyk.jpg",root).as_str());assert!(jpeg::decode(&cmyk).is_err());decisions+=1usize;
+ let mut family=0usize;while family<6usize{
+  let prefix=if family==0usize{"l-0"}else if family==1usize{"rgb-0"}else if family==2usize{"rgb-1"}else if family==3usize{"rgb-2"}else if family==4usize{"rgb-noise"}else{"rgb-direct"};
+  let base=read(&mut world,format!("{}/tests/images/jpeg/{}-baseline.jpg",root,prefix).as_str());
+  let progressive=read(&mut world,format!("{}/tests/images/jpeg/{}-progressive.jpg",root,prefix).as_str());
+  assert_eq!(jpeg::decode(&base).unwrap().pixels,jpeg::decode(&progressive).unwrap().pixels);decisions+=1usize;family+=1usize;
+ }
+ let gif_cases=vec![
+  ("palette".to_string(),39usize,27usize,4758076745124368974u64),
+  ("local-palette".to_string(),39usize,27usize,4758076745124368974u64),
+  ("transparent".to_string(),39usize,27usize,1897416319749578374u64),
+  ("interlaced".to_string(),39usize,27usize,4758076745124368974u64),
+  ("dictionary".to_string(),137usize,103usize,14688606392527594493u64),
+  ("animation".to_string(),17usize,13usize,14303996447757958529u64),
+ ];
+ for (name,width,height,expected) in gif_cases{
+  let bytes=read(&mut world,format!("{}/tests/images/gif/{}.gif",root,name).as_str());
+  let image=images::decode(&bytes).unwrap();assert_eq!(image.width,width);assert_eq!(image.height,height);assert_eq!(hash(&image.pixels),expected);
+  world.stdout().write(format!("GIF reference {}: {}x{}, every visible/alpha pixel exact\n",name,width,height).as_bytes());decisions+=1usize;
+  if name=="transparent" || name=="local-palette"{
+   let mut end=0usize;while end<bytes.len(){assert!(gif::decode(&bytes[..end]).is_err());end+=1usize;decisions+=1usize;}
+   let mut n=0usize;while n<96usize{
+    let mut changed=bytes.clone();let at=(n*997usize+27usize)%changed.len();changed[at]^=1u8<<((n%8usize) as u32);
+    if let Ok(decoded)=gif::decode(&changed){assert_eq!(decoded.pixels.len(),decoded.width*decoded.height);assert!(decoded.width<=4096usize && decoded.height<=4096usize);}
+    decisions+=1usize;n+=1usize;
+   }
+  }
+ }
+ let one=[71u8,73u8,70u8,56u8,57u8,97u8,1u8,0u8,1u8,0u8,128u8,0u8,0u8,0u8,0u8,0u8,255u8,255u8,255u8,
+  44u8,0u8,0u8,0u8,0u8,1u8,0u8,1u8,0u8,0u8,2u8,2u8,76u8,1u8,0u8,59u8];
+ assert_eq!(gif::decode(&one).unwrap().pixels,vec![0xffffffffu32]);decisions+=1usize;
+ let mut wrong=one[..].to_vec();wrong[31usize]=252u8;assert!(gif::decode(&wrong).is_err());decisions+=1usize;
+ wrong=one[..].to_vec();wrong[25usize]=2u8;assert!(gif::decode(&wrong).is_err());decisions+=1usize;
+ wrong=one[..].to_vec();wrong[29usize]=1u8;assert!(gif::decode(&wrong).is_err());decisions+=1usize;
+ assert!(gif::decode(b"GIF89a").is_err());assert!(jpeg::decode(b"not a JPEG").is_err());decisions+=2usize;
+ world.stdout().write(format!("PASS raster codec checks: {} decisions (including every-prefix and mutation cases)\n",decisions).as_bytes());
+}

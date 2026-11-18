@@ -1,0 +1,6 @@
+name	url	sha256	width	height	maximum_composited_channel_error	mean_composited_channel_error	alpha_exact
+wikipedia-portrait.jpg	https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d1/Tim_Berners-Lee_at_the_2025_Web_Summit_%28Cropped%29.jpg/250px-Tim_Berners-Lee_at_the_2025_Web_Summit_%28Cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail	d30c5000467567f6eead1b22ba2864a3d65596797cc691b4fcd38e74acf8b924	250	187	4	0.2557361853832442	true
+w3c-mergedcells.gif	https://www.w3.org/TR/html401/images/mergedcells.gif	e80d2128884aeef0e7b2438767b0cd64add04ac681d757368bd47bd3d0f0b444	301	140	0	0	true
+w3c-rowspan.gif	https://www.w3.org/TR/html401/images/rowspan.gif	cd276bbbc8ebee9efeddf1e574e2db4044fafc7b979dd985dcee5f1d49d00374	209	99	0	0	true
+pg-title.gif	https://s.turbifycdn.com/aah/paulgraham/how-to-do-great-work-2.gif	a8613ea5a5f54160f5d7c043da478128ad39c6aed91949f5b0a16c80a36d78f9	185	18	0	0	true
+freebsd-daemon.gif	https://www.freebsd.org/gifs/dae_up3.gif	6b4efdda814df8dfde9b89808ce4969b4c58018b8a1bd325a6f23a673f01530b	72	81	0	0	true

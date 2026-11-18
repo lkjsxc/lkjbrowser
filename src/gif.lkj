@@ -1,0 +1,134 @@
+//! GIF87a/GIF89a first-frame decoding in lkjscript.
+//! https://www.w3.org/Graphics/GIF/spec-gif89a.txt
+//! Animation is deliberately not played; later frames are structurally skipped.
+use crate::png::Image;
+const MAX_FILE:usize=33554432usize;
+const MAX_AXIS:usize=4096usize;
+const MAX_PIXELS:usize=8388608usize;
+fn error(message:&str)->String{format!("GIF: {}",message)}
+fn word(data:&[u8],at:usize)->usize{data[at] as usize+256usize*data[at+1usize] as usize}
+fn palette(data:&[u8],at:&mut usize,count:usize)->Result<Vec<u32>,String>{
+ if *at>data.len() || count*3usize>data.len()-*at{return Err(error("truncated color table"));}
+ let mut result=Vec::<u32>::new();let mut n=0usize;
+ while n<count{let p=*at+n*3usize;result.push(0xff000000u32|((data[p] as u32)<<16u32)|((data[p+1usize] as u32)<<8u32)|data[p+2usize] as u32);n+=1usize;}
+ *at+=count*3usize;Ok(result)
+}
+fn subblocks(data:&[u8],at:&mut usize,collect:bool)->Result<Vec<u8>,String>{
+ let mut result=Vec::<u8>::new();
+ loop{
+  if *at>=data.len(){return Err(error("truncated subblock chain"));}
+  let length=data[*at] as usize;*at+=1usize;if length==0usize{return Ok(result);}
+  if length>data.len()-*at{return Err(error("subblock exceeds input"));}
+  if collect{result.extend_from_slice(&data[*at..*at+length]);}*at+=length;
+ }
+}
+struct Bits{at:usize,bit:u8}
+impl Bits{
+ fn read(&mut self,data:&[u8],size:u8)->Result<usize,String>{
+  let mut value=0usize;let mut n=0u8;
+  while n<size{
+   if self.at>=data.len(){return Err(error("truncated LZW code"));}
+   value|=(((data[self.at]>>self.bit)&1u8) as usize)<<n;self.bit+=1u8;
+   if self.bit==8u8{self.bit=0u8;self.at+=1usize;}n+=1u8;
+  }
+  Ok(value)
+ }
+}
+fn lzw(data:&[u8],minimum:u8,limit:usize)->Result<Vec<u8>,String>{
+ if minimum<2u8 || minimum>8u8{return Err(error("invalid LZW minimum code size"));}
+ let clear=1usize<<minimum;let end=clear+1usize;let mut next=clear+2usize;let mut size=minimum+1u8;
+ let mut prefixes=[0u16;4096];let mut suffixes=[0u8;4096];let mut stack=[0u8;4096];
+ let mut n=0usize;while n<clear{suffixes[n]=n as u8;n+=1usize;}
+ let mut bits=Bits{at:0usize,bit:0u8};let mut previous=4096usize;let mut first=0u8;let mut codes=0usize;
+ let mut output=Vec::<u8>::new();
+ if bits.read(data,size)?!=clear{return Err(error("LZW stream does not begin with a clear code"));}
+ loop{
+  codes+=1usize;if codes>limit*4usize+4096usize{return Err(error("LZW code work exceeds policy"));}
+  let code=bits.read(data,size)?;
+  if code==clear{next=clear+2usize;size=minimum+1u8;previous=4096usize;continue;}
+  if code==end{
+   if output.len()!=limit{return Err(error("decoded pixel count does not match image dimensions"));}
+   return Ok(output);
+  }
+  if code>next || code>=4096usize || (code==next && previous==4096usize){return Err(error("invalid LZW dictionary reference"));}
+  let mut cursor=code;let mut length=0usize;
+  if code==next{stack[length]=first;length+=1usize;cursor=previous;}
+  while cursor>=clear{
+   if cursor==clear || cursor==end || cursor>=next || length>=4095usize{return Err(error("invalid or cyclic LZW prefix"));}
+   stack[length]=suffixes[cursor];length+=1usize;cursor=prefixes[cursor] as usize;
+  }
+  first=cursor as u8;stack[length]=first;length+=1usize;
+  if length>limit-output.len(){return Err(error("decoded pixels exceed image dimensions"));}
+  let mut p=length;while p>0usize{p-=1usize;output.push(stack[p]);}
+  if previous!=4096usize && next<4096usize{
+   prefixes[next]=previous as u16;suffixes[next]=first;next+=1usize;
+   if next==(1usize<<size) && size<12u8{size+=1u8;}
+  }
+  previous=code;
+ }
+}
+fn dimensions(width:usize,height:usize)->Result<(),String>{
+ if width==0usize || height==0usize || width>MAX_AXIS || height>MAX_AXIS || width*height>MAX_PIXELS{
+  Err(error("dimensions exceed the 4096-axis / 8-Mpixel policy"))
+ }else{Ok(())}
+}
+
+/// Returns the first composited image. The whole block chain must reach a trailer;
+/// later frames do not decode or allocate pixels. Transparency and interlace work.
+pub fn decode(data:&[u8])->Result<Image,String>{
+ if data.len()<13usize || data.len()>MAX_FILE{return Err(error("input is short or exceeds 32 MiB"));}
+ if &data[..6usize]!=b"GIF87a" && &data[..6usize]!=b"GIF89a"{return Err(error("invalid signature"));}
+ let width=word(data,6usize);let height=word(data,8usize);dimensions(width,height)?;
+ let flags=data[10usize];let background=data[11usize] as usize;let mut at=13usize;
+ let global=if flags&128u8!=0u8{palette(data,&mut at,1usize<<((flags&7u8)+1u8))?}else{Vec::new()};
+ let mut transparent= -1i32;let mut first_image=None;let mut blocks=0usize;
+ loop{
+  blocks+=1usize;if blocks>4096usize{return Err(error("too many blocks"));}
+  if at>=data.len(){return Err(error("missing trailer"));}
+  let tag=data[at];at+=1usize;
+  if tag==59u8{return match first_image{Some(image)=>Ok(image),None=>Err(error("no image frame"))};}
+  if tag==33u8{
+   if at>=data.len(){return Err(error("truncated extension"));}
+   let label=data[at];at+=1usize;
+   if label==249u8{
+    if data.len()-at<6usize || data[at]!=4u8 || data[at+5usize]!=0u8{return Err(error("invalid graphic control extension"));}
+    let control=data[at+1usize];
+    if control&224u8!=0u8 || ((control>>2u8)&7u8)>3u8{return Err(error("reserved graphic control fields"));}
+    transparent=if control&1u8!=0u8{data[at+4usize] as i32}else{ -1i32};at+=6usize;
+   }else{
+    // Plain-text rendering is absent, but its control extension is consumed.
+    subblocks(data,&mut at,false)?;if label==1u8{transparent= -1i32;}
+   }
+   continue;
+  }
+  if tag!=44u8{return Err(error("unknown block introducer"));}
+  if data.len()-at<9usize{return Err(error("truncated image descriptor"));}
+  let left=word(data,at);let top=word(data,at+2usize);let iw=word(data,at+4usize);let ih=word(data,at+6usize);let packed=data[at+8usize];at+=9usize;
+  dimensions(iw,ih)?;
+  if left>width || top>height || iw>width-left || ih>height-top || packed&24u8!=0u8{return Err(error("image rectangle or reserved descriptor fields are invalid"));}
+  let local=if packed&128u8!=0u8{palette(data,&mut at,1usize<<((packed&7u8)+1u8))?}else{Vec::new()};
+  let colors=if local.is_empty(){&global}else{&local};
+  if colors.is_empty(){return Err(error("image has no color table"));}
+  if at>=data.len(){return Err(error("missing LZW minimum code size"));}
+  let minimum=data[at];at+=1usize;
+  if minimum<2u8 || minimum>8u8{return Err(error("invalid LZW minimum code size"));}
+  let needs_image=first_image.is_none();let encoded=subblocks(data,&mut at,needs_image)?;
+  if needs_image{
+   let indices=lzw(&encoded,minimum,iw*ih)?;
+   if transparent>=colors.len() as i32{return Err(error("transparency index exceeds color table"));}
+   let backdrop=if transparent>=0i32{0u32}else if background<global.len(){global[background]}else{0u32};
+   let mut pixels=vec![backdrop;width*height];let mut row_order=Vec::<usize>::new();
+   if packed&64u8==0u8{let mut row=0usize;while row<ih{row_order.push(row);row+=1usize;}}
+   else{
+    let starts=[0usize,4usize,2usize,1usize];let steps=[8usize,8usize,4usize,2usize];let mut pass=0usize;
+    while pass<4usize{let mut row=starts[pass];while row<ih{row_order.push(row);row+=steps[pass];}pass+=1usize;}
+   }
+   let mut y=0usize;while y<ih{let mut x=0usize;while x<iw{
+    let index=indices[y*iw+x] as usize;if index>=colors.len(){return Err(error("pixel index exceeds color table"));}
+    if index as i32!=transparent{pixels[(top+row_order[y])*width+left+x]=colors[index];}x+=1usize;
+   }y+=1usize;}
+   first_image=Some(Image{width,height,pixels});
+  }
+  transparent= -1i32;
+ }
+}
