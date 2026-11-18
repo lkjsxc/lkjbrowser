@@ -5,15 +5,21 @@ sha256=60149069984ecfe491e322eba406238555c13acc90375c5468e5d5d4954a83ca
 asset=lkjscript-x86_64-linux
 repository=lkjsxc/lkjscript
 
-article http://127.0.0.1:38551/article.html
+article http://127.0.0.1:43709/article.html
+HTTP_RESPONSE status=200 bytes=5118 url=http://127.0.0.1:43709/article.html
+PAINT wayland-submit elapsed_us=190686 url=http://127.0.0.1:43709/article.html
 Wayland: sent 25 messages, received 34, presented 1 frames
 pixel comparison 1000x760: 0 differing pixels
 
-simple http://127.0.0.1:38551/simple.html
+simple http://127.0.0.1:43709/simple.html
+HTTP_RESPONSE status=200 bytes=2021 url=http://127.0.0.1:43709/simple.html
+PAINT wayland-submit elapsed_us=190534 url=http://127.0.0.1:43709/simple.html
 Wayland: sent 25 messages, received 34, presented 1 frames
 pixel comparison 1000x760: 0 differing pixels
 
-error http://127.0.0.1:43975/unreachable
+error http://127.0.0.1:39633/unreachable
+NAV_ERROR http://127.0.0.1:39633/unreachable: Connect: ECONNREFUSED (111)
+PAINT wayland-submit elapsed_us=115709 url=http://127.0.0.1:39633/unreachable
 Wayland: sent 25 messages, received 34, presented 1 frames
 pixel comparison 1000x760: 0 differing pixels
 

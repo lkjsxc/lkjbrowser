@@ -50,7 +50,7 @@ pub struct View {
 }
 
 pub struct State {
-    hover: u8, pressed: u8, grab: i32,
+    hover: u8, pressed: u8, grab: i32, x: i32, y: i32,
     /// Set when the pointer pressed empty toolbar: the window should start an interactive move.
     pub moving: bool,
     /// Address being fetched while navigation blocks the event loop; empty otherwise.
@@ -100,13 +100,14 @@ fn scroll_for(view: &View, y: i32, grab: i32) -> i32 {
 }
 
 impl State {
-    pub fn new() -> State { State { hover: PAGE, pressed: PAGE, grab: 0i32, moving: false, loading: String::new() } }
+    pub fn new() -> State { State { hover: PAGE, pressed: PAGE, grab: 0i32, x: 0i32, y: 0i32, moving: false, loading: String::new() } }
     fn enabled(&self, view: &View, id: u8) -> bool {
         if !self.loading.is_empty() { return false; }
         if id == BACK { view.can_back } else if id == FORWARD { view.can_forward } else { true }
     }
     /// The pointer moved. Dragging the scrollbar scrolls; over chrome no page link is hovered.
     pub fn motion(&mut self, view: &View, x: i32, y: i32) -> Action {
+        self.x = x; self.y = y;
         if self.pressed == SCROLLBAR { self.hover = SCROLLBAR; return Action::Scroll(scroll_for(view, y, self.grab)); }
         self.hover = target(view, x, y);
         if self.hover == PAGE { Action::None } else { Action::Consumed }
@@ -114,7 +115,7 @@ impl State {
     /// The main button went down. Buttons arm here and act on release.
     pub fn press(&mut self, view: &View, x: i32, y: i32) -> Action {
         let id = target(view, x, y);
-        self.hover = id; self.pressed = PAGE;
+        self.x = x; self.y = y; self.hover = id; self.pressed = PAGE;
         if id == PAGE { return Action::None; }
         if id == ADDRESS { return Action::Edit; }
         if id == BAR { self.moving = true; return Action::Move; }
@@ -329,7 +330,10 @@ fn bubble(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View) {
     let text = fit(font, view.hover.as_str(), 12i32, (view.width - 36i32).min(560i32));
     if text.is_empty() { return; }
     let width = font.text_width(text.as_str(), 12i32) + 20i32;
-    let x = 8i32; let y = view.height - 34i32;
+    let y = view.height - 34i32;
+    // The bubble never covers the link it describes: it crosses over when the pointer comes down its side.
+    let low = state.y >= y - 28i32 && state.x < view.width / 2i32;
+    let x = if low { (view.width - width - 20i32).max(8i32) } else { 8i32 };
     canvas.shape(&Shape::round(x * 16i32, (y + 1i32) * 16i32, width * 16i32, 26i32 * 16i32, 112i32), INK, 22u8);
     canvas.shape(&Shape::round(x * 16i32, y * 16i32, width * 16i32, 26i32 * 16i32, 112i32), SURFACE, 255u8);
     canvas.shape(&Shape::frame(x * 16i32, y * 16i32, width * 16i32, 26i32 * 16i32, 112i32, 16i32), HAIRLINE, 255u8);

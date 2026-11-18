@@ -4,7 +4,7 @@ pub fn main(mut world:World) {
     let args=world.args();let port=std::str::from_utf8(&args[0]).unwrap().parse::<u16>().unwrap();
     let mut client=wayland::Wayland::open(&mut world,port,1000i32,760i32,"input proof").unwrap();
     client.present(0u32).unwrap();
-    let mut motion=false;let mut click=false;let mut scroll=false;
+    let mut motion=false;let mut click=false;let mut scroll=false;let mut release=false;let mut leave=false;
     let mut down=false;let mut up=false;let mut resize=false;let mut close=false;
     let mut mod_down=0usize;let mut mod_up=0usize;let mut held=0u32;
     let mut rounds=0usize;
@@ -13,9 +13,9 @@ pub fn main(mut world:World) {
         for event in events {
             match event {
                 wayland::Event::Motion(x,y)=>{assert!(x==120i32 && y==220i32);motion=true;},
-                wayland::Event::Click(x,y)=>{assert!(x==120i32 && y==220i32);click=true;},
-                wayland::Event::Release(_,_)=>{},
-                wayland::Event::Leave=>{},
+                wayland::Event::Click(x,y)=>{assert!(x==120i32 && y==220i32);click=true;client.start_move().unwrap();},
+                wayland::Event::Release(x,y)=>{assert!(click && x==120i32 && y==220i32);release=true;},
+                wayland::Event::Leave=>{assert!(release);leave=true;},
                 wayland::Event::Scroll(y)=>{assert!(y==24i32);scroll=true;},
                 wayland::Event::Key(key,pressed)=>{
                     if key==30u32 {if pressed {down=true;}else{up=true;}}
@@ -30,12 +30,12 @@ pub fn main(mut world:World) {
         }
         rounds+=1usize;
     }
-    assert!(motion && click && scroll && down && up && resize && close);
+    assert!(motion && click && release && leave && scroll && down && up && resize && close);
     assert!(mod_down==3usize && mod_up==16usize && held==0u32);
     assert!(wayland::key_ascii(30u32,false)==b'a');
     assert!(wayland::key_ascii(30u32,true)==b'A');
     assert!(wayland::key_ascii(53u32,false)==b'/');
     assert!(wayland::key_ascii(39u32,true)==b':');
     assert!(wayland::cursor_bytes().len()==2304usize);
-    world.stdout().write(b"input PASS motion=120,220 click=120,220 scroll=24 key=press+release resize=900x700 focus=clear+restore close=true\n");
+    world.stdout().write(b"input PASS motion=120,220 click=120,220 release=120,220 move=requested leave=true scroll=24 key=press+release resize=900x700 focus=clear+restore close=true\n");
 }

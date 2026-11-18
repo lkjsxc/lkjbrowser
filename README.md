@@ -53,19 +53,28 @@ Local TLS tests supply their test root through this option.
 
 | Action | Input |
 | --- | --- |
-| Edit or replace the entire address | Ctrl+L, type, Enter |
+| Edit or replace the entire address | Click the address field or Ctrl+L, type, Enter |
 | Follow a link | Left click |
-| Scroll | Wheel, Up/Down, Page Up/Page Down, Space |
+| Scroll | Wheel, drag the scrollbar, Up/Down, Page Up/Page Down, Space |
 | Beginning / end | Home / End |
-| Back | The < button, or Ctrl+Left |
-| Reload | Ctrl+R |
+| Back | The back arrow, or Ctrl+Left |
+| Forward | The forward arrow |
+| Reload | The reload button, or Ctrl+R |
 | Cancel address editing | Escape |
-| Close | Compositor close, Ctrl+Q or Ctrl+W |
+| Close | The cross, compositor close, Ctrl+Q or Ctrl+W |
+| Move the window | Drag empty toolbar |
 
 The minimal address editor appends text and supports Backspace and whole-address
 selection. Keyboard text uses the US physical-key layout; focus transitions and both
 left/right modifiers are tracked. Clipboard, IME, keymap parsing and caret movement
 remain future work. The window advertises a fixed size selected at launch.
+
+The toolbar is the only permanent chrome. The address field shows a lock for verified
+HTTPS, a "Not secure" chip for plain HTTP and a document for local files; the host or
+file name is in strong ink and the rest is quiet. A hovered link's destination appears
+in a small bubble at the bottom, the scrollbar overlays the page, and a progress line
+is painted before a fetch blocks the event loop. `sh tools/chrome-shots.sh` regenerates
+the review pictures in `shots/chrome/` (it needs the public network).
 
 ## HTTPS and authentication
 
@@ -244,12 +253,13 @@ and deployments are separate from these commands.
 
 | Module | Responsibility |
 | --- | --- |
-| `src/main.lkj` | Application state, origin policy, input, navigation, chrome and painting |
+| `src/main.lkj` | Application state, origin policy, input, navigation and page painting |
+| `src/chrome.lkj` | Toolbar, address field, link bubble and overlay scrollbar: painting and hit testing |
 | `src/net.lkj` | URLs, regular files, DNS, HTTP framing and TLS adaptation |
 | `src/resources.lkj` | Same-executable stylesheet fetch worker and parent deadline/cleanup |
 | `src/crypto/` | HKDF, X25519, AES-GCM, bigint/signatures, SHA-384/512, DER/X.509, TLS records/handshake/transport |
 | `src/html.lkj`, `css.lkj`, `layout.lkj` | Tree, supported styles, boxes and inline runs |
-| `src/font.lkj`, `paint.lkj` | Font parsing, outlines, glyph masks and pixel canvas |
+| `src/font.lkj`, `paint.lkj` | Font parsing, outlines, glyph masks, pixel canvas and anti-aliased shapes |
 | `src/png.lkj` | PNG/DEFLATE and native PNG output |
 | `src/wayland.lkj` | Wayland object state, wire messages, buffers and input |
 

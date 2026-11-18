@@ -37,7 +37,7 @@ pub fn main(mut world:World) {
     let mut wm=0u32;let mut surface=0u32;let mut xdg=0u32;let mut top=0u32;
     let mut pointer=0u32;let mut keyboard=0u32;
     let mut mapped=false;let mut attached=false;let mut configured=false;let mut injected=false;
-    let mut pong=false;let mut ack=false;let mut cursor=false;let mut fd=false;
+    let mut pong=false;let mut ack=false;let mut cursor=false;let mut fd=false;let mut moved=false;let mut seat=0u32;
     let mut requests=0usize;
     loop {
         let mut header=[0u8;8]; if !exact(&mut stream,&mut header){break;}
@@ -66,7 +66,7 @@ pub fn main(mut world:World) {
             let k=match name {1u32=>3u32,2u32=>4u32,3u32=>5u32,4u32=>6u32,_=>0u32};
             put(&mut kinds,new,k);
             if k==5u32 {wm=new;}
-            if k==6u32 {ints(&mut stream,new,0u32,&[3u32]);}
+            if k==6u32 {seat=new;ints(&mut stream,new,0u32,&[3u32]);}
         } else if kind==3u32 && op==0u32 {
             put(&mut kinds,num(data,0usize),7u32);
         } else if kind==5u32 && op==2u32 {
@@ -75,6 +75,9 @@ pub fn main(mut world:World) {
             assert!(num(data,0usize)==99u32);pong=true;
         } else if kind==8u32 && op==1u32 {
             top=num(data,0usize);put(&mut kinds,top,9u32);
+        } else if kind==9u32 && op==5u32 {
+            // xdg_toplevel.move must name the seat and the serial of the button press.
+            assert!(num(data,0usize)==seat && num(data,4usize)==8u32);moved=true;
         } else if kind==8u32 && op==4u32 {
             let serial=num(data,0usize); assert!(serial==11u32||serial==12u32);
             if serial==12u32 {ack=true;}
@@ -101,6 +104,7 @@ pub fn main(mut world:World) {
             ints(&mut stream,pointer,0u32,&[7u32,surface,40u32*256u32,220u32*256u32]);
             ints(&mut stream,pointer,2u32,&[1u32,120u32*256u32,220u32*256u32]);
             ints(&mut stream,pointer,3u32,&[8u32,1u32,272u32,1u32]);
+            ints(&mut stream,pointer,3u32,&[15u32,2u32,272u32,0u32]);
             ints(&mut stream,pointer,4u32,&[1u32,0u32,24u32*256u32]);
             ints(&mut stream,pointer,5u32,&[0u32;0]);
             ints(&mut stream,keyboard,1u32,&[9u32,surface,4u32,42u32]);
@@ -109,14 +113,15 @@ pub fn main(mut world:World) {
             ints(&mut stream,keyboard,2u32,&[12u32,surface]);
             ints(&mut stream,keyboard,1u32,&[13u32,surface,12u32,29u32,54u32,16u32]);
             ints(&mut stream,keyboard,2u32,&[14u32,surface]);
+            ints(&mut stream,pointer,1u32,&[16u32,surface]);
             ints(&mut stream,top,0u32,&[900u32,700u32,0u32]);
             ints(&mut stream,xdg,0u32,&[12u32]);
             injected=true;
         }
-        if injected && pong && ack && cursor {
+        if injected && pong && ack && cursor && moved {
             assert!(fd);
             ints(&mut stream,top,1u32,&[0u32;0]);
-            world.stdout().write(format!("peer PASS requests={} shm_fd=true pong=true configure_ack=true cursor=true\n",requests).as_bytes());
+            world.stdout().write(format!("peer PASS requests={} shm_fd=true pong=true configure_ack=true cursor=true move=seat+serial\n",requests).as_bytes());
             return;
         }
     }
