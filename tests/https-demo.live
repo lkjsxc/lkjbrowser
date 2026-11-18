@@ -37,7 +37,7 @@
 4500 scroll 480
 5400 scroll 480
 7000 key 102
-# About text is x280..328 and y394..414 at scroll zero in the confirmed 1000x760 capture.
-8000 click 300 406
+# About text is x280..328 and y374..394 at scroll zero in the confirmed 1000x760 capture.
+8000 click 300 386
 # Reveal the linked About page body in the final two seconds.
 10000 scroll 420

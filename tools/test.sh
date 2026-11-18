@@ -47,9 +47,9 @@ render() {
   --screenshot "$run/$name.ppm" --layout "$run/$name.full-layout" "$@" "$url"
  # Only the first URL line varies with checkout directory / ephemeral HTTP port.
  tail -n +2 "$run/$name.full-layout" >"$run/$name.layout"
- # Exact document viewport pixels, excluding URL/status chrome.
+ # Exact document viewport pixels below the 52 px toolbar (the overlay scrollbar thumb is part of them).
  tail -c "$((width*760*3))" "$run/$name.ppm" |
-  dd bs="$((width*3))" skip=72 count=662 iflag=fullblock status=none |
+  dd bs="$((width*3))" skip=52 count=708 iflag=fullblock status=none |
   sha256sum | cut -d' ' -f1 >"$run/$name.pixels.sha256"
 }
 golden() {

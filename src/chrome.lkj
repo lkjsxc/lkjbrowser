@@ -1,0 +1,434 @@
+//! Browser chrome: toolbar, address field, link bubble and overlay scrollbar.
+//! This file paints and hit-tests only. Navigation and page state stay in main.
+use crate::font::Font;
+use crate::paint::Canvas;
+use crate::paint::Shape;
+
+/// Height of the toolbar. The page starts below it and runs to the window edge.
+pub const HEIGHT: i32 = 52i32;
+
+// The whole palette. Hover and pressed states are INK at low alpha, not new colours.
+const SURFACE: u32 = 0xf7f9fau32;
+const FIELD: u32 = 0xe9eef1u32;
+const PAPER: u32 = 0xffffffu32;
+const INK: u32 = 0x1b2a32u32;
+const MUTED: u32 = 0x5d717bu32;
+const FAINT: u32 = 0xb3bfc5u32;
+const HAIRLINE: u32 = 0xd8e0e4u32;
+const ACCENT: u32 = 0x0b7a87u32;
+const ACCENT_SOFT: u32 = 0xc9e7ebu32;
+const WARNING: u32 = 0xae422bu32;
+const WARNING_SOFT: u32 = 0xfbe5dfu32;
+
+const BUTTON: i32 = 32i32;
+const BUTTON_TOP: i32 = 10i32;
+const FIELD_TOP: i32 = 9i32;
+const FIELD_HEIGHT: i32 = 34i32;
+const CENTRE: i32 = 26i32;
+const BASELINE: i32 = 31i32;
+const TEXT: i32 = 15i32;
+const SMALL: i32 = 13i32;
+const STROKE: i32 = 32i32;
+
+const PAGE: u8 = 0u8;
+const BACK: u8 = 1u8;
+const FORWARD: u8 = 2u8;
+const RELOAD: u8 = 3u8;
+const CLOSE: u8 = 4u8;
+const ADDRESS: u8 = 5u8;
+const BAR: u8 = 6u8;
+const SCROLLBAR: u8 = 7u8;
+
+/// What a pointer event on the chrome asks the browser to do.
+pub enum Action { None, Consumed, Back, Forward, Reload, Close, Edit, Move, Scroll(i32) }
+
+/// Everything the chrome shows, copied from the browser for one event or frame.
+pub struct View {
+    pub width: i32, pub height: i32, pub url: String, pub address: String, pub title: String, pub hover: String,
+    pub verified: bool, pub failed: bool, pub editing: bool, pub select_all: bool,
+    pub can_back: bool, pub can_forward: bool, pub scroll: i32, pub max_scroll: i32, pub page_height: i32,
+}
+
+pub struct State {
+    hover: u8, pressed: u8, grab: i32,
+    /// Set when the pointer pressed empty toolbar: the window should start an interactive move.
+    pub moving: bool,
+    /// Address being fetched while navigation blocks the event loop; empty otherwise.
+    pub loading: String,
+}
+
+struct Plan { back: i32, forward: i32, reload: i32, close: i32, field: i32, field_width: i32 }
+fn plan(width: i32) -> Plan {
+    // Buttons keep fixed places; the field takes the rest up to a readable maximum and
+    // centres in the window when there is room. Empty toolbar next to it moves the window.
+    let left = 124i32;
+    let right = (width - 84i32).max(left + 40i32);
+    let field_width = (right - left).min(860i32);
+    let field = ((width - field_width) / 2i32).max(left).min(right - field_width);
+    Plan { back: 10i32, forward: 46i32, reload: 82i32, close: width - 42i32, field, field_width }
+}
+fn within(x: i32, start: i32, length: i32) -> bool { x >= start && x < start + length }
+fn target(view: &View, x: i32, y: i32) -> u8 {
+    if y < HEIGHT {
+        let p = plan(view.width);
+        if within(y, BUTTON_TOP, BUTTON) {
+            if within(x, p.back, BUTTON) { return BACK; }
+            if within(x, p.forward, BUTTON) { return FORWARD; }
+            if within(x, p.reload, BUTTON) { return RELOAD; }
+            if within(x, p.close, BUTTON) { return CLOSE; }
+        }
+        if within(y, FIELD_TOP, FIELD_HEIGHT) && within(x, p.field, p.field_width) { return ADDRESS; }
+        return BAR;
+    }
+    if view.max_scroll > 0i32 && x >= view.width - 14i32 { return SCROLLBAR; }
+    PAGE
+}
+/// Top and length of the scrollbar thumb in window pixels.
+fn thumb(view: &View) -> (i32, i32) {
+    let visible = view.height - HEIGHT;
+    let track = (visible - 8i32).max(1i32);
+    let length = (track * visible / view.page_height.max(1i32)).max(40i32).min(track);
+    let top = HEIGHT + 4i32 + if view.max_scroll > 0i32 { view.scroll * (track - length) / view.max_scroll } else { 0i32 };
+    (top, length)
+}
+fn scroll_for(view: &View, y: i32, grab: i32) -> i32 {
+    let (_, length) = thumb(view);
+    let free = view.height - HEIGHT - 8i32 - length;
+    if free <= 0i32 { return 0i32; }
+    let offset = (y - grab - HEIGHT - 4i32).max(0i32).min(free);
+    ((offset as i64) * (view.max_scroll as i64) / (free as i64)) as i32
+}
+
+impl State {
+    pub fn new() -> State { State { hover: PAGE, pressed: PAGE, grab: 0i32, moving: false, loading: String::new() } }
+    fn enabled(&self, view: &View, id: u8) -> bool {
+        if !self.loading.is_empty() { return false; }
+        if id == BACK { view.can_back } else if id == FORWARD { view.can_forward } else { true }
+    }
+    /// The pointer moved. Dragging the scrollbar scrolls; over chrome no page link is hovered.
+    pub fn motion(&mut self, view: &View, x: i32, y: i32) -> Action {
+        if self.pressed == SCROLLBAR { self.hover = SCROLLBAR; return Action::Scroll(scroll_for(view, y, self.grab)); }
+        self.hover = target(view, x, y);
+        if self.hover == PAGE { Action::None } else { Action::Consumed }
+    }
+    /// The main button went down. Buttons arm here and act on release.
+    pub fn press(&mut self, view: &View, x: i32, y: i32) -> Action {
+        let id = target(view, x, y);
+        self.hover = id; self.pressed = PAGE;
+        if id == PAGE { return Action::None; }
+        if id == ADDRESS { return Action::Edit; }
+        if id == BAR { self.moving = true; return Action::Move; }
+        self.pressed = id;
+        if id == SCROLLBAR {
+            let (top, length) = thumb(view);
+            self.grab = if within(y, top, length) { y - top } else { length / 2i32 };
+            return Action::Scroll(scroll_for(view, y, self.grab));
+        }
+        Action::Consumed
+    }
+    /// What releasing the button here would do, without changing anything.
+    pub fn release_action(&self, view: &View, x: i32, y: i32) -> Action {
+        let id = self.pressed;
+        if id == PAGE || id == SCROLLBAR || target(view, x, y) != id || !self.enabled(view, id) { return Action::None; }
+        if id == BACK { Action::Back } else if id == FORWARD { Action::Forward }
+        else if id == RELOAD { Action::Reload } else { Action::Close }
+    }
+    pub fn release(&mut self, view: &View, x: i32, y: i32) -> Action {
+        let action = self.release_action(view, x, y);
+        self.pressed = PAGE; self.hover = target(view, x, y);
+        action
+    }
+    /// The pointer left the window, or the compositor took it for a window move.
+    pub fn leave(&mut self) { self.hover = PAGE; self.pressed = PAGE; }
+    /// True once after a press on empty toolbar.
+    pub fn take_move(&mut self) -> bool { let moving = self.moving; self.moving = false; moving }
+}
+
+fn ellipsis(font: &Font, size: i32) -> i32 { font.advance(8230u32, size) }
+/// Keep the start, end with an ellipsis. Nothing is drawn when not even that fits.
+fn fit(font: &Font, text: &str, size: i32, room: i32) -> String {
+    if font.text_width(text, size) <= room { return text.to_string(); }
+    let budget = room - ellipsis(font, size);
+    if budget < 0i32 { return String::new(); }
+    let mut out = String::new(); let mut width = 0i32;
+    for c in text.chars() {
+        let next = font.advance(c as u32, size);
+        if width + next > budget { break; }
+        out.push(c); width += next;
+    }
+    out.push('…'); out
+}
+/// Keep the end, start with an ellipsis.
+fn fit_end(font: &Font, text: &str, size: i32, room: i32) -> String {
+    let mut total = font.text_width(text, size);
+    if total <= room { return text.to_string(); }
+    let budget = room - ellipsis(font, size);
+    if budget < 0i32 { return String::new(); }
+    let mut offset = 0usize;
+    for c in text.chars() {
+        if total <= budget { break; }
+        total -= font.advance(c as u32, size); offset += c.len_utf8();
+    }
+    format!("…{}", &text[offset..])
+}
+/// Split an address into quiet lead, the part that names the place, and quiet tail.
+fn parts(url: &str) -> (String, String, String) {
+    let bytes = url.as_bytes();
+    let web = if url.starts_with("https://") { 8usize } else if url.starts_with("http://") { 7usize } else { 0usize };
+    if web != 0usize {
+        let mut end = web;
+        while end < bytes.len() && bytes[end] != b'/' && bytes[end] != b'?' && bytes[end] != b'#' { end += 1usize; }
+        let tail = if &url[end..] == "/" { String::new() } else { url[end..].to_string() };
+        return (String::new(), url[web..end].to_string(), tail);
+    }
+    if url.starts_with("file://") {
+        let mut cut = 7usize; let mut at = 7usize;
+        while at + 1usize < bytes.len() { if bytes[at] == b'/' { cut = at + 1usize; } at += 1usize; }
+        return (url[7usize..cut].to_string(), url[cut..].to_string(), String::new());
+    }
+    (String::new(), url.to_string(), String::new())
+}
+
+fn stroke(canvas: &mut Canvas, cx: i32, cy: i32, ax: i32, ay: i32, bx: i32, by: i32, thickness: i32, color: u32) {
+    canvas.shape(&Shape::line(cx * 16i32 + ax, cy * 16i32 + ay, cx * 16i32 + bx, cy * 16i32 + by, thickness), color, 255u8);
+}
+// Icons are drawn around a centre given in whole pixels; offsets are sixteenths of a pixel.
+fn icon_arrow(canvas: &mut Canvas, cx: i32, cy: i32, direction: i32, color: u32) {
+    let tip = 96i32 * direction;
+    stroke(canvas, cx, cy, -tip, 0i32, tip, 0i32, STROKE, color);
+    stroke(canvas, cx, cy, tip, 0i32, 0i32, -96i32, STROKE, color);
+    stroke(canvas, cx, cy, tip, 0i32, 0i32, 96i32, STROKE, color);
+}
+fn icon_reload(canvas: &mut Canvas, cx: i32, cy: i32, color: u32) {
+    let x = cx * 16i32; let y = cy * 16i32;
+    canvas.shape(&Shape::arc(x, y, 96i32, STROKE, 643i32, -766i32, 966i32, 259i32), color, 255u8);
+    stroke(canvas, cx, cy, 93i32, 25i32, 93i32, 25i32, STROKE, color);
+    canvas.shape(&Shape::triangle(x + 103i32, y - 39i32, x + 95i32, y - 113i32, x + 29i32, y - 34i32), color, 255u8);
+}
+fn icon_close(canvas: &mut Canvas, cx: i32, cy: i32, color: u32) {
+    stroke(canvas, cx, cy, -80i32, -80i32, 80i32, 80i32, STROKE, color);
+    stroke(canvas, cx, cy, -80i32, 80i32, 80i32, -80i32, STROKE, color);
+}
+fn icon_lock(canvas: &mut Canvas, cx: i32, cy: i32, color: u32) {
+    let x = cx * 16i32; let y = cy * 16i32;
+    canvas.shape(&Shape::arc(x, y - 32i32, 48i32, STROKE, 1i32, 0i32, -1i32, 0i32), color, 255u8);
+    canvas.shape(&Shape::round(x - 64i32, y - 32i32, 32i32, 32i32, 0i32), color, 255u8);
+    canvas.shape(&Shape::round(x + 32i32, y - 32i32, 32i32, 32i32, 0i32), color, 255u8);
+    canvas.shape(&Shape::round(x - 80i32, y - 16i32, 160i32, 112i32, 32i32), color, 255u8);
+}
+fn icon_warning(canvas: &mut Canvas, cx: i32, cy: i32, color: u32, paper: u32) {
+    let x = cx * 16i32; let y = cy * 16i32;
+    canvas.shape(&Shape::triangle(x, y - 88i32, x - 96i32, y + 72i32, x + 96i32, y + 72i32), color, 255u8);
+    stroke(canvas, cx, cy, 0i32, -88i32, -96i32, 72i32, STROKE, color);
+    stroke(canvas, cx, cy, -96i32, 72i32, 96i32, 72i32, STROKE, color);
+    stroke(canvas, cx, cy, 96i32, 72i32, 0i32, -88i32, STROKE, color);
+    stroke(canvas, cx, cy, 0i32, -36i32, 0i32, 14i32, 26i32, paper);
+    stroke(canvas, cx, cy, 0i32, 48i32, 0i32, 48i32, 30i32, paper);
+}
+fn icon_document(canvas: &mut Canvas, cx: i32, cy: i32, color: u32) {
+    let x = cx * 16i32; let y = cy * 16i32;
+    canvas.shape(&Shape::frame(x - 80i32, y - 96i32, 160i32, 192i32, 32i32, 24i32), color, 255u8);
+    stroke(canvas, cx, cy, -32i32, -40i32, 32i32, -40i32, 16i32, color);
+    stroke(canvas, cx, cy, -32i32, 8i32, 32i32, 8i32, 16i32, color);
+    stroke(canvas, cx, cy, -32i32, 56i32, 0i32, 56i32, 16i32, color);
+}
+fn icon_notice(canvas: &mut Canvas, cx: i32, cy: i32, color: u32) {
+    canvas.shape(&Shape::ring(cx * 16i32, cy * 16i32, 92i32, 24i32), color, 255u8);
+    stroke(canvas, cx, cy, 0i32, -44i32, 0i32, 10i32, 24i32, color);
+    stroke(canvas, cx, cy, 0i32, 48i32, 0i32, 48i32, 28i32, color);
+}
+
+fn button(state: &State, canvas: &mut Canvas, view: &View, id: u8, x: i32) -> u32 {
+    if !state.enabled(view, id) { return FAINT; }
+    let alpha = if state.pressed == id && state.hover == id { 36u8 }
+        else if state.hover == id && state.pressed == PAGE { 20u8 } else { 0u8 };
+    if alpha == 0u8 { return MUTED; }
+    canvas.shape(&Shape::round(x * 16i32, BUTTON_TOP * 16i32, BUTTON * 16i32, BUTTON * 16i32, 128i32), INK, alpha);
+    INK
+}
+fn field(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View, p: &Plan) {
+    let x = p.field; let width = p.field_width; let right = x + width - 16i32;
+    let outline = Shape::round(x * 16i32, FIELD_TOP * 16i32, width * 16i32, FIELD_HEIGHT * 16i32, FIELD_HEIGHT * 8i32);
+    if view.editing && state.loading.is_empty() {
+        // Focus: a soft halo outside, white paper, and a firm accent ring.
+        canvas.shape(&Shape::frame((x - 3i32) * 16i32, (FIELD_TOP - 3i32) * 16i32, (width + 6i32) * 16i32, (FIELD_HEIGHT + 6i32) * 16i32, (FIELD_HEIGHT + 6i32) * 8i32, 48i32), ACCENT, 44u8);
+        canvas.shape(&outline, PAPER, 255u8);
+        canvas.shape(&Shape::frame(x * 16i32, FIELD_TOP * 16i32, width * 16i32, FIELD_HEIGHT * 16i32, FIELD_HEIGHT * 8i32, 24i32), ACCENT, 255u8);
+        let start = x + 16i32;
+        let text = fit_end(font, view.address.as_str(), TEXT, right - start - 4i32);
+        let drawn = font.text_width(text.as_str(), TEXT);
+        if view.select_all && drawn > 0i32 {
+            canvas.shape(&Shape::round((start - 3i32) * 16i32, (CENTRE - 11i32) * 16i32, (drawn + 6i32) * 16i32, 22i32 * 16i32, 64i32), ACCENT_SOFT, 255u8);
+        }
+        canvas.text(font, text.as_str(), TEXT, start, BASELINE, INK);
+        if !view.select_all { canvas.rect(start + drawn + 1i32, CENTRE - 9i32, 2i32, 18i32, ACCENT); }
+        return;
+    }
+    canvas.shape(&outline, FIELD, 255u8);
+    if state.hover == ADDRESS && state.loading.is_empty() { canvas.shape(&outline, INK, 10u8); }
+    if !state.loading.is_empty() {
+        let text = fit(font, state.loading.as_str(), TEXT, right - x - 16i32);
+        canvas.text(font, text.as_str(), TEXT, x + 16i32, BASELINE, MUTED);
+        return;
+    }
+    let mut start = x + 16i32;
+    if view.failed {
+        icon_notice(canvas, x + 19i32, CENTRE, MUTED); start = x + 34i32;
+    } else if view.verified && view.url.starts_with("https://") {
+        icon_lock(canvas, x + 19i32, CENTRE, ACCENT); start = x + 34i32;
+    } else if view.url.starts_with("http://") || view.url.starts_with("https://") {
+        // Plain HTTP, or HTTPS that was not verified: say so in words when there is room.
+        let label = if width >= 300i32 { "Not secure" } else { "" };
+        let chip = if label.is_empty() { 34i32 } else { 41i32 + font.text_width(label, SMALL) };
+        canvas.shape(&Shape::round((x + 4i32) * 16i32, (FIELD_TOP + 4i32) * 16i32, chip * 16i32, (FIELD_HEIGHT - 8i32) * 16i32, 208i32), WARNING_SOFT, 255u8);
+        icon_warning(canvas, x + 21i32, CENTRE, WARNING, WARNING_SOFT);
+        canvas.text(font, label, SMALL, x + 34i32, BASELINE - 1i32, WARNING);
+        start = x + 4i32 + chip + 10i32;
+    } else if view.url.starts_with("file://") {
+        icon_document(canvas, x + 19i32, CENTRE, MUTED); start = x + 34i32;
+    }
+    if view.url == "about:welcome" {
+        canvas.text(font, "Enter an address", TEXT, start, BASELINE, MUTED);
+        return;
+    }
+    let (lead, name, tail) = parts(view.url.as_str());
+    let room = right - start;
+    let name_width = font.text_width(name.as_str(), TEXT);
+    let mut pen = start;
+    if name_width > room {
+        let text = if lead.is_empty() { fit_end(font, name.as_str(), TEXT, room) } else { fit(font, name.as_str(), TEXT, room) };
+        pen += canvas.text(font, text.as_str(), TEXT, pen, BASELINE, INK);
+    } else {
+        let before = fit_end(font, lead.as_str(), TEXT, room - name_width);
+        pen += canvas.text(font, before.as_str(), TEXT, pen, BASELINE, MUTED);
+        pen += canvas.text(font, name.as_str(), TEXT, pen, BASELINE, INK);
+        let after = fit(font, tail.as_str(), TEXT, right - pen);
+        pen += canvas.text(font, after.as_str(), TEXT, pen, BASELINE, MUTED);
+    }
+    // The page title sits at the far end of the field when the address leaves room for it.
+    let space = right - pen - 32i32;
+    if space >= 96i32 && !view.title.is_empty() && !view.failed {
+        let title = fit(font, view.title.as_str(), SMALL, space);
+        let title_width = font.text_width(title.as_str(), SMALL);
+        canvas.text(font, title.as_str(), SMALL, right - title_width, BASELINE, MUTED);
+    }
+}
+fn scrollbar(state: &State, canvas: &mut Canvas, view: &View) {
+    if view.max_scroll <= 0i32 { return; }
+    let (top, length) = thumb(view);
+    let held = state.pressed == SCROLLBAR;
+    let near = held || state.hover == SCROLLBAR;
+    let width = if near { 8i32 } else { 5i32 };
+    let x = view.width - 3i32 - width;
+    // A pale rim keeps the thumb visible on dark pages.
+    canvas.shape(&Shape::frame((x - 1i32) * 16i32, (top - 1i32) * 16i32, (width + 2i32) * 16i32, (length + 2i32) * 16i32, (width + 2i32) * 8i32, 16i32), PAPER, 110u8);
+    canvas.shape(&Shape::round(x * 16i32, top * 16i32, width * 16i32, length * 16i32, width * 8i32), INK, if held { 150u8 } else if near { 120u8 } else { 80u8 });
+}
+fn bubble(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View) {
+    if view.hover.is_empty() || state.hover != PAGE || !state.loading.is_empty() { return; }
+    let text = fit(font, view.hover.as_str(), 12i32, (view.width - 36i32).min(560i32));
+    if text.is_empty() { return; }
+    let width = font.text_width(text.as_str(), 12i32) + 20i32;
+    let x = 8i32; let y = view.height - 34i32;
+    canvas.shape(&Shape::round(x * 16i32, (y + 1i32) * 16i32, width * 16i32, 26i32 * 16i32, 112i32), INK, 22u8);
+    canvas.shape(&Shape::round(x * 16i32, y * 16i32, width * 16i32, 26i32 * 16i32, 112i32), SURFACE, 255u8);
+    canvas.shape(&Shape::frame(x * 16i32, y * 16i32, width * 16i32, 26i32 * 16i32, 112i32, 16i32), HAIRLINE, 255u8);
+    canvas.text(font, text.as_str(), 12i32, x + 10i32, y + 17i32, MUTED);
+}
+/// Paint the chrome over a finished page. Call last so page content never covers it.
+pub fn paint(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View) {
+    let p = plan(view.width);
+    scrollbar(state, canvas, view);
+    bubble(state, canvas, font, view);
+    canvas.rect(0i32, 0i32, view.width, HEIGHT, SURFACE);
+    canvas.rect(0i32, HEIGHT - 1i32, view.width, 1i32, HAIRLINE);
+    let middle = BUTTON / 2i32;
+    let color = button(state, canvas, view, BACK, p.back);
+    icon_arrow(canvas, p.back + middle, CENTRE, -1i32, color);
+    let color = button(state, canvas, view, FORWARD, p.forward);
+    icon_arrow(canvas, p.forward + middle, CENTRE, 1i32, color);
+    let color = button(state, canvas, view, RELOAD, p.reload);
+    icon_reload(canvas, p.reload + middle, CENTRE, color);
+    let color = button(state, canvas, view, CLOSE, p.close);
+    icon_close(canvas, p.close + middle, CENTRE, color);
+    field(state, canvas, font, view, &p);
+    if !state.loading.is_empty() {
+        // Navigation blocks the loop, so progress is one honest still frame: a line that has set off.
+        let solid = view.width * 2i32 / 5i32; let fade = view.width / 5i32;
+        canvas.rect(0i32, HEIGHT - 2i32, solid, 2i32, ACCENT);
+        let mut i = 0i32;
+        while i < fade {
+            let alpha = (255i32 * (fade - i) / fade) as u8;
+            canvas.blend(solid + i, HEIGHT - 2i32, ACCENT, alpha);
+            canvas.blend(solid + i, HEIGHT - 1i32, ACCENT, alpha);
+            i += 1i32;
+        }
+    }
+}
+
+/// A typical view for the tests below.
+fn sample(width: i32) -> View {
+    View { width, height: 760i32, url: "https://example.com/a".to_string(), address: String::new(), title: String::new(),
+        hover: String::new(), verified: true, failed: false, editing: false, select_all: false,
+        can_back: true, can_forward: false, scroll: 0i32, max_scroll: 2000i32, page_height: 2708i32 }
+}
+#[test]
+fn toolbar_parts_never_overlap() {
+    for width in vec![320i32, 620i32, 1000i32, 1600i32, 4096i32] {
+        let p = plan(width);
+        assert!(p.field >= p.reload + BUTTON + 8i32);
+        assert!(p.field + p.field_width + 8i32 <= p.close);
+        assert!(p.field_width >= 40i32 && p.field_width <= 860i32);
+    }
+    let wide = plan(1600i32);
+    assert_eq!(wide.field * 2i32 + wide.field_width, 1600i32);
+}
+#[test]
+fn buttons_act_on_release_inside_only() {
+    let view = sample(1000i32);
+    let mut state = State::new();
+    assert!(matches!(state.press(&view, 20i32, 20i32), Action::Consumed));
+    assert!(matches!(state.release(&view, 20i32, 20i32), Action::Back));
+    state.press(&view, 20i32, 20i32);
+    assert!(matches!(state.release(&view, 300i32, 300i32), Action::None));
+    // Forward has nowhere to go in this view, so it stays inert.
+    state.press(&view, 60i32, 20i32);
+    assert!(matches!(state.release(&view, 60i32, 20i32), Action::None));
+    assert!(matches!(state.press(&view, 400i32, 20i32), Action::Edit));
+    assert!(matches!(state.press(&view, 940i32, 20i32), Action::Move));
+    assert!(state.take_move() && !state.take_move());
+    state.press(&view, 970i32, 20i32);
+    assert!(matches!(state.release(&view, 970i32, 20i32), Action::Close));
+}
+#[test]
+fn scrollbar_drag_reaches_both_ends() {
+    let view = sample(1000i32);
+    let mut state = State::new();
+    assert!(matches!(state.press(&view, 995i32, 60i32), Action::Scroll(0i32)));
+    assert!(matches!(state.motion(&view, 500i32, 5000i32), Action::Scroll(2000i32)));
+    assert!(matches!(state.motion(&view, 500i32, -50i32), Action::Scroll(0i32)));
+    state.release(&view, 500i32, 300i32);
+    assert!(matches!(state.motion(&view, 500i32, 300i32), Action::None));
+}
+#[test]
+fn address_parts_name_the_place() {
+    let (lead, name, tail) = parts("https://www.example.org/a/b?c#d");
+    assert!(lead.is_empty() && name == "www.example.org" && tail == "/a/b?c#d");
+    let (_, name, tail) = parts("http://127.0.0.1:8080/");
+    assert!(name == "127.0.0.1:8080" && tail.is_empty());
+    let (lead, name, _) = parts("file:///home/reader/notes/page.html");
+    assert!(lead == "/home/reader/notes/" && name == "page.html");
+    let (_, name, _) = parts("about:welcome");
+    assert!(name == "about:welcome");
+}
+#[test]
+fn elided_text_always_fits() {
+    let font = crate::font::metric_test_font();
+    let text = "www.example.org/a/long/path/to/a/page.html";
+    let mut room = 0i32;
+    while room < 400i32 {
+        assert!(font.text_width(fit(&font, text, TEXT, room).as_str(), TEXT) <= room);
+        assert!(font.text_width(fit_end(&font, text, TEXT, room).as_str(), TEXT) <= room);
+        room += 7i32;
+    }
+}

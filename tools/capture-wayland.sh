@@ -121,8 +121,8 @@ capture_motion() {
  printf 'Actual Weston screenshots of one continuously running native browser.\nInput is timed application event replay, not physical hardware input.\nFrames retain exact PNG pixels; animation uses a nominal 400 ms frame delay.\n' >docs/motion-proof.log
  target/animate shots/scroll-and-link.apng 400 "$@" >>docs/motion-proof.log
  cat "$run/motion/browser.log" >>docs/motion-proof.log
- grep -F "Script 3400ms: click 130 120" "$run/motion/browser.log" >/dev/null
- grep -F "Script 5200ms: click 75 35" "$run/motion/browser.log" >/dev/null
+ grep -F "Script 3400ms: click 130 100" "$run/motion/browser.log" >/dev/null
+ grep -F "Script 5200ms: click 26 26" "$run/motion/browser.log" >/dev/null
  grep -Fx "URL http://127.0.0.1:$port/article.html" "$run/motion/final.layout" >/dev/null
 }
 capture_motion

@@ -1,136 +1,136 @@
 VIEW 1000 760 SCROLL 0
 TITLE A small workshop — Field Notes
 IMAGES 1
-page width=988 height=937 background=fff0f3f2 title="A small workshop — Field Notes"
-box node=0 tag=#document x=0 y=0 w=988 h=937
-box node=2 tag=html x=0 y=0 w=988 h=937
-box node=15 tag=body x=0 y=0 w=988 h=937
-box node=17 tag=main x=82 y=0 w=824 h=937
-box node=19 tag=nav x=124 y=32 w=740 h=21
-box node=24 tag=p x=124 y=81 w=740 h=20
-box node=27 tag=h1 x=124 y=111 w=740 h=46
-box node=30 tag=p x=124 y=174 w=740 h=64
-box node=35 tag=figure x=124 y=261 w=740 h=258
-box node=39 tag=figcaption x=124 y=498 w=740 h=21
-box node=43 tag=div x=124 y=543 w=740 h=95
-box node=45 tag=p x=147 y=563 w=694 h=54
-box node=51 tag=h2 x=124 y=686 w=740 h=33
-box node=54 tag=p x=124 y=731 w=740 h=54
-box node=60 tag=p x=124 y=802 w=740 h=27
-box node=63 tag=footer x=124 y=872 w=740 h=21
-rect x=0 y=0 w=988 h=937 color=fff0f3f2
-rect x=82 y=0 w=824 h=937 color=ffffffff
-text node=21 x=124 baseline=47 top=34 w=40 h=16 size=14 bold=false italic=false color=ff166f5e href="article.html" value="FIELD"
-text node=21 x=168 baseline=47 top=34 w=48 h=16 size=14 bold=false italic=false color=ff166f5e href="article.html" value="NOTES"
-text node=22 x=220 baseline=47 top=34 w=4 h=16 size=14 bold=false italic=false color=ff637c75 href="" value=" "
-text node=22 x=228 baseline=47 top=34 w=4 h=16 size=14 bold=false italic=false color=ff637c75 href="" value="/"
-text node=22 x=236 baseline=47 top=34 w=4 h=16 size=14 bold=false italic=false color=ff637c75 href="" value=" "
-text node=22 x=244 baseline=47 top=34 w=25 h=16 size=14 bold=false italic=false color=ff637c75 href="" value="The"
-text node=22 x=273 baseline=47 top=34 w=61 h=16 size=14 bold=false italic=false color=ff637c75 href="" value="workshop"
-rect x=124 y=49 w=92 h=1 color=ff166f5e
-text node=25 x=124 baseline=95 top=83 w=45 h=15 size=13 bold=true italic=false color=ff166f5e href="" value="SMALL"
-text node=25 x=173 baseline=95 top=83 w=49 h=15 size=13 bold=true italic=false color=ff166f5e href="" value="TOOLS,"
-text node=25 x=226 baseline=95 top=83 w=52 h=15 size=13 bold=true italic=false color=ff166f5e href="" value="USEFUL"
-text node=25 x=282 baseline=95 top=83 w=49 h=15 size=13 bold=true italic=false color=ff166f5e href="" value="THINGS"
-text node=28 x=124 baseline=148 top=111 w=29 h=46 size=40 bold=true italic=false color=ff183d33 href="" value="A"
-text node=28 x=164 baseline=148 top=111 w=102 h=46 size=40 bold=true italic=false color=ff183d33 href="" value="small"
-text node=28 x=277 baseline=148 top=111 w=187 h=46 size=40 bold=true italic=false color=ff183d33 href="" value="workshop"
-text node=31 x=124 baseline=197 top=177 w=69 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="Careful"
-text node=31 x=199 baseline=197 top=177 w=123 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="experiments."
-text node=31 x=328 baseline=197 top=177 w=92 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="Readable"
-text node=31 x=426 baseline=197 top=177 w=65 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="pages."
-text node=33 x=124 baseline=229 top=209 w=61 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="Useful"
-text node=33 x=191 baseline=229 top=209 w=52 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="tools,"
-text node=33 x=249 baseline=229 top=209 w=53 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="made"
-text node=33 x=308 baseline=229 top=209 w=36 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="one"
-text node=33 x=350 baseline=229 top=209 w=50 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="small"
-text node=33 x=406 baseline=229 top=209 w=41 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="step"
-text node=33 x=453 baseline=229 top=209 w=18 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="at"
-text node=33 x=477 baseline=229 top=209 w=12 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="a"
-text node=33 x=495 baseline=229 top=209 w=46 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="time."
-image node=37 x=124 y=261 w=740 h=225 src="workshop.png" alt="A calm landscape of layered green hills under a pale sky." href=""
-text node=40 x=124 baseline=513 top=500 w=30 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="Hills,"
-text node=40 x=158 baseline=513 top=500 w=8 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="a"
-text node=40 x=170 baseline=513 top=500 w=32 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="river,"
-text node=40 x=206 baseline=513 top=500 w=24 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="and"
-text node=40 x=234 baseline=513 top=500 w=8 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="a"
-text node=40 x=246 baseline=513 top=500 w=25 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="little"
-text node=40 x=275 baseline=513 top=500 w=33 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="room"
-text node=40 x=312 baseline=513 top=500 w=12 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="to"
-text node=40 x=328 baseline=513 top=500 w=34 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="think."
-rect x=124 y=543 w=740 h=95 color=ffeff6f2
-rect x=124 y=543 w=740 h=1 color=ffd9e7de
-rect x=124 y=637 w=740 h=1 color=ffd9e7de
-rect x=124 y=543 w=1 h=95 color=ffd9e7de
-rect x=863 y=543 w=1 h=95 color=ffd9e7de
-text node=47 x=147 baseline=583 top=566 w=67 h=21 size=18 bold=true italic=false color=ff2d443f href="" value="Today's"
-text node=47 x=219 baseline=583 top=566 w=102 h=21 size=18 bold=true italic=false color=ff2d443f href="" value="experiment:"
-text node=48 x=326 baseline=583 top=566 w=40 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="open"
-text node=48 x=371 baseline=583 top=566 w=10 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="a"
-text node=48 x=386 baseline=583 top=566 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="native"
-text node=48 x=439 baseline=583 top=566 w=70 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="Wayland"
-text node=48 x=514 baseline=583 top=566 w=65 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="window,"
-text node=48 x=584 baseline=583 top=566 w=39 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="fetch"
-text node=48 x=628 baseline=583 top=566 w=10 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="a"
-text node=48 x=643 baseline=583 top=566 w=45 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="page,"
-text node=48 x=693 baseline=583 top=566 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="and"
-text node=48 x=728 baseline=583 top=566 w=39 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="draw"
-text node=48 x=772 baseline=583 top=566 w=18 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="its"
-text node=48 x=795 baseline=583 top=566 w=29 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="text"
-text node=48 x=147 baseline=610 top=593 w=36 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="from"
-text node=48 x=188 baseline=610 top=593 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="real"
-text node=48 x=223 baseline=610 top=593 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="font"
-text node=48 x=258 baseline=610 top=593 w=67 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="outlines."
-text node=52 x=124 baseline=711 top=688 w=57 h=29 size=25 bold=true italic=false color=ff2d443f href="" value="Take"
-text node=52 x=188 baseline=711 top=688 w=14 h=29 size=25 bold=true italic=false color=ff2d443f href="" value="a"
-text node=52 x=209 baseline=711 top=688 w=51 h=29 size=25 bold=true italic=false color=ff2d443f href="" value="look"
-text node=52 x=267 baseline=711 top=688 w=84 h=29 size=25 bold=true italic=false color=ff2d443f href="" value="around"
-text node=55 x=124 baseline=751 top=734 w=31 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="The"
-text node=57 x=160 baseline=751 top=734 w=34 h=21 size=18 bold=false italic=false color=ff166f5e href="article.html" value="long"
-text node=57 x=199 baseline=751 top=734 w=48 h=21 size=18 bold=false italic=false color=ff166f5e href="article.html" value="article"
-text node=58 x=252 baseline=751 top=734 w=13 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="is"
-text node=58 x=270 baseline=751 top=734 w=10 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="a"
-text node=58 x=285 baseline=751 top=734 w=40 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="good"
-text node=58 x=330 baseline=751 top=734 w=43 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="place"
-text node=58 x=378 baseline=751 top=734 w=15 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="to"
-text node=58 x=398 baseline=751 top=734 w=20 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="try"
-text node=58 x=423 baseline=751 top=734 w=71 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="scrolling,"
-text node=58 x=499 baseline=751 top=734 w=78 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="headings,"
-text node=58 x=582 baseline=751 top=734 w=36 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="lists,"
-text node=58 x=623 baseline=751 top=734 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="and"
-text node=58 x=658 baseline=751 top=734 w=41 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="links."
-text node=58 x=704 baseline=751 top=734 w=34 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="This"
-text node=58 x=743 baseline=751 top=734 w=40 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="page"
-text node=58 x=788 baseline=751 top=734 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="keeps"
-rect x=160 y=753 w=87 h=1 color=ff166f5e
-text node=58 x=124 baseline=778 top=761 w=25 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="the"
-text node=58 x=154 baseline=778 top=761 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="layout"
-text node=58 x=207 baseline=778 top=761 w=52 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="simple"
-text node=58 x=264 baseline=778 top=761 w=60 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="enough"
-text node=58 x=329 baseline=778 top=761 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="that"
-text node=58 x=364 baseline=778 top=761 w=39 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="each"
-text node=58 x=408 baseline=778 top=761 w=31 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="part"
-text node=58 x=444 baseline=778 top=761 w=29 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="can"
-text node=58 x=478 baseline=778 top=761 w=20 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="be"
-text node=58 x=503 baseline=778 top=761 w=82 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="inspected."
-text node=61 x=124 baseline=822 top=805 w=44 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="Tools"
-text node=61 x=173 baseline=822 top=805 w=64 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="become"
-text node=61 x=242 baseline=822 top=805 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="useful"
-text node=61 x=295 baseline=822 top=805 w=61 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="through"
-text node=61 x=361 baseline=822 top=805 w=47 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="small,"
-text node=61 x=413 baseline=822 top=805 w=63 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="testable"
-text node=61 x=481 baseline=822 top=805 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="steps."
-text node=61 x=534 baseline=822 top=805 w=34 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="This"
-text node=61 x=573 baseline=822 top=805 w=13 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="is"
-text node=61 x=591 baseline=822 top=805 w=25 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="the"
-text node=61 x=621 baseline=822 top=805 w=29 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="first"
-text node=61 x=655 baseline=822 top=805 w=35 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="one."
-text node=64 x=124 baseline=887 top=874 w=27 h=16 size=14 bold=false italic=false color=ff708278 href="" value="Built"
-text node=64 x=155 baseline=887 top=874 w=11 h=16 size=14 bold=false italic=false color=ff708278 href="" value="in"
-text node=64 x=170 baseline=887 top=874 w=47 h=16 size=14 bold=false italic=false color=ff708278 href="" value="lkjscript"
-text node=64 x=221 baseline=887 top=874 w=4 h=16 size=14 bold=false italic=false color=ff708278 href="" value=" "
-text node=64 x=229 baseline=887 top=874 w=5 h=16 size=14 bold=false italic=false color=ff708278 href="" value="·"
-text node=64 x=238 baseline=887 top=874 w=4 h=16 size=14 bold=false italic=false color=ff708278 href="" value=" "
-text node=64 x=246 baseline=887 top=874 w=72 h=16 size=14 bold=false italic=false color=ff708278 href="" value="Documents"
-text node=64 x=322 baseline=887 top=874 w=41 h=16 size=14 bold=false italic=false color=ff708278 href="" value="before"
-text node=64 x=367 baseline=887 top=874 w=72 h=16 size=14 bold=false italic=false color=ff708278 href="" value="distractions"
+page width=1000 height=937 background=fff0f3f2 title="A small workshop — Field Notes"
+box node=0 tag=#document x=0 y=0 w=1000 h=937
+box node=2 tag=html x=0 y=0 w=1000 h=937
+box node=15 tag=body x=0 y=0 w=1000 h=937
+box node=17 tag=main x=88 y=0 w=824 h=937
+box node=19 tag=nav x=130 y=32 w=740 h=21
+box node=24 tag=p x=130 y=81 w=740 h=20
+box node=27 tag=h1 x=130 y=111 w=740 h=46
+box node=30 tag=p x=130 y=174 w=740 h=64
+box node=35 tag=figure x=130 y=261 w=740 h=258
+box node=39 tag=figcaption x=130 y=498 w=740 h=21
+box node=43 tag=div x=130 y=543 w=740 h=95
+box node=45 tag=p x=153 y=563 w=694 h=54
+box node=51 tag=h2 x=130 y=686 w=740 h=33
+box node=54 tag=p x=130 y=731 w=740 h=54
+box node=60 tag=p x=130 y=802 w=740 h=27
+box node=63 tag=footer x=130 y=872 w=740 h=21
+rect x=0 y=0 w=1000 h=937 color=fff0f3f2
+rect x=88 y=0 w=824 h=937 color=ffffffff
+text node=21 x=130 baseline=47 top=34 w=40 h=16 size=14 bold=false italic=false color=ff166f5e href="article.html" value="FIELD"
+text node=21 x=174 baseline=47 top=34 w=48 h=16 size=14 bold=false italic=false color=ff166f5e href="article.html" value="NOTES"
+text node=22 x=226 baseline=47 top=34 w=4 h=16 size=14 bold=false italic=false color=ff637c75 href="" value=" "
+text node=22 x=234 baseline=47 top=34 w=4 h=16 size=14 bold=false italic=false color=ff637c75 href="" value="/"
+text node=22 x=242 baseline=47 top=34 w=4 h=16 size=14 bold=false italic=false color=ff637c75 href="" value=" "
+text node=22 x=250 baseline=47 top=34 w=25 h=16 size=14 bold=false italic=false color=ff637c75 href="" value="The"
+text node=22 x=279 baseline=47 top=34 w=61 h=16 size=14 bold=false italic=false color=ff637c75 href="" value="workshop"
+rect x=130 y=49 w=92 h=1 color=ff166f5e
+text node=25 x=130 baseline=95 top=83 w=45 h=15 size=13 bold=true italic=false color=ff166f5e href="" value="SMALL"
+text node=25 x=179 baseline=95 top=83 w=49 h=15 size=13 bold=true italic=false color=ff166f5e href="" value="TOOLS,"
+text node=25 x=232 baseline=95 top=83 w=52 h=15 size=13 bold=true italic=false color=ff166f5e href="" value="USEFUL"
+text node=25 x=288 baseline=95 top=83 w=49 h=15 size=13 bold=true italic=false color=ff166f5e href="" value="THINGS"
+text node=28 x=130 baseline=148 top=111 w=29 h=46 size=40 bold=true italic=false color=ff183d33 href="" value="A"
+text node=28 x=170 baseline=148 top=111 w=102 h=46 size=40 bold=true italic=false color=ff183d33 href="" value="small"
+text node=28 x=283 baseline=148 top=111 w=187 h=46 size=40 bold=true italic=false color=ff183d33 href="" value="workshop"
+text node=31 x=130 baseline=197 top=177 w=69 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="Careful"
+text node=31 x=205 baseline=197 top=177 w=123 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="experiments."
+text node=31 x=334 baseline=197 top=177 w=92 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="Readable"
+text node=31 x=432 baseline=197 top=177 w=65 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="pages."
+text node=33 x=130 baseline=229 top=209 w=61 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="Useful"
+text node=33 x=197 baseline=229 top=209 w=52 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="tools,"
+text node=33 x=255 baseline=229 top=209 w=53 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="made"
+text node=33 x=314 baseline=229 top=209 w=36 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="one"
+text node=33 x=356 baseline=229 top=209 w=50 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="small"
+text node=33 x=412 baseline=229 top=209 w=41 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="step"
+text node=33 x=459 baseline=229 top=209 w=18 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="at"
+text node=33 x=483 baseline=229 top=209 w=12 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="a"
+text node=33 x=501 baseline=229 top=209 w=46 h=25 size=21 bold=false italic=false color=ff4b675e href="" value="time."
+image node=37 x=130 y=261 w=740 h=225 src="workshop.png" alt="A calm landscape of layered green hills under a pale sky." href=""
+text node=40 x=130 baseline=513 top=500 w=30 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="Hills,"
+text node=40 x=164 baseline=513 top=500 w=8 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="a"
+text node=40 x=176 baseline=513 top=500 w=32 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="river,"
+text node=40 x=212 baseline=513 top=500 w=24 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="and"
+text node=40 x=240 baseline=513 top=500 w=8 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="a"
+text node=40 x=252 baseline=513 top=500 w=25 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="little"
+text node=40 x=281 baseline=513 top=500 w=33 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="room"
+text node=40 x=318 baseline=513 top=500 w=12 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="to"
+text node=40 x=334 baseline=513 top=500 w=34 h=16 size=14 bold=false italic=false color=ff6c7d76 href="" value="think."
+rect x=130 y=543 w=740 h=95 color=ffeff6f2
+rect x=130 y=543 w=740 h=1 color=ffd9e7de
+rect x=130 y=637 w=740 h=1 color=ffd9e7de
+rect x=130 y=543 w=1 h=95 color=ffd9e7de
+rect x=869 y=543 w=1 h=95 color=ffd9e7de
+text node=47 x=153 baseline=583 top=566 w=67 h=21 size=18 bold=true italic=false color=ff2d443f href="" value="Today's"
+text node=47 x=225 baseline=583 top=566 w=102 h=21 size=18 bold=true italic=false color=ff2d443f href="" value="experiment:"
+text node=48 x=332 baseline=583 top=566 w=40 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="open"
+text node=48 x=377 baseline=583 top=566 w=10 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="a"
+text node=48 x=392 baseline=583 top=566 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="native"
+text node=48 x=445 baseline=583 top=566 w=70 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="Wayland"
+text node=48 x=520 baseline=583 top=566 w=65 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="window,"
+text node=48 x=590 baseline=583 top=566 w=39 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="fetch"
+text node=48 x=634 baseline=583 top=566 w=10 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="a"
+text node=48 x=649 baseline=583 top=566 w=45 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="page,"
+text node=48 x=699 baseline=583 top=566 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="and"
+text node=48 x=734 baseline=583 top=566 w=39 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="draw"
+text node=48 x=778 baseline=583 top=566 w=18 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="its"
+text node=48 x=801 baseline=583 top=566 w=29 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="text"
+text node=48 x=153 baseline=610 top=593 w=36 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="from"
+text node=48 x=194 baseline=610 top=593 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="real"
+text node=48 x=229 baseline=610 top=593 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="font"
+text node=48 x=264 baseline=610 top=593 w=67 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="outlines."
+text node=52 x=130 baseline=711 top=688 w=57 h=29 size=25 bold=true italic=false color=ff2d443f href="" value="Take"
+text node=52 x=194 baseline=711 top=688 w=14 h=29 size=25 bold=true italic=false color=ff2d443f href="" value="a"
+text node=52 x=215 baseline=711 top=688 w=51 h=29 size=25 bold=true italic=false color=ff2d443f href="" value="look"
+text node=52 x=273 baseline=711 top=688 w=84 h=29 size=25 bold=true italic=false color=ff2d443f href="" value="around"
+text node=55 x=130 baseline=751 top=734 w=31 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="The"
+text node=57 x=166 baseline=751 top=734 w=34 h=21 size=18 bold=false italic=false color=ff166f5e href="article.html" value="long"
+text node=57 x=205 baseline=751 top=734 w=48 h=21 size=18 bold=false italic=false color=ff166f5e href="article.html" value="article"
+text node=58 x=258 baseline=751 top=734 w=13 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="is"
+text node=58 x=276 baseline=751 top=734 w=10 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="a"
+text node=58 x=291 baseline=751 top=734 w=40 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="good"
+text node=58 x=336 baseline=751 top=734 w=43 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="place"
+text node=58 x=384 baseline=751 top=734 w=15 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="to"
+text node=58 x=404 baseline=751 top=734 w=20 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="try"
+text node=58 x=429 baseline=751 top=734 w=71 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="scrolling,"
+text node=58 x=505 baseline=751 top=734 w=78 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="headings,"
+text node=58 x=588 baseline=751 top=734 w=36 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="lists,"
+text node=58 x=629 baseline=751 top=734 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="and"
+text node=58 x=664 baseline=751 top=734 w=41 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="links."
+text node=58 x=710 baseline=751 top=734 w=34 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="This"
+text node=58 x=749 baseline=751 top=734 w=40 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="page"
+text node=58 x=794 baseline=751 top=734 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="keeps"
+rect x=166 y=753 w=87 h=1 color=ff166f5e
+text node=58 x=130 baseline=778 top=761 w=25 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="the"
+text node=58 x=160 baseline=778 top=761 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="layout"
+text node=58 x=213 baseline=778 top=761 w=52 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="simple"
+text node=58 x=270 baseline=778 top=761 w=60 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="enough"
+text node=58 x=335 baseline=778 top=761 w=30 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="that"
+text node=58 x=370 baseline=778 top=761 w=39 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="each"
+text node=58 x=414 baseline=778 top=761 w=31 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="part"
+text node=58 x=450 baseline=778 top=761 w=29 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="can"
+text node=58 x=484 baseline=778 top=761 w=20 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="be"
+text node=58 x=509 baseline=778 top=761 w=82 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="inspected."
+text node=61 x=130 baseline=822 top=805 w=44 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="Tools"
+text node=61 x=179 baseline=822 top=805 w=64 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="become"
+text node=61 x=248 baseline=822 top=805 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="useful"
+text node=61 x=301 baseline=822 top=805 w=61 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="through"
+text node=61 x=367 baseline=822 top=805 w=47 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="small,"
+text node=61 x=419 baseline=822 top=805 w=63 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="testable"
+text node=61 x=487 baseline=822 top=805 w=48 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="steps."
+text node=61 x=540 baseline=822 top=805 w=34 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="This"
+text node=61 x=579 baseline=822 top=805 w=13 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="is"
+text node=61 x=597 baseline=822 top=805 w=25 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="the"
+text node=61 x=627 baseline=822 top=805 w=29 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="first"
+text node=61 x=661 baseline=822 top=805 w=35 h=21 size=18 bold=false italic=false color=ff2d443f href="" value="one."
+text node=64 x=130 baseline=887 top=874 w=27 h=16 size=14 bold=false italic=false color=ff708278 href="" value="Built"
+text node=64 x=161 baseline=887 top=874 w=11 h=16 size=14 bold=false italic=false color=ff708278 href="" value="in"
+text node=64 x=176 baseline=887 top=874 w=47 h=16 size=14 bold=false italic=false color=ff708278 href="" value="lkjscript"
+text node=64 x=227 baseline=887 top=874 w=4 h=16 size=14 bold=false italic=false color=ff708278 href="" value=" "
+text node=64 x=235 baseline=887 top=874 w=5 h=16 size=14 bold=false italic=false color=ff708278 href="" value="·"
+text node=64 x=244 baseline=887 top=874 w=4 h=16 size=14 bold=false italic=false color=ff708278 href="" value=" "
+text node=64 x=252 baseline=887 top=874 w=72 h=16 size=14 bold=false italic=false color=ff708278 href="" value="Documents"
+text node=64 x=328 baseline=887 top=874 w=41 h=16 size=14 bold=false italic=false color=ff708278 href="" value="before"
+text node=64 x=373 baseline=887 top=874 w=72 h=16 size=14 bold=false italic=false color=ff708278 href="" value="distractions"

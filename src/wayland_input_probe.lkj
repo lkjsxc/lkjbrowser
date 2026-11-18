@@ -14,6 +14,8 @@ pub fn main(mut world:World) {
             match event {
                 wayland::Event::Motion(x,y)=>{assert!(x==120i32 && y==220i32);motion=true;},
                 wayland::Event::Click(x,y)=>{assert!(x==120i32 && y==220i32);click=true;},
+                wayland::Event::Release(_,_)=>{},
+                wayland::Event::Leave=>{},
                 wayland::Event::Scroll(y)=>{assert!(y==24i32);scroll=true;},
                 wayland::Event::Key(key,pressed)=>{
                     if key==30u32 {if pressed {down=true;}else{up=true;}}

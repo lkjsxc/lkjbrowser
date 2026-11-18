@@ -2,8 +2,8 @@
 //! Protocol sources: Wayland XML and stable xdg-shell XML, not client libraries.
 #[derive(Clone, Copy)]
 pub enum Event {
-    Scroll(i32), Key(u32, bool), Click(i32, i32), Motion(i32, i32),
-    Resize(i32, i32), Close,
+    Scroll(i32), Key(u32, bool), Click(i32, i32), Release(i32, i32), Motion(i32, i32),
+    Leave, Resize(i32, i32), Close,
 }
 pub struct Wayland {
     socket: File, ready: Readiness, clock: Clock, incoming: Vec<u8>,
@@ -12,7 +12,7 @@ pub struct Wayland {
     surface: u32, xdg: u32, top: u32, pool: u32,
     first: u32, second: u32, pointer: u32, keyboard: u32, cursor_surface: u32, cursor_buffer: u32,
     first_free: bool, second_free: bool, configured: bool, closed: bool,
-    px: i32, py: i32, width: i32, height: i32,
+    px: i32, py: i32, width: i32, height: i32, press_serial: u32,
     pub sent_messages: usize, pub received_messages: usize, pub committed_frames: usize,
 }
 fn word(bytes: &mut Vec<u8>, n: u32) {
@@ -46,6 +46,12 @@ impl Wayland {
         let mut bytes=Vec::new();wire_string(&mut bytes,title);
         let top=self.top;self.send(top,2u32,bytes,false)
     }
+    /// Ask the compositor to move the window with the pointer, as answer to the last button press.
+    pub fn start_move(&mut self)->Result<(),String>{
+        if self.seat==0u32 || self.press_serial==0u32{return Ok(());}
+        let top=self.top;let seat=self.seat;let serial=self.press_serial;
+        self.request(top,5u32,vec![seat,serial],false)
+    }
     pub fn open(world: &mut World, port: u16, width: i32, height: i32, title: &str) -> Result<Wayland, String> {
         if width < 1i32 || height < 1i32 || width > 8192i32 || height > 8192i32 {
             return Err("Wayland: viewport outside 1..8192".to_string());
@@ -69,7 +75,7 @@ impl Wayland {
             surface: 0u32, xdg: 0u32, top: 0u32, pool: 0u32,
             first: 0u32, second: 0u32, pointer: 0u32, keyboard: 0u32, cursor_surface: 0u32, cursor_buffer: 0u32,
             first_free: true, second_free: true, configured: false, closed: false,
-            px: 0i32, py: 0i32, width, height,
+            px: 0i32, py: 0i32, width, height, press_serial: 0u32,
             sent_messages: 0usize, received_messages: 0usize, committed_frames: 0usize,
         };
         client.request(1u32, 1u32, vec![2u32], false)?;
@@ -296,13 +302,18 @@ impl Wayland {
                 if cs != 0u32 { self.request(object, 0u32, vec![number(data, 0usize), cs, 1u32, 1u32], false)?; }
                 self.px = (number(data, 8usize) as i32) / 256i32;
                 self.py = (number(data, 12usize) as i32) / 256i32;
+            } else if opcode == 1u32 {
+                events.push(Event::Leave);
             } else if opcode == 2u32 && data.len() >= 12usize {
                 self.px = (number(data, 4usize) as i32) / 256i32;
                 self.py = (number(data, 8usize) as i32) / 256i32;
                 events.push(Event::Motion(self.px, self.py));
             } else if opcode == 3u32 && data.len() >= 16usize {
-                if number(data, 8usize) == 272u32 && number(data, 12usize) == 1u32 {
-                    events.push(Event::Click(self.px, self.py));
+                if number(data, 8usize) == 272u32 {
+                    if number(data, 12usize) == 1u32 {
+                        self.press_serial = number(data, 0usize);
+                        events.push(Event::Click(self.px, self.py));
+                    } else { events.push(Event::Release(self.px, self.py)); }
                 }
             } else if opcode == 4u32 && data.len() >= 12usize {
                 if number(data, 4usize) == 0u32 {

@@ -4,6 +4,7 @@ mod net;
 mod resources;
 mod font;
 mod paint;
+mod chrome;
 mod html;
 mod css;
 mod layout;
@@ -13,8 +14,9 @@ mod png;
 use font::Font;
 use paint::Canvas;
 use wayland::Event;
-const TOP: i32 = 72i32;
-const BOTTOM: i32 = 26i32;
+// The page runs from under the toolbar to the window edge; chrome overlays, it takes no strip or gutter.
+const TOP: i32 = chrome::HEIGHT;
+const BOTTOM: i32 = 0i32;
 
 struct Fonts { normal:Font,bold:Font,italic:Font,bolditalic:Font }
 fn load_face(world:&mut World,filename:&str,fallback:&str,override_dir:&str)->Result<Font,String>{
@@ -68,10 +70,12 @@ fn error_html(address:&str,problem:&str)->String{
     }else if problem.contains("ENOENT"){
         "The file or folder could not be found. Check the path and try again.".to_string()
     }else{problem.to_string()};
-    format!("<!doctype html><html><head><title>Unable to open this page</title><style>body {{ background:#f5f7f8; color:#213d4a; font-size:18px; margin:48px; }} h1 {{ font-size:38px; color:#18343f; margin-bottom:20px; }} .tag {{ color:#a34132; font-size:14px; font-weight:bold; }} .panel {{ background:#ffffff; padding:24px; border:1px solid #d5e0e5; margin-top:24px; margin-bottom:24px; }} p {{ margin-bottom:14px; }} a {{color:#087b90;}}</style></head><body><p class=\"tag\">Page unavailable</p><h1>We could not open this page.</h1><p>{}</p><div class=\"panel\"><p><strong>Address</strong></p><p>{}</p></div><p><a href=\"about:welcome\">Return to the start page</a></p></body></html>",escape(explanation.as_str()),escape(address))
+    format!("<!doctype html><html><head><title>Unable to open this page</title><style>{}</style></head><body><div class=\"sheet\"><p class=\"mark warn\">Page not opened</p><h1>This page could not be opened.</h1><p class=\"lead\">{}</p><div class=\"rule\"></div><div class=\"row\"><h2>Address</h2><p class=\"quiet\">{}</p></div><div class=\"rule\"></div><div class=\"row\"><p><a href=\"{}\">Try again</a> &nbsp;·&nbsp; <a href=\"about:welcome\">Start page</a></p></div></div></body></html>",OWN_PAGE_STYLE,escape(explanation.as_str()),escape(address),escape(address))
 }
+// The browser's own pages share the toolbar's palette: ink, quiet ink, hairline, one accent, one warning.
+const OWN_PAGE_STYLE:&str="body {margin:0;background:#ffffff;color:#1b2a32;font-size:17px;line-height:1.55;} .sheet {max-width:600px;margin:0 auto;padding:72px 24px 48px 24px;} .mark {color:#0b7a87;font-size:14px;font-weight:bold;margin:0 0 12px 0;} .warn {color:#ae422b;} h1 {font-size:40px;line-height:1.15;margin:0 0 16px 0;} .lead {font-size:20px;line-height:1.45;color:#5d717b;margin:0 0 40px 0;} .rule {height:1px;background:#d8e0e4;} .row {padding:18px 0 18px 0;} h2 {font-size:16px;margin:0 0 4px 0;} p {margin:0;} .quiet {color:#5d717b;} a {color:#0b7a87;}";
 fn welcome()->String{
-    "<!doctype html><html><head><title>lkjbrowser</title><style>body {margin:48px;background:#f8fafb;color:#203d48;font-size:19px;} h1 {font-size:44px;color:#126d7e;} p {margin-bottom:24px;} a {color:#087b90;}</style></head><body><h1>A clear place to read.</h1><p>HTTPS pages, links, scrolling and PNG images work here.</p><p>JavaScript, forms, cookies and logins are not supported.</p><h2>Open a page</h2><p>Press <strong>Ctrl+L</strong>, enter an address or host name, and press Enter. Local file:// and plain http:// addresses also work.</p><p><a href=\"https://example.com/\">Visit example.com</a></p><h2>Move around</h2><p>Use the wheel, arrow keys or Page Up and Page Down to scroll. Click a link to follow it, and use the back button to return.</p></body></html>".to_string()
+    format!("<!doctype html><html><head><title>lkjbrowser</title><style>{}</style></head><body><div class=\"sheet\"><p class=\"mark\">lkjbrowser</p><h1>A clear place to read.</h1><p class=\"lead\">Web pages, links and PNG pictures work here. Scripts, forms and sign-ins do not.</p><div class=\"rule\"></div><div class=\"row\"><h2>Open a page</h2><p class=\"quiet\">Click the address field or press <strong>Ctrl+L</strong>, type an address and press Enter. Try <a href=\"https://example.com/\">example.com</a>.</p></div><div class=\"rule\"></div><div class=\"row\"><h2>Move around</h2><p class=\"quiet\">Scroll with the wheel, the arrow keys or Page Up and Page Down. Click a link to follow it. The arrows in the toolbar go back and forward, and <strong>Ctrl+R</strong> loads the page again.</p></div><div class=\"rule\"></div><div class=\"row\"><h2>Close</h2><p class=\"quiet\">Press <strong>Ctrl+Q</strong> or click the cross in the toolbar.</p></div></div></body></html>",OWN_PAGE_STYLE)
 }
 fn fit(font:&Font,text:&str,size:i32,max_width:i32)->String{
     let mut total=0i32;for c in text.chars(){total+=font.advance(c as u32,size);}
@@ -83,17 +87,6 @@ fn fit(font:&Font,text:&str,size:i32,max_width:i32)->String{
         if width+next>budget{break;}out.push(c);width+=next;
     }
     out.push('…');out
-}
-fn fit_end(font:&Font,text:&str,size:i32,max_width:i32)->String{
-    let mut total=0i32;for c in text.chars(){total+=font.advance(c as u32,size);}
-    if total<=max_width{return text.to_string();}
-    let budget=(max_width-font.advance(8230u32,size)).max(0i32);
-    let mut offset=0usize;
-    for c in text.chars(){
-        if total<=budget{break;}
-        total-=font.advance(c as u32,size);offset+=c.len_utf8();
-    }
-    format!("…{}",&text[offset..])
 }
 struct Modifiers {shift:u8,ctrl:u8}
 impl Modifiers{
@@ -112,17 +105,17 @@ struct Browser {
     fonts:Fonts,page:layout::Page,url:String,address:String,source:String,title:String,status:String,
     width:i32,height:i32,scroll:i32,editing:bool,select_all:bool,modifiers:Modifiers,
     history:Vec<HistoryEntry>,history_at:usize,hover:String,dns:String,images:Vec<LoadedImage>,file_authority:bool,
-    trust_file:String,paint_started:Option<usize>,styles:String,image_attempted:Vec<String>,
+    trust_file:String,paint_started:Option<usize>,styles:String,image_attempted:Vec<String>,chrome:chrome::State,
 }
 impl Browser {
     fn new(fonts:Fonts,width:i32,height:i32,dns:String)->Browser{
         let document=html::parse("<html><body></body></html>");
-        let page=layout::build_in_viewport(&document,width-12i32,width,height-TOP-BOTTOM,&fonts.normal,&fonts.bold,&fonts.italic,&fonts.bolditalic);
+        let page=layout::build_in_viewport(&document,width,width,height-TOP-BOTTOM,&fonts.normal,&fonts.bold,&fonts.italic,&fonts.bolditalic);
         Browser {fonts,page,url:String::new(),address:String::new(),source:String::new(),
             title:String::new(),status:String::new(),width,height,scroll:0i32,editing:false,
             select_all:false,modifiers:Modifiers{shift:0u8,ctrl:0u8},history:Vec::new(),history_at:0usize,
             hover:String::new(),dns,images:Vec::new(),file_authority:true,
-            trust_file:net::SYSTEM_TRUST.to_string(),paint_started:None,styles:String::new(),image_attempted:Vec::new()}
+            trust_file:net::SYSTEM_TRUST.to_string(),paint_started:None,styles:String::new(),image_attempted:Vec::new(),chrome:chrome::State::new()}
     }
     fn max_scroll(&self)->i32{
         let value=self.page.height-(self.height-TOP-BOTTOM);
@@ -136,7 +129,7 @@ impl Browser {
         let mut document=html::parse(self.source.as_str());
         document.styles=self.styles.clone();
         self.title=document.title.clone();
-        self.page=layout::build_in_viewport(&document,self.width-12i32,self.width,self.height-TOP-BOTTOM,&self.fonts.normal,&self.fonts.bold,&self.fonts.italic,&self.fonts.bolditalic);
+        self.page=layout::build_in_viewport(&document,self.width,self.width,self.height-TOP-BOTTOM,&self.fonts.normal,&self.fonts.bold,&self.fonts.italic,&self.fonts.bolditalic);
         self.scroll=self.scroll.min(self.max_scroll());
     }
     fn navigate(&mut self,world:&mut World,address:&str,remember:bool){
@@ -257,12 +250,60 @@ impl Browser {
             self.navigate_authorized(world,address.as_str(),false,allowed);
         }
     }
+    fn forward(&mut self,world:&mut World){
+        if self.history_at+1usize<self.history.len(){
+            self.history_at+=1usize;let address=self.history[self.history_at].url.clone();
+            let allowed=self.history[self.history_at].allow_file;
+            self.navigate_authorized(world,address.as_str(),false,allowed);
+        }
+    }
+    fn reload(&mut self,world:&mut World){
+        let address=self.url.clone();let allowed=self.file_authority;self.navigate_authorized(world,address.as_str(),false,allowed);
+    }
+    fn chrome_view(&self)->chrome::View{
+        chrome::View{width:self.width,height:self.height,url:self.url.clone(),address:self.address.clone(),
+            title:self.title.clone(),hover:self.hover.clone(),verified:self.status=="Verified HTTPS",
+            failed:self.status=="Unable to load this address",editing:self.editing,select_all:self.select_all,
+            can_back:self.history_at>0usize,can_forward:self.history_at+1usize<self.history.len(),
+            scroll:self.scroll,max_scroll:self.max_scroll(),page_height:self.page.height}
+    }
+    /// The address this event is about to fetch, so a loading frame can be shown before the fetch blocks.
+    fn about_to_load(&self,event:Event)->String{
+        match event{
+            Event::Key(key,true)=>{
+                if self.modifiers.ctrl!=0u8 && key==19u32{return self.url.clone();}
+                if self.editing && key==28u32{return net::entered_address(self.address.as_str());}
+                if !self.editing && self.modifiers.ctrl!=0u8 && key==105u32 && self.history_at>0usize{
+                    return self.history[self.history_at-1usize].url.clone();
+                }
+            }
+            Event::Click(x,y)=>{
+                let view=self.chrome_view();
+                let mut probe=chrome::State::new();
+                if let chrome::Action::None=probe.press(&view,x,y){
+                    let href=self.page.hit(x,y-TOP+self.scroll);
+                    if !href.is_empty() && !href.starts_with('#') && !href.starts_with("about:"){return net::resolve(self.url.as_str(),href.as_str());}
+                }
+            }
+            Event::Release(x,y)=>{
+                let view=self.chrome_view();
+                match self.chrome.release_action(&view,x,y){
+                    chrome::Action::Back=>{return self.history[self.history_at-1usize].url.clone();}
+                    chrome::Action::Forward=>{return self.history[self.history_at+1usize].url.clone();}
+                    chrome::Action::Reload=>{return self.url.clone();}
+                    _=>{}
+                }
+            }
+            _=>{}
+        }
+        String::new()
+    }
     fn key(&mut self,world:&mut World,key:u32,pressed:bool)->bool{
         if self.modifiers.update(key,pressed){return true;}
         if !pressed{return true;}
         if self.modifiers.ctrl!=0u8 && (key==16u32 || key==17u32){return false;}
         if self.modifiers.ctrl!=0u8 && key==38u32{self.editing=true;self.select_all=true;return true;}
-        if self.modifiers.ctrl!=0u8 && key==19u32{let address=self.url.clone();let allowed=self.file_authority;self.navigate_authorized(world,address.as_str(),false,allowed);return true;}
+        if self.modifiers.ctrl!=0u8 && key==19u32{self.reload(world);return true;}
         if self.editing{
             if key==1u32{self.editing=false;self.select_all=false;self.address=self.url.clone();}
             else if key==28u32{
@@ -299,20 +340,40 @@ impl Browser {
             Event::Scroll(delta)=>{self.move_scroll(delta);true}
             Event::Key(key,pressed)=>self.key(world,key,pressed),
             Event::Motion(x,y)=>{
-                self.hover=if y>=TOP && y<self.height-BOTTOM{self.page.hit(x,y-TOP+self.scroll)}else{String::new()};
+                let view=self.chrome_view();
+                self.hover=match self.chrome.motion(&view,x,y){
+                    chrome::Action::Scroll(to)=>{self.scroll=to.max(0i32).min(self.max_scroll());String::new()}
+                    chrome::Action::None=>self.page.hit(x,y-TOP+self.scroll),
+                    _=>String::new(),
+                };
                 true
             }
             Event::Click(x,y)=>{
-                if y<TOP{
-                    if x>=62i32 && x<98i32{self.back(world);}
-                    else if x>=104i32{self.editing=true;self.select_all=true;}
-                }else if y<self.height-BOTTOM{
-                    self.editing=false;
-                    let href=self.page.hit(x,y-TOP+self.scroll);
-                    if !href.is_empty(){self.follow(world,href.as_str());}
+                let view=self.chrome_view();
+                match self.chrome.press(&view,x,y){
+                    chrome::Action::Edit=>{self.editing=true;self.select_all=true;}
+                    chrome::Action::Scroll(to)=>{self.scroll=to.max(0i32).min(self.max_scroll());}
+                    chrome::Action::None=>{
+                        self.editing=false;
+                        let href=self.page.hit(x,y-TOP+self.scroll);
+                        if !href.is_empty(){self.follow(world,href.as_str());}
+                    }
+                    _=>{}
                 }
                 true
             }
+            Event::Release(x,y)=>{
+                let view=self.chrome_view();
+                match self.chrome.release(&view,x,y){
+                    chrome::Action::Back=>{self.back(world);}
+                    chrome::Action::Forward=>{self.forward(world);}
+                    chrome::Action::Reload=>{self.reload(world);}
+                    chrome::Action::Close=>{return false;}
+                    _=>{}
+                }
+                true
+            }
+            Event::Leave=>{self.chrome.leave();self.hover.clear();true}
             Event::Resize(_,_)=>true, // First slice advertises fixed minimum/maximum size.
         }
     }
@@ -352,35 +413,8 @@ impl Browser {
             i+=1;
         }
         // Chrome is painted last, so scrolled content cannot overlap it.
-        canvas.rect(0i32,0i32,self.width,TOP,0x173744u32);
-        canvas.rect(0i32,TOP-2i32,self.width,2i32,0x30a5a8u32);
-        canvas.text(&mut self.fonts.bold,"lkj",24i32,18i32,44i32,0xffffffu32);
-        canvas.rect(62i32,15i32,34i32,41i32,0x274b59u32);
-        canvas.text(&mut self.fonts.normal,"<",24i32,72i32,43i32,if self.history_at>0usize{0xffffffu32}else{0x829da8u32});
-        canvas.rect(104i32,14i32,self.width-124i32,43i32,if self.editing{0xe1f5f7u32}else{0xf7fafbu32});
-        let insecure=self.url.starts_with("http://");
-        let address_x=if insecure{213i32}else{117i32};
-        if insecure{canvas.text(&mut self.fonts.normal,"Not secure",14i32,117i32,41i32,0xa34132u32);}
-        if self.select_all{canvas.rect(address_x-2i32,22i32,self.width-address_x-33i32,25i32,0xb7dfe6u32);}
-        let room=self.width-address_x-43i32;
-        let address=if self.editing{fit_end(&self.fonts.normal,self.address.as_str(),16i32,room)}
-            else{fit(&self.fonts.normal,self.address.as_str(),16i32,room)};
-        let drawn=canvas.text(&mut self.fonts.normal,address.as_str(),16i32,address_x,41i32,0x234652u32);
-        if self.editing && !self.select_all{canvas.rect(address_x+1i32+drawn,24i32,1i32,20i32,0x15758au32);}
-        let view=self.height-TOP-BOTTOM;
-        if self.max_scroll()>0i32{
-            canvas.rect(self.width-10i32,TOP,10i32,view,0xe8eff1u32);
-            let thumb=(view*view/self.page.height).max(28i32);
-            let y=TOP+self.scroll*(view-thumb)/self.max_scroll();
-            canvas.rect(self.width-8i32,y,6i32,thumb,0x789aa5u32);
-        }
-        canvas.rect(0i32,self.height-BOTTOM,self.width,BOTTOM,0xedf3f5u32);
-        canvas.rect(0i32,self.height-BOTTOM,self.width,1i32,0xd5e2e7u32);
-        let message=if !self.hover.is_empty(){self.hover.clone()}
-            else if self.status.is_empty(){"Ctrl+L address  ·  Ctrl+Q close".to_string()}
-            else{format!("{}  ·  Ctrl+L address  ·  Ctrl+Q close",self.status)};
-        let label=fit(&self.fonts.normal,message.as_str(),12i32,self.width-30i32);
-        canvas.text(&mut self.fonts.normal,label.as_str(),12i32,14i32,self.height-8i32,0x45636fu32);
+        let view=self.chrome_view();
+        chrome::paint(&self.chrome,&mut canvas,&mut self.fonts.normal,&view);
         canvas
     }
     fn replay(&mut self,world:&mut World,script:&str)->Result<(),String>{
@@ -397,11 +431,16 @@ impl Browser {
             }else if command=="down" || command=="up"{
                 let code=match arg.parse::<u32>(){Ok(n)=>n,Err(_)=>return Err("Invalid held key".to_string())};
                 self.event(world,Event::Key(code,command=="down"));
-            }else if command=="click"{
-                let (a,b)=match arg.split_once(' '){Some(p)=>p,None=>return Err("Script click needs x y".to_string())};
+            }else if command=="click" || command=="press" || command=="move"{
+                // click is press and release at one point; press alone holds the button; move only moves.
+                let (a,b)=match arg.split_once(' '){Some(p)=>p,None=>return Err("Script pointer command needs x y".to_string())};
                 let x=a.parse::<i32>().unwrap();let y=b.parse::<i32>().unwrap();
-                self.event(world,Event::Click(x,y));
-            }else if command=="open"{self.navigate(world,arg,true);}
+                if command=="move"{self.event(world,Event::Motion(x,y));}
+                else{
+                    self.event(world,Event::Click(x,y));
+                    if command=="click"{self.event(world,Event::Release(x,y));}
+                }
+            }else if command=="loading"{self.chrome.loading=arg.to_string();}else if command=="open"{self.navigate(world,arg,true);}
             else if command=="follow"{self.follow(world,arg);}
             else if command=="back"{self.back(world);}
             else if command=="address"{self.editing=true;self.address=arg.to_string();self.select_all=false;}
@@ -539,7 +578,20 @@ fn run(world:&mut World)->Result<(),String>{
             action_index+=1usize;changed=true;
         }
         for event in events{
+            let loading=app.about_to_load(event);
+            if !loading.is_empty(){
+                // The fetch blocks this loop: show where we are going before it starts.
+                app.chrome.loading=loading;
+                let slot=if window.available(0u32){0u32}else{1u32};
+                if window.available(slot){
+                    frame.seek((slot as usize*slot_size) as i64,0u8).unwrap();
+                    frame.write_all(&app.paint().bgra()).unwrap();
+                    window.present(slot)?;
+                }
+                app.chrome.loading.clear();
+            }
             if !app.event(world,event){alive=false;}
+            if app.chrome.take_move(){window.start_move()?;}
             changed=true;
         }
         if changed{

@@ -1,0 +1,52 @@
+//! Picture helper for chrome review: put screenshots side by side, or enlarge a detail.
+//!   row OUT.png A.png B.png ...           images left to right on a neutral ground
+//!   zoom OUT.png IN.png X Y WIDTH HEIGHT FACTOR   exact pixels, enlarged without smoothing
+mod crypto;
+mod png;
+mod net;
+fn value(args:&Vec<Vec<u8>>,at:usize)->usize{net::text(&args[at]).as_str().parse::<usize>().unwrap()}
+fn load(world:&mut World,path:&str)->png::Image{
+    let bytes=net::read_path(world,path).unwrap();png::decode(&bytes).unwrap()
+}
+pub fn main(mut world:World){
+    let args=world.args();
+    assert!(args.len()>=3usize);
+    let mode=net::text(&args[0]);let out=net::text(&args[1]);
+    let mut width=0usize;let mut height=0usize;let mut pixels:Vec<u32>=Vec::new();
+    if mode=="zoom"{
+        assert_eq!(args.len(),8usize);
+        let image=load(&mut world,net::text(&args[2]).as_str());
+        let x=value(&args,3usize);let y=value(&args,4usize);let w=value(&args,5usize);let h=value(&args,6usize);let factor=value(&args,7usize);
+        assert!(x+w<=image.width && y+h<=image.height && factor>0usize);
+        width=w*factor;height=h*factor;
+        let mut row=0usize;
+        while row<height{
+            let mut col=0usize;
+            while col<width{pixels.push(image.pixels[(y+row/factor)*image.width+x+col/factor]);col+=1usize;}
+            row+=1usize;
+        }
+    }else{
+        assert!(mode=="row");
+        let gap=24usize;let mut images:Vec<png::Image>=Vec::new();
+        let mut i=2usize;
+        while i<args.len(){
+            let image=load(&mut world,net::text(&args[i]).as_str());
+            width+=image.width+gap;if image.height>height{height=image.height;}
+            images.push(image);i+=1usize;
+        }
+        width+=gap;height+=gap*2usize;
+        pixels=vec![0xff6f7b82u32;width*height];
+        let mut left=gap;
+        for image in &images{
+            let mut row=0usize;
+            while row<image.height{
+                let mut col=0usize;
+                while col<image.width{pixels[(gap+row)*width+left+col]=image.pixels[row*image.width+col];col+=1usize;}
+                row+=1usize;
+            }
+            left+=image.width+gap;
+        }
+    }
+    let bytes=png::encode(width,height,&pixels).unwrap();
+    net::write_path(&mut world,out.as_str(),&bytes).unwrap();
+}

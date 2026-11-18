@@ -112,3 +112,138 @@ impl Canvas {
         }
     }
 }
+
+/// Anti-aliased shape. Coordinates are sixteenths of a pixel, y grows downward.
+#[derive(Clone, Copy)]
+pub struct Shape { kind: u8, a: i32, b: i32, c: i32, d: i32, r: i32, t: i32, e: i32, f: i32, g: i32, h: i32 }
+
+fn in_round(x0: i32, y0: i32, x1: i32, y1: i32, r: i32, px: i32, py: i32) -> bool {
+    let qx = px.max(x0 + r).min(x1 - r);
+    let qy = py.max(y0 + r).min(y1 - r);
+    let dx = (px - qx) as i64;
+    let dy = (py - qy) as i64;
+    dx * dx + dy * dy <= (r as i64) * (r as i64)
+}
+fn side(ax: i32, ay: i32, bx: i32, by: i32, px: i32, py: i32) -> i64 {
+    ((bx - ax) as i64) * ((py - ay) as i64) - ((by - ay) as i64) * ((px - ax) as i64)
+}
+impl Shape {
+    /// Filled rectangle with rounded corners; the radius is clamped to a full pill.
+    pub fn round(x: i32, y: i32, width: i32, height: i32, radius: i32) -> Shape {
+        let r = radius.min(width / 2i32).min(height / 2i32).max(0i32);
+        Shape { kind: 0u8, a: x, b: y, c: x + width, d: y + height, r, t: 0i32, e: 0i32, f: 0i32, g: 0i32, h: 0i32 }
+    }
+    /// Outline of a rounded rectangle, drawn inside its bounds.
+    pub fn frame(x: i32, y: i32, width: i32, height: i32, radius: i32, thickness: i32) -> Shape {
+        let mut shape = Shape::round(x, y, width, height, radius);
+        shape.kind = 1u8; shape.t = thickness; shape
+    }
+    /// Segment with round caps. A zero-length segment is a disc.
+    pub fn line(ax: i32, ay: i32, bx: i32, by: i32, thickness: i32) -> Shape {
+        Shape { kind: 2u8, a: ax, b: ay, c: bx, d: by, r: thickness / 2i32, t: 0i32, e: 0i32, f: 0i32, g: 0i32, h: 0i32 }
+    }
+    /// Circle outline around a centre line radius.
+    pub fn ring(cx: i32, cy: i32, radius: i32, thickness: i32) -> Shape {
+        Shape { kind: 3u8, a: cx, b: cy, c: 0i32, d: 0i32, r: radius, t: thickness / 2i32, e: 0i32, f: 0i32, g: 0i32, h: 0i32 }
+    }
+    /// Ring without the wedge that runs clockwise from direction (ux,uy) to (vx,vy), at most a half turn.
+    pub fn arc(cx: i32, cy: i32, radius: i32, thickness: i32, ux: i32, uy: i32, vx: i32, vy: i32) -> Shape {
+        let mut shape = Shape::ring(cx, cy, radius, thickness);
+        shape.e = ux; shape.f = uy; shape.g = vx; shape.h = vy; shape
+    }
+    pub fn triangle(ax: i32, ay: i32, bx: i32, by: i32, cx: i32, cy: i32) -> Shape {
+        Shape { kind: 4u8, a: ax, b: ay, c: bx, d: by, r: 0i32, t: 0i32, e: cx, f: cy, g: 0i32, h: 0i32 }
+    }
+    fn contains(&self, px: i32, py: i32) -> bool {
+        if self.kind == 0u8 { return in_round(self.a, self.b, self.c, self.d, self.r, px, py); }
+        if self.kind == 1u8 {
+            let t = self.t;
+            return in_round(self.a, self.b, self.c, self.d, self.r, px, py)
+                && !in_round(self.a + t, self.b + t, self.c - t, self.d - t, (self.r - t).max(0i32), px, py);
+        }
+        if self.kind == 2u8 {
+            let abx = (self.c - self.a) as i64; let aby = (self.d - self.b) as i64;
+            let apx = (px - self.a) as i64; let apy = (py - self.b) as i64;
+            let limit = (self.r as i64) * (self.r as i64);
+            let length = abx * abx + aby * aby;
+            let along = apx * abx + apy * aby;
+            if length == 0i64 || along <= 0i64 { return apx * apx + apy * apy <= limit; }
+            if along >= length {
+                let bpx = (px - self.c) as i64; let bpy = (py - self.d) as i64;
+                return bpx * bpx + bpy * bpy <= limit;
+            }
+            let cross = apx * aby - apy * abx;
+            return cross * cross <= limit * length;
+        }
+        if self.kind == 3u8 {
+            let dx = (px - self.a) as i64; let dy = (py - self.b) as i64;
+            let distance = dx * dx + dy * dy;
+            let inner = (self.r - self.t) as i64; let outer = (self.r + self.t) as i64;
+            if distance < inner * inner || distance > outer * outer { return false; }
+            if self.e != 0i32 || self.f != 0i32 || self.g != 0i32 || self.h != 0i32 {
+                let first = (self.e as i64) * dy - (self.f as i64) * dx;
+                let second = dx * (self.h as i64) - dy * (self.g as i64);
+                if first >= 0i64 && second >= 0i64 { return false; }
+            }
+            return true;
+        }
+        let one = side(self.a, self.b, self.c, self.d, px, py);
+        let two = side(self.c, self.d, self.e, self.f, px, py);
+        let three = side(self.e, self.f, self.a, self.b, px, py);
+        (one >= 0i64 && two >= 0i64 && three >= 0i64) || (one <= 0i64 && two <= 0i64 && three <= 0i64)
+    }
+    /// Covered share of one pixel, 0..64, from an 8x8 sample grid.
+    fn coverage(&self, col: i32, row: i32) -> u32 {
+        let mut count = 0u32;
+        let mut sy = 1i32;
+        while sy < 16i32 {
+            let mut sx = 1i32;
+            while sx < 16i32 {
+                if self.contains(col * 16i32 + sx, row * 16i32 + sy) { count += 1u32; }
+                sx += 2i32;
+            }
+            sy += 2i32;
+        }
+        count
+    }
+}
+
+impl Canvas {
+    /// Paint a shape with coverage anti-aliasing. Pixel-aligned edges stay crisp.
+    pub fn shape(&mut self, shape: &Shape, color: u32, alpha: u8) {
+        let mut x0 = shape.a; let mut y0 = shape.b; let mut x1 = shape.c; let mut y1 = shape.d;
+        if shape.kind == 2u8 {
+            x0 = shape.a.min(shape.c) - shape.r; x1 = shape.a.max(shape.c) + shape.r;
+            y0 = shape.b.min(shape.d) - shape.r; y1 = shape.b.max(shape.d) + shape.r;
+        } else if shape.kind == 3u8 {
+            let reach = shape.r + shape.t;
+            x0 = shape.a - reach; x1 = shape.a + reach; y0 = shape.b - reach; y1 = shape.b + reach;
+        } else if shape.kind == 4u8 {
+            x0 = shape.a.min(shape.c).min(shape.e); x1 = shape.a.max(shape.c).max(shape.e);
+            y0 = shape.b.min(shape.d).min(shape.f); y1 = shape.b.max(shape.d).max(shape.f);
+        }
+        let left = (x0 >> 4u32).max(0i32);
+        let top = (y0 >> 4u32).max(0i32);
+        let right = ((x1 + 15i32) >> 4u32).min(self.width as i32);
+        let bottom = ((y1 + 15i32) >> 4u32).min(self.height as i32);
+        // Columns of a rounded rectangle between its corners share one coverage per row.
+        let mut same0 = right; let mut same1 = right;
+        if shape.kind <= 1u8 {
+            same0 = ((shape.a + shape.r + 15i32) >> 4u32).max(left);
+            same1 = ((shape.c - shape.r) >> 4u32).min(right);
+        }
+        let mut row = top;
+        while row < bottom {
+            let shared = if same1 > same0 { shape.coverage(same0, row) } else { 0u32 };
+            let mut col = left;
+            while col < right {
+                let count = if col >= same0 && col < same1 { shared } else { shape.coverage(col, row) };
+                if count != 0u32 {
+                    self.blend(col, row, color, ((count * alpha as u32 + 32u32) / 64u32) as u8);
+                }
+                col += 1i32;
+            }
+            row += 1i32;
+        }
+    }
+}
