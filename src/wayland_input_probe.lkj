@@ -1,5 +1,8 @@
 //! Native protocol input proof; runs only against wayland_peer.lkj.
 mod wayland;
+mod address;
+mod address_words;
+mod font;
 pub fn main(mut world:World) {
     let args=world.args();let port=std::str::from_utf8(&args[0]).unwrap().parse::<u16>().unwrap();
     let mut client=wayland::Wayland::open_test_peer(&mut world,port,1000i32,760i32,"input proof").unwrap();
@@ -7,28 +10,59 @@ pub fn main(mut world:World) {
     let mut motion=false;let mut click=false;let mut scroll=false;let mut release=false;let mut leave=false;
     let mut down=false;let mut up=false;let mut resize=false;let mut close=false;
     let mut mod_down=0usize;let mut mod_up=0usize;let mut held=0u32;
-    let mut rounds=0usize;let mut no_clipboard=false;
+    let mut rounds=0usize;let mut no_clipboard=false;let mut timestamps_checked=false;
+    let expected_times=vec![100u32,701u32,1101u32,1502u32,1602u32,1702u32,1802u32,4294967195u32,90u32,190u32];
+    let metrics=font::metric_test_font();let mut editor=address::Editor::new();editor.reset("part/other",false);
     while rounds<50usize && !close {
         let events=client.poll(100usize).unwrap();
-        for event in events {
-            match event {
-                wayland::Event::Motion(x,y)=>{assert!(x==120i32 && y==220i32);motion=true;},
-                wayland::Event::Click(x,y)=>{assert!(x==120i32 && y==220i32);click=true;client.start_move().unwrap();},
-                wayland::Event::Release(x,y)=>{assert!(click && x==120i32 && y==220i32);release=true;},
-                wayland::Event::Leave=>{assert!(release);leave=true;},
-                wayland::Event::Scroll(y)=>{assert!(y==24i32);scroll=true;},
-                wayland::Event::Key(key,pressed)=>{
-                    if key==30u32 {if pressed {down=true;}else{up=true;}}
-                    else {
-                        let bit=match key {42u32=>1u32,54u32=>2u32,29u32=>4u32,97u32=>8u32,56u32=>16u32,100u32=>32u32,_=>panic!("focus replayed an ordinary key")};
-                        if pressed {mod_down+=1usize;held|=bit;}else{mod_up+=1usize;held&=!bit;}
+        if no_clipboard && !timestamps_checked{
+            let mut presses=0usize;let mut releases=0usize;let mut marker=false;
+            for event in events{
+                match event{
+                    wayland::Event::Motion(x,y)=>{assert!(x==24i32 && y==26i32);}
+                    wayland::Event::Click(x,y,time)=>{
+                        assert!(x==24i32 && y==26i32 && presses<expected_times.len());
+                        assert_eq!(time,expected_times[presses]);
+                        editor.press(&metrics,0i32,300i32,x,y,time as usize,false);
+                        if presses==2usize || presses==4usize || presses==8usize{assert_eq!(editor.selected(),"part");}
+                        else if presses==5usize || presses==9usize{assert_eq!(editor.selected(),"part/other");}
+                        else{assert!(!editor.has_selection());}
+                        presses+=1usize;
                     }
-                },
-                wayland::Event::Resize(w,h)=>{assert!(w==900i32 && h==700i32);resize=true;},
-                wayland::Event::Close=>close=true,
+                    wayland::Event::Release(x,y)=>{assert!(x==24i32 && y==26i32);editor.release();releases+=1usize;}
+                    wayland::Event::Resize(w,h)=>{assert!(w==901i32 && h==701i32);marker=true;}
+                    _=>panic!("unexpected event in timestamp batch"),
+                }
+            }
+            if presses!=0usize || releases!=0usize || marker{
+                // This is the property under test: old, timely and wrapping compositor
+                // times all arrive in one client poll, not one handler clock sample each.
+                assert!(presses==10usize && releases==10usize && marker);
+                timestamps_checked=true;client.set_title("input-proof-times-checked").unwrap();
+            }
+        }else{
+            for event in events {
+                match event {
+                    wayland::Event::Motion(x,y)=>{assert!(x==120i32 && y==220i32);motion=true;},
+                    wayland::Event::Click(x,y,time)=>{assert!(x==120i32 && y==220i32 && time==1u32);click=true;client.start_move().unwrap();},
+                    wayland::Event::Release(x,y)=>{assert!(click && x==120i32 && y==220i32);release=true;},
+                    wayland::Event::Leave=>{assert!(release);leave=true;},
+                    wayland::Event::Scroll(y)=>{assert!(y==24i32);scroll=true;},
+                    wayland::Event::Key(key,pressed)=>{
+                        if key==30u32 {if pressed {down=true;}else{up=true;}}
+                        else {
+                            let bit=match key {42u32=>1u32,54u32=>2u32,29u32=>4u32,97u32=>8u32,56u32=>16u32,100u32=>32u32,_=>panic!("focus replayed an ordinary key")};
+                            if pressed {mod_down+=1usize;held|=bit;}else{mod_up+=1usize;held&=!bit;}
+                        }
+                    },
+                    wayland::Event::Resize(w,h)=>{assert!(w==900i32 && h==700i32);resize=true;},
+                    wayland::Event::Close=>close=true,
+                }
             }
         }
-        if down && !close {
+        // The final resize follows the final keyboard enter on the wire. A short
+        // network read may stop at an earlier leave; wait for the full authority state.
+        if down && up && resize && client.keyboard_has_focus() && !no_clipboard && !close {
             assert!(client.keyboard_has_focus());
             assert!(!client.clipboard_available());
             assert!(!client.clipboard_copy("synthetic clipboard refusal").unwrap());
@@ -36,16 +70,18 @@ pub fn main(mut world:World) {
             assert!(!client.clipboard_pending());
             assert!(client.take_clipboard().is_none());
             no_clipboard=true;
+            // The peer cannot close until this proof and the timestamp proof are acknowledged.
+            client.set_title("input-proof-no-clipboard-checked").unwrap();
         }
         rounds+=1usize;
     }
     assert!(motion && click && release && leave && scroll && down && up && resize && close);
-    assert!(no_clipboard);
+    assert!(no_clipboard && timestamps_checked);
     assert!(mod_down==3usize && mod_up==30usize && held==0u32);
     assert!(wayland::key_ascii(30u32,false)==b'a');
     assert!(wayland::key_ascii(30u32,true)==b'A');
     assert!(wayland::key_ascii(53u32,false)==b'/');
     assert!(wayland::key_ascii(39u32,true)==b':');
     assert!(wayland::cursor_bytes().len()==2304usize);
-    world.stdout().write(b"input PASS motion=120,220 click=120,220 release=120,220 move=requested leave=true scroll=24 key=press+release resize=900x700 focus=clear+restore clipboard=focused-no-manager-noop close=true\n");
+    world.stdout().write(b"input PASS motion=120,220 click=120,220 release=120,220 move=requested leave=true scroll=24 key=press+release resize=900x700 focus=clear+restore clipboard=focused-no-manager-noop close=true timestamps=ten-in-one-poll slow=single exact400=double over400=single timely=double+triple fourth=single wrap=double+triple\n");
 }

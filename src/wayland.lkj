@@ -2,7 +2,7 @@
 //! Protocol sources: Wayland XML and stable xdg-shell XML, not client libraries.
 #[derive(Clone, Copy)]
 pub enum Event {
-    Scroll(i32), Key(u32, bool), Click(i32, i32), Release(i32, i32), Motion(i32, i32),
+    Scroll(i32), Key(u32, bool), Click(i32, i32, u32), Release(i32, i32), Motion(i32, i32),
     Leave, Resize(i32, i32), Close,
 }
 #[derive(Clone)]
@@ -686,7 +686,7 @@ impl Wayland {
                     if number(data, 12usize) == 1u32 {
                         self.press_serial = number(data, 0usize);
                         self.selection_serial = self.press_serial;
-                        events.push(Event::Click(self.px, self.py));
+                        events.push(Event::Click(self.px, self.py, number(data, 4usize)));
                     } else { events.push(Event::Release(self.px, self.py)); }
                 }
             } else if opcode == 4u32 && data.len() >= 12usize {

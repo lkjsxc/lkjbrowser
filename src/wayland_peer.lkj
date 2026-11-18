@@ -28,6 +28,24 @@ fn exact(s:&mut File,v:&mut [u8])->bool {
 fn put(kinds:&mut Vec<u32>,id:u32,kind:u32) {
     while kinds.len()<=id as usize {kinds.push(0u32);} kinds[id as usize]=kind;
 }
+fn batch_ints(bytes:&mut Vec<u8>,id:u32,op:u32,args:&[u32]) {
+    push(bytes,id);push(bytes,(((args.len()*4usize+8usize) as u32)<<16u32)|op);
+    for value in args{push(bytes,*value);}
+}
+fn timestamp_batch(stream:&mut File,pointer:u32,top:u32) {
+    // One small write deliberately queues every press before the native client processes the batch.
+    let mut bytes=Vec::new();
+    batch_ints(&mut bytes,pointer,2u32,&[99u32,24u32*256u32,26u32*256u32]);
+    let times=vec![100u32,701u32,1101u32,1502u32,1602u32,1702u32,1802u32,4294967195u32,90u32,190u32];
+    let mut serial=200u32;
+    for time in times{
+        batch_ints(&mut bytes,pointer,3u32,&[serial,time,272u32,1u32]);
+        batch_ints(&mut bytes,pointer,3u32,&[serial+1u32,time+1u32,272u32,0u32]);
+        serial+=2u32;
+    }
+    batch_ints(&mut bytes,top,0u32,&[901u32,701u32,0u32]);
+    assert!(bytes.len()<1024usize);stream.write_all(&bytes).unwrap();
+}
 pub fn main(mut world:World) {
     let mut listener=world.listen("127.0.0.1",0u16).unwrap();
     let port=listener.port().unwrap();
@@ -38,7 +56,7 @@ pub fn main(mut world:World) {
     let mut pointer=0u32;let mut keyboard=0u32;
     let mut mapped=false;let mut attached=false;let mut configured=false;let mut injected=false;
     let mut pong=false;let mut ack=false;let mut cursor=false;let mut fd=false;let mut moved=false;let mut seat=0u32;
-    let mut requests=0usize;
+    let mut requests=0usize;let mut clipboard_checked=false;let mut timestamps_checked=false;
     loop {
         let mut header=[0u8;8]; if !exact(&mut stream,&mut header){break;}
         let size=num(&header,0usize) as usize;
@@ -75,6 +93,15 @@ pub fn main(mut world:World) {
             assert!(num(data,0usize)==99u32);pong=true;
         } else if kind==8u32 && op==1u32 {
             top=num(data,0usize);put(&mut kinds,top,9u32);
+        } else if kind==9u32 && op==2u32 {
+            let length=num(data,0usize) as usize;
+            let title=std::str::from_utf8(&data[4usize..3usize+length]).unwrap();
+            if title=="input-proof-no-clipboard-checked"{
+                assert!(injected && pong && ack && cursor && moved);
+                clipboard_checked=true;timestamp_batch(&mut stream,pointer,top);
+            }else if title=="input-proof-times-checked"{
+                assert!(clipboard_checked);timestamps_checked=true;
+            }
         } else if kind==9u32 && op==5u32 {
             // xdg_toplevel.move must name the seat and the serial of the button press.
             assert!(num(data,0usize)==seat && num(data,4usize)==8u32);moved=true;
@@ -120,10 +147,10 @@ pub fn main(mut world:World) {
             ints(&mut stream,xdg,0u32,&[12u32]);
             injected=true;
         }
-        if injected && pong && ack && cursor && moved {
+        if injected && pong && ack && cursor && moved && clipboard_checked && timestamps_checked {
             assert!(fd);
             ints(&mut stream,top,1u32,&[0u32;0]);
-            world.stdout().write(format!("peer PASS requests={} shm_fd=true pong=true configure_ack=true cursor=true move=seat+serial\n",requests).as_bytes());
+            world.stdout().write(format!("peer PASS requests={} shm_fd=true pong=true configure_ack=true cursor=true move=seat+serial clipboard_ack=true timestamps=ten-presses-one-write\n",requests).as_bytes());
             return;
         }
     }

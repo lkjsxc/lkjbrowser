@@ -183,7 +183,10 @@ impl Editor {
     pub fn press(&mut self, font: &Font, start: i32, room: i32, x: i32, y: i32, now_ms: usize, entering: bool) {
         let dx = x as i64 - self.press_x as i64; let dy = y as i64 - self.press_y as i64;
         let nearby = dx >= -4i64 && dx <= 4i64 && dy >= -4i64 && dy <= 4i64;
-        self.clicks = if self.clicks > 0u8 && self.clicks < 3u8 && nearby && now_ms >= self.last_click_ms && now_ms - self.last_click_ms <= 400usize {
+        // Wayland button timestamps wrap modulo 2^32 milliseconds.
+        let now_ms = now_ms % 4294967296usize;
+        let elapsed = (now_ms + 4294967296usize - self.last_click_ms) % 4294967296usize;
+        self.clicks = if self.clicks > 0u8 && self.clicks < 3u8 && nearby && elapsed <= 400usize {
             self.clicks + 1u8
         } else { 1u8 };
         self.last_click_ms = now_ms; self.press_x = x; self.press_y = y;
@@ -412,4 +415,15 @@ fn pointer_jitter_within_boundary_preserves_click_and_entry_selection() {
     edit.release();
     edit.press(&font, 0i32, 300i32, 10i32, 26i32, 1200usize, false); edit.release();
     assert_eq!(edit.selected(), "one");
+}
+
+#[test]
+fn compositor_click_time_wrap_keeps_the_four_hundred_ms_interval(){
+    let font=crate::font::metric_test_font();let mut edit=Editor::new();
+    edit.reset("alpha.beta",false);
+    edit.press(&font,100i32,240i32,102i32,26i32,4294967100usize,false);edit.release();
+    edit.press(&font,100i32,240i32,102i32,26i32,100usize,false);edit.release();
+    assert_eq!(edit.selected(),"alpha");
+    edit.press(&font,100i32,240i32,102i32,26i32,501usize,false);edit.release();
+    assert!(!edit.has_selection());
 }

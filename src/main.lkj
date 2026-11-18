@@ -344,7 +344,7 @@ impl Browser {
                     return self.history[self.history_at+1usize].url.clone();
                 }
             }
-            Event::Click(x,y)=>{
+            Event::Click(x,y,_)=>{
                 let view=self.chrome_view();
                 let mut probe=chrome::State::new();
                 if let chrome::Action::None=probe.press(&view,x,y){
@@ -369,6 +369,13 @@ impl Browser {
         if !self.editing {self.address.reset(self.url.as_str(),true);}
         else {self.address.select_all();}
         self.editing=true;self.address.cancel_pointer();self.reveal_address();
+    }
+    /// Use the compositor's event time: delivery can be delayed by navigation or painting.
+    fn press_address(&mut self,x:i32,y:i32,time:u32){
+        let entering=!self.editing;
+        if entering{self.address.reset(self.url.as_str(),true);self.editing=true;self.reveal_address();}
+        let (start,room)=chrome::address_area(self.width);
+        self.address.press(&self.fonts.normal,start,room,x,y,time as usize,entering);
     }
     fn discard_address(&mut self){
         self.editing=false;self.address.reset(self.url.as_str(),false);
@@ -451,17 +458,11 @@ impl Browser {
                 };
                 true
             }
-            Event::Click(x,y)=>{
+            Event::Click(x,y,time)=>{
                 if self.editing && !chrome::address_hit(self.width,x,y){self.discard_address();}
                 let view=self.chrome_view();
                 match self.chrome.press(&view,x,y){
-                    chrome::Action::Edit=>{
-                        let entering=!self.editing;
-                        if entering{self.address.reset(self.url.as_str(),true);self.editing=true;self.reveal_address();}
-                        let (start,room)=chrome::address_area(self.width);
-                        let mut clock=world.clock();let now=clock.nanoseconds().unwrap()/1000000usize;
-                        self.address.press(&self.fonts.normal,start,room,x,y,now,entering);
-                    }
+                    chrome::Action::Edit=>{self.press_address(x,y,time);}
                     chrome::Action::Scroll(to)=>{self.scroll=to.max(0i32).min(self.max_scroll());}
                     chrome::Action::None=>{
                         self.editing=false;
@@ -552,7 +553,8 @@ impl Browser {
                 let x=a.parse::<i32>().unwrap();let y=b.parse::<i32>().unwrap();
                 if command=="move"{self.event(world,Event::Motion(x,y));}
                 else{
-                    self.event(world,Event::Click(x,y));
+                    let time={let mut clock=world.clock();(clock.nanoseconds().unwrap()/1000000usize) as u32};
+                    self.event(world,Event::Click(x,y,time));
                     if command=="click"{self.event(world,Event::Release(x,y));}
                 }
             }else if command=="loading"{self.chrome.loading=arg.to_string();}else if command=="open"{self.navigate(world,arg,true);}
@@ -860,4 +862,20 @@ fn initial_image_reflow_keeps_document_top(){
     app.relayout_images();
     assert_eq!(app.scroll,0i32);
     assert!(anchor_test_text_top(&app.page,"First")>=300i32);
+}
+
+#[test]
+fn queued_address_clicks_use_compositor_time_instead_of_delivery_time(){
+    let mut app=anchor_test_browser("<p>Pointer timing.</p>",1000i32);
+    app.url="alpha.beta".to_string();
+    let (start,_)=chrome::address_area(app.width);
+    // Process all of these immediately, as a delayed Wayland batch can arrive.
+    app.press_address(start+2i32,26i32,100u32);app.address.release();
+    assert_eq!(app.address.selected(),"alpha.beta");
+    app.press_address(start+2i32,26i32,701u32);app.address.release();
+    assert!(!app.address.has_selection());
+    app.press_address(start+2i32,26i32,1101u32);app.address.release();
+    assert_eq!(app.address.selected(),"alpha");
+    app.press_address(start+2i32,26i32,1502u32);app.address.release();
+    assert!(!app.address.has_selection());
 }

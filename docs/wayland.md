@@ -95,9 +95,12 @@ wayland::frame_file_size(width:usize,height:usize) -> usize
 wayland::key_ascii(evdev_code:u32, shift:bool) -> u8
 ```
 
-Events are Scroll(i32), Key(u32,bool), Click(i32,i32), Release(i32,i32),
+Events are Scroll(i32), Key(u32,bool), Click(i32,i32,u32), Release(i32,i32),
 Motion(i32,i32), Leave, Resize(i32,i32), and Close. Scroll/pointer coordinates are logical pixels.
-Key numbers are Linux evdev codes; bool is press/release. Click is a left press.
+Key numbers are Linux evdev codes; bool is press/release. Click is a left press;
+its final value preserves the compositor's millisecond timestamp. Multi-click
+intervals use that event time, including its 32-bit wrap, so delayed event delivery
+does not turn separate clicks into a double-click.
 Keyboard leave clears physical modifier state; enter restores held modifiers from
 the compositor's key array. Held non-modifier keys are not replayed as new actions.
 The first slice requests fixed viewport size through xdg min/max constraints.
