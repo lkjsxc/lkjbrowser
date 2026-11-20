@@ -23,6 +23,7 @@ Weston address/scroll/link recording.
 
 Linux x86-64, a Wayland compositor, GCC for the temporary transport bridge, a system
 PEM trust bundle, and Liberation Sans or DejaVu Sans TrueType fonts are required.
+Font discovery includes the distribution font directories used by Debian and Arch Linux.
 
 ~~~sh
 sh tools/build.sh
@@ -53,8 +54,9 @@ target/lkjbrowser --headless --screenshot shots/page-local.png \
 `--width`, `--height` and `--scroll` select the viewport.
 `--font-dir DIR` selects four LiberationSans files; `--dns IPv4` selects an IPv4 DNS
 resolver for TCP queries. `--trust-file FILE` selects an explicit PEM root bundle
-for HTTPS connections, including subresources. It replaces the default trust input,
-`/etc/ssl/certs/ca-certificates.crt`; it does not disable verification.
+for HTTPS connections, including subresources. Without this option, the browser
+uses the system roots in `/etc/ssl/certs/ca-certificates.crt` or the regular PEM file
+at `/etc/ca-certificates/extracted/tls-ca-bundle.pem` on Arch Linux.
 Local TLS tests supply their test root through this option.
 
 ### Controls

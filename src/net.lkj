@@ -403,10 +403,25 @@ impl Transport{
     fn receive(&mut self,bytes:&mut [u8])->Result<usize,String>{match self{Transport::Plain(s)=>s.receive(bytes),Transport::Secure(s)=>s.receive(bytes)}}
     fn close(&mut self){if let Transport::Secure(s)=self{let _=s.close();}}
 }
+fn read_trust_bundle(world:&mut World,trust_file:&str)->Result<Vec<u8>,String>{
+    match read_path(world,trust_file){
+        Ok(bytes)=>Ok(bytes),
+        Err(problem)=>{
+            // Arch's compatibility path is a symlink to this fixed OS-managed PEM.
+            if trust_file==SYSTEM_TRUST{
+                if let Ok(bytes)=read_path(world,"/etc/ca-certificates/extracted/tls-ca-bundle.pem"){
+                    return Ok(bytes);
+                }
+            }
+            Err(format!("Read trust bundle {}: {}",trust_file,problem))
+        }
+    }
+}
+
 fn request(world:&mut World,url:&Url,dns:&str,trust_file:&str,trace:bool,body_limit:usize)->Result<(Headers,Vec<u8>),String>{
     let address=lookup(world,url.host.as_str(),dns)?;
     let secure=url.scheme=="https";
-    let roots=if secure{x509::parse_pem(&read_path(world,trust_file)?)?}else{Vec::new()};
+    let roots=if secure{x509::parse_pem(&read_trust_bundle(world,trust_file)?)?}else{Vec::new()};
     let stream=Stream::open(world,address.as_str(),url.port)?;
     let mut stream=if secure{
         let mut clock=world.clock();

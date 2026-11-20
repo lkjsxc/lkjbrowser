@@ -27,6 +27,14 @@ typedef unsigned long U;
 typedef unsigned int U32;
 typedef unsigned short U16;
 typedef long I;
+
+/* GCC can lower initialization to memset even in a freestanding build. */
+void *memset(void *memory, int value, U count) {
+ volatile unsigned char *bytes=memory;
+ for(U i=0;i<count;i++) bytes[i]=(unsigned char)value;
+ return memory;
+}
+
 static I call(I n,I a,I b,I c,I d,I e,I f) {
  register I r10 __asm__("r10")=d;
  register I r8 __asm__("r8")=e;

@@ -17,6 +17,8 @@ fn load_face(world:&mut World,filename:&str,fallback:&str,override_dir:&str)->Re
   format!("/usr/share/fonts/truetype/liberation2/{}",filename),
   format!("/usr/share/fonts/truetype/dejavu/{}",fallback),
   "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf".to_string(),
+  format!("/usr/share/fonts/liberation/{}",filename),
+  format!("/usr/share/fonts/TTF/{}",fallback),
  ];
  for path in candidates{
   if let Ok(bytes)=net::read_path(world,path.as_str()){return Font::parse(bytes);}
@@ -30,6 +32,8 @@ fn load_mono(world:&mut World,filename:&str,fallback:&str,sans:&str,sans_fallbac
  candidates.push(format!("/usr/share/fonts/truetype/liberation/{}",filename));
  candidates.push(format!("/usr/share/fonts/truetype/liberation2/{}",filename));
  candidates.push(format!("/usr/share/fonts/truetype/dejavu/{}",fallback));
+ candidates.push(format!("/usr/share/fonts/liberation/{}",filename));
+ candidates.push(format!("/usr/share/fonts/TTF/{}",fallback));
  for path in candidates{
   if let Ok(bytes)=net::read_path(world,path.as_str()){return Font::parse(bytes);}
  }
