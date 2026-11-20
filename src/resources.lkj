@@ -2,7 +2,7 @@
 //! The parent's absolute deadline also bounds a child blocked inside Connector.connect.
 use crate::net;
 use crate::{html,css};
-const ALL_STYLES_LIMIT:usize=4194304usize;
+pub const ALL_STYLES_LIMIT:usize=4194304usize;
 const STYLE_URL_LIMIT:usize=8192usize;
 struct Sheet {url:String,text:String}
 struct CachedSheet {requested:String,url:String,text:String}

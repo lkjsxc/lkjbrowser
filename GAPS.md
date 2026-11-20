@@ -16,7 +16,7 @@ not language gaps.
 
 | Rank | Kind and missing form | Sites | What it blocked | Smallest witness / current treatment |
 | --- | --- | ---: | --- | --- |
-| 1 | Runtime: nonblocking/deadline TCP connect | 1 direct connection boundary | Main-document/image navigation can stall before the six-second response timer starts | `connector.connect_deadline(deadline)` rejects in `probes/connect-deadline.lkj`. Read/write deadlines work after connect; an owned child now bounds optional stylesheets only. |
+| 1 | Runtime: nonblocking/deadline TCP connect | 1 direct connection boundary | The browser uses an owned worker to supervise a blocking connect | `connector.connect_deadline(deadline)` rejects in `probes/connect-deadline.lkj`. The parent terminates a worker after five seconds of TCP connect. |
 | 2 | Runtime: Unix stream connection by authorized path | 1 | A direct Wayland connection | `world.unix_connect(path)` rejects in `probes/unix-socket.lkj`; temporary transport bridge. |
 | 3 | Runtime: descriptor send **and receive** on an owned socket | 2 boundaries | Sending the wl_shm backing file and receiving a compositor keymap | `stream.send_file(file)` rejects in `probes/send-descriptor.lkj`; bridge sends a frame descriptor and closes received descriptors. |
 | 4 | Runtime authority: deriving arbitrary destinations without World | 1 | A useful restricted network grant for user-selected navigation | `connector.for_destination(address, port)` rejects in `probes/destination-authority.lkj`. The current entry explicitly uses full World authority. |
@@ -32,14 +32,12 @@ promises or reasons to add raw descriptor integers. The negative probes are chec
 the exact binary. Documentation and the capability inventory establish the absent facility;
 a missing guessed spelling alone would not establish that.
 
-The direct connect API remains a runtime gap. The browser now uses an existing-capability
-workaround for **optional linked/imported stylesheets only**: a same-executable native child,
-anonymous temporary files and a parent-enforced three-second deadline shared by the
-whole batch. At most four distinct URLs are fetched, each bounded to one MiB; cached
-results are applied in source order within the four-MiB aggregate CSS limit. The parent
-kills and reaps an unfinished child, so a stylesheet blocked inside connect cannot
-hold up text indefinitely. Main-document and image fetches remain synchronous.
-Do not describe their post-connect timer as a total navigation deadline.
+The direct connect API remains a runtime gap. Main documents and visible images use
+a same-executable native child and anonymous temporary files. The child records when
+connect starts so the parent can enforce a five-second limit while servicing Wayland.
+The parent also bounds the total job lifetime and owns cancellation. The stylesheet
+batch still has one three-second budget shared by up to four distinct stylesheet URLs.
+Its cached results apply in source order within the four-MiB aggregate CSS limit.
 
 The positive `probes/owned-resource-child.lkj` demonstrates `World.executable()`,
 `Process.spawn_file`, retained anonymous output files, bounded reads, `Child.try_wait`,

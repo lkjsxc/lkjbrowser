@@ -12,12 +12,17 @@ pub struct Connection{
     pub signature_scheme:u16,pub key_updates:usize,
 }
 impl Connection{
-    pub fn connect(stream:Stream,entropy:&mut Entropy,host:&str,roots:&[Vec<u8>],now:u64)->Result<Connection,String>{
+    pub fn connect(mut stream:Stream,entropy:&mut Entropy,host:&str,roots:&[Vec<u8>],now:u64)->Result<Connection,String>{
+        stream.start_stage("TLS handshake")?;
         let mut connection=Connection{stream,reader:None,writer:None,messages:Messages::new(),
             buffered:Vec::new(),offset:0usize,authenticated:false,closed:false,ccs:0usize,
             signature_scheme:0u16,key_updates:0usize};
         match connection.handshake(entropy,host,roots,now){
-            Ok(())=>Ok(connection),
+            Ok(())=>{
+                connection.stream.check_deadline()?;
+                connection.stream.start_stage("HTTP response")?;
+                Ok(connection)
+            }
             Err(problem)=>{connection.abort(problem.as_str());Err(problem)}
         }
     }

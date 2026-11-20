@@ -69,6 +69,7 @@ Local TLS tests supply their test root through this option.
 | Beginning / end | Home / End |
 | Back / forward | Toolbar arrows or Alt+Left / Alt+Right, including while editing |
 | Reload | The reload button, or Ctrl+R |
+| Cancel navigation | Escape while a page is loading |
 | Restore / leave address editing | Escape restores changed text and selects it; Escape again leaves editing |
 | Close | The cross, compositor close, Ctrl+Q or Ctrl+W |
 | Move the window | Drag empty toolbar |
@@ -99,8 +100,9 @@ fixed size selected at launch.
 The toolbar is the only permanent chrome. The address field shows a lock for verified
 HTTPS, a "Not secure" chip for plain HTTP and a document for local files; the host or
 file name is in strong ink and the rest is quiet. A hovered link's destination appears
-in a small bubble at the bottom, the scrollbar overlays the page, and a progress line
-is painted before a fetch blocks the event loop. `sh tools/chrome-shots.sh` regenerates
+in a small bubble at the bottom, the scrollbar overlays the page, and a moving progress line
+shows when a page is loading. You can scroll the current page or enter another address
+during a load. Escape keeps the current page and its history. `sh tools/chrome-shots.sh` regenerates
 the review pictures in `shots/chrome/` (it needs the public network).
 
 ## HTTPS and authentication
@@ -174,18 +176,20 @@ Tables retain a 64-column policy and readable narrow fallback; row spans, column
 legacy spacing/padding, group boundaries and footer placement now work. Complete CSS
 table sizing, collapsed borders and CSS `vertical-align` are not implemented.
 
-Visible raster images are decoded before the corresponding paint. Their intrinsic sizes
-then reflow the page using the cached document and computed styles, avoiding another
+On Wayland, visible images load in the background and repaint as they arrive. Their
+intrinsic sizes reflow the page using the cached document and computed styles, avoiding another
 whole-page selector pass. Image-driven reflow keeps the first visible text fragment at
 its screen position, including when the same image source also occurs above the
 viewport; initial navigation stays at scroll zero. Off-screen resources remain deferred. GIFs show their first
 composited frame; CMYK JPEG, SVG painting, non-8-bit/Adam7 PNG, orientation metadata and
 color-profile management are outside the implemented image subset.
 
-This deadline isolation applies to **stylesheets only**. Main-document and image fetches
-remain synchronous. Their six-second I/O deadline begins after TCP connect; the pinned
-`Connector.connect()` itself remains blocking. A slow connection can still delay
-navigation and input. [GAPS.md](GAPS.md) keeps that runtime gap first.
+Main documents and visible images use same-executable workers with a five-second
+deadline for each TCP connect. DNS responses, TLS handshakes and HTTP responses each
+have an independent six-second deadline. A 45-second limit covers each full fetch,
+including redirect chains. The Wayland loop keeps painting the current page while the
+worker runs. Cancellation and supersession close the outstanding fetch and discard
+its result. The pinned `Connector.connect()` still blocks inside the worker.
 
 Every HTTPS connection is authenticated again, including redirects and subresources.
 HTTP-to-HTTPS redirects work. An HTTPS redirect chain cannot downgrade to HTTP, and
@@ -236,6 +240,12 @@ To deliberately accept reviewed visual changes, run
 `sh tools/test.sh --update-goldens`, then `sh tools/test.sh`; do not refresh
 goldens to conceal a failed comparison.
 
+After `sh tools/build.sh`, run `node tools/navigation-test.cjs` for loopback TCP,
+TLS and HTTP deadline checks. Add `--wayland` for the isolated Weston proof of loading
+animation, scrolling during a pending request, Escape and a superseding navigation.
+The fixture uses Python 3 for the TCP backlog test and Pillow for the screenshot
+comparison. Prepare Weston with `sh tools/wayland-deps.sh` when needed.
+
 Public-network proof is a separate, explicit command:
 
 ~~~sh
@@ -275,8 +285,7 @@ and timings. This is application-event replay, not physical keyboard or mouse in
 
 A `handshake_us` log measures TLS construction after DNS/root loading/TCP connect.
 The `PAINT` marker covers navigation through headless completion or Wayland presentation
-submission. Neither is a claim about physical display scanout. Capture watchdogs do not
-repair the browser's remaining blocking connect operation.
+submission. Neither is a claim about physical display scanout.
 
 The original fixture window proof remains reproducible with
 `sh tools/capture-wayland.sh`; `sh tools/wayland-test.sh` independently checks
@@ -303,6 +312,7 @@ and deployments are separate from these commands.
 | `src/chrome.lkj` | Toolbar, address field, link bubble and overlay scrollbar: painting and hit testing |
 | `src/address.lkj`, `address_words.lkj` | UTF-8 editor state, measured caret/selection scrolling and Unicode word boundaries |
 | `src/net.lkj` | URLs, regular files, DNS, HTTP framing and TLS adaptation |
+| `src/navigation.lkj` | Owned fetch workers, connect deadlines and result handoff |
 | `src/resources.lkj` | Same-executable stylesheet fetch worker and parent deadline/cleanup |
 | `src/crypto/` | HKDF, X25519, AES-GCM, bigint/signatures, SHA-384/512, DER/X.509, TLS records/handshake/transport |
 | `src/html.lkj`, `css.lkj`, `layout.lkj` | Tree, supported styles, boxes and inline runs |

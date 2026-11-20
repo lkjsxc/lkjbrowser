@@ -1,30 +1,61 @@
-//! A bounded-after-connect byte stream built from source-visible capabilities.
-//! The pinned Connector.connect itself is blocking; callers must not call this a total connect deadline.
-const TIMEOUT:usize=6000000000usize;
+//! A byte stream with independent absolute deadlines for each protocol stage.
+pub const CONNECT_TIMEOUT:usize=5000000000usize;
+const IO_TIMEOUT:usize=6000000000usize;
+pub const DNS_CONNECT:u8=1u8;
+pub const ORIGIN_CONNECT:u8=2u8;
+pub const CONNECT_FINISHED:u8=0u8;
 fn error(op:&str,e:i64)->String{format!("{}: {} ({})",op,std::io::errno_name(e),e)}
-pub struct Stream {file:File,ready:Readiness,clock:Clock,deadline:usize}
+pub fn connect_timeout(stage:u8)->String{
+    if stage==DNS_CONNECT{"DNS connection deadline exceeded".to_string()}
+    else{"TCP connection deadline exceeded".to_string()}
+}
+fn connect_event(progress:&mut Option<File>,stage:u8,now:usize)->Result<(),String>{
+    if let Some(file)=progress{
+        // One stage byte followed by the little-endian monotonic timestamp.
+        let mut message=[0u8;9];
+        message[0]=stage;
+        let mut i=0usize;
+        while i<8usize{message[i+1usize]=(now>>(i*8usize)) as u8;i+=1usize;}
+        file.write_all(&message).map_err(|e:i64|->String{error("Record connect state",e)})?;
+    }
+    Ok(())
+}
+pub struct Stream {file:File,ready:Readiness,clock:Clock,deadline:usize,stage:String}
 impl Stream{
-    pub fn open(world:&mut World,address:&str,port:u16)->Result<Stream,String>{
+    pub fn open(world:&mut World,address:&str,port:u16,stage:u8,progress:&mut Option<File>)->Result<Stream,String>{
         let mut connector=world.connector(address,port).map_err(|e:i64|->String{error("Destination",e)})?;
-        let mut file=connector.connect().map_err(|e:i64|->String{error("Connect",e)})?;
+        let mut clock=world.clock();
+        let started=clock.nanoseconds().map_err(|e:i64|->String{error("Clock",e)})?;
+        // The pinned runtime blocks in connect. Navigation's parent watches these
+        // timestamps and drops the owned worker if connect does not return.
+        connect_event(progress,stage,started)?;
+        let connected=connector.connect();
+        let finished=clock.nanoseconds().map_err(|e:i64|->String{error("Clock",e)})?;
+        connect_event(progress,CONNECT_FINISHED,finished)?;
+        if finished-started>=CONNECT_TIMEOUT{return Err(connect_timeout(stage));}
+        let label=if stage==DNS_CONNECT{"Connect to DNS resolver"}else{"TCP connect"};
+        let mut file=connected.map_err(|e:i64|->String{error(label,e)})?;
         file.set_nonblocking(true).map_err(|e:i64|->String{error("Nonblocking socket",e)})?;
         let mut ready=world.readiness().map_err(|e:i64|->String{error("Readiness",e)})?;
         ready.watch_file(&mut file,1usize,1u8).map_err(|e:i64|->String{error("Watch socket",e)})?;
-        let mut clock=world.clock();
-        let start=clock.nanoseconds().map_err(|e:i64|->String{error("Clock",e)})?;
-        Ok(Stream{file,ready,clock,deadline:start+TIMEOUT})
+        Ok(Stream{file,ready,clock,deadline:finished+IO_TIMEOUT,stage:"DNS response".to_string()})
+    }
+    pub fn start_stage(&mut self,stage:&str)->Result<(),String>{
+        let now=self.clock.nanoseconds().map_err(|e:i64|->String{error("Clock",e)})?;
+        self.deadline=now+IO_TIMEOUT;
+        self.stage=stage.to_string();
+        Ok(())
     }
     pub fn check_deadline(&mut self)->Result<(),String>{
         let now=self.clock.nanoseconds().map_err(|e:i64|->String{error("Clock",e)})?;
-        if now>=self.deadline{return Err("The server did not finish before the six-second deadline".to_string());}
+        if now>=self.deadline{return Err(format!("{} deadline exceeded",self.stage));}
         Ok(())
     }
     fn wait(&mut self,interest:u8)->Result<(),String>{
         self.check_deadline()?;
         self.ready.watch_file(&mut self.file,1usize,interest).map_err(|e:i64|->String{error("Watch socket",e)})?;
-        let events=self.ready.wait(&mut self.clock,self.deadline).map_err(|e:i64|->String{error("Wait for socket",e)})?;
-        if events.is_empty(){return Err("The server did not respond before the six-second deadline".to_string());}
-        Ok(())
+        let _=self.ready.wait(&mut self.clock,self.deadline).map_err(|e:i64|->String{error("Wait for socket",e)})?;
+        self.check_deadline()
     }
     pub fn send(&mut self,bytes:&[u8])->Result<(),String>{
         let mut at=0usize;

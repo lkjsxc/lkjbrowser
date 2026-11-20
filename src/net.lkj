@@ -2,8 +2,8 @@
 use std::str::trim_ascii;
 pub mod content;
 pub fn document_text(bytes:&[u8],content_type:&str)->Result<String,String>{content::document_text(bytes,content_type)}
-const LIMIT: usize = 16777216usize;
-use crate::crypto::transport::Stream;
+pub const LIMIT: usize = 16777216usize;
+use crate::crypto::transport::{Stream,DNS_CONNECT,ORIGIN_CONNECT};
 use crate::crypto::{tls,x509};
 const SYSTEM_TRUST:&str="/etc/ssl/certs/ca-certificates.crt";
 
@@ -280,6 +280,9 @@ pub fn dns_answer(bytes:&[u8],id:u16)->Result<String,String>{
     Err("DNS returned no IPv4 address".to_string())
 }
 pub fn lookup(world:&mut World,host:&str,dns:&str)->Result<String,String>{
+    lookup_tracked(world,host,dns,&mut None)
+}
+fn lookup_tracked(world:&mut World,host:&str,dns:&str,progress:&mut Option<File>)->Result<String,String>{
     if numeric(host){return Ok(host.to_string());}
     if host=="localhost"{return Ok("127.0.0.1".to_string());}
     if host.len()>253{return Err("DNS name is too long".to_string());}
@@ -295,7 +298,7 @@ pub fn lookup(world:&mut World,host:&str,dns:&str)->Result<String,String>{
     query.extend_from_slice(&[0u8,0u8,1u8,0u8,1u8]);
     let mut packet=vec![(query.len()>>8) as u8,(query.len()&255usize) as u8];
     packet.extend_from_slice(&query);
-    let mut stream=Stream::open(world,address.as_str(),53u16)?;
+    let mut stream=Stream::open(world,address.as_str(),53u16,DNS_CONNECT,progress)?;
     stream.send(&packet)?;
     let length=stream.exact(2usize)?;let n=be16(&length,0) as usize;
     let response=stream.exact(n)?;
@@ -421,11 +424,11 @@ fn read_trust_bundle(world:&mut World,trust_file:&str)->Result<Vec<u8>,String>{
     }
 }
 
-fn request(world:&mut World,url:&Url,dns:&str,trust_file:&str,trace:bool,body_limit:usize)->Result<(Headers,Vec<u8>),String>{
-    let address=lookup(world,url.host.as_str(),dns)?;
+fn request(world:&mut World,url:&Url,dns:&str,trust_file:&str,trace:bool,body_limit:usize,progress:&mut Option<File>)->Result<(Headers,Vec<u8>),String>{
+    let address=lookup_tracked(world,url.host.as_str(),dns,progress)?;
     let secure=url.scheme=="https";
     let roots=if secure{x509::parse_pem(&read_trust_bundle(world,trust_file)?)?}else{Vec::new()};
-    let stream=Stream::open(world,address.as_str(),url.port)?;
+    let mut stream=Stream::open(world,address.as_str(),url.port,ORIGIN_CONNECT,progress)?;
     let mut stream=if secure{
         let mut clock=world.clock();
         let started=clock.nanoseconds().map_err(|_|->String{"The clock is unavailable for secure connections".to_string()})?;
@@ -435,7 +438,10 @@ fn request(world:&mut World,url:&Url,dns:&str,trust_file:&str,trace:bool,body_li
         let elapsed=clock.nanoseconds().unwrap()-started;
         if trace{world.stdout().write(format!("TLS {} authenticated tls=1.3 cipher=AES128-GCM group=X25519 signature={} handshake_us={}\n",url.host,connection.signature_scheme,elapsed/1000usize).as_bytes());}
         Transport::Secure(connection)
-    }else{Transport::Plain(stream)};
+    }else{
+        stream.start_stage("HTTP response")?;
+        Transport::Plain(stream)
+    };
     let host=if (secure && url.port==443u16) || (!secure && url.port==80u16){url.host.clone()}else{format!("{}:{}",url.host,url.port)};
     let request=format!("GET {} HTTP/1.1\r\nHost: {}\r\nUser-Agent: lkjbrowser/0.1\r\nAccept: text/html,text/plain,*/*;q=0.5\r\nAccept-Encoding: gzip, deflate\r\nConnection: close\r\n\r\n",url.path,host);
     stream.send(request.as_bytes())?;
@@ -489,13 +495,16 @@ pub fn fetch_authorized(world:&mut World,address:&str,dns:&str,allow_file:bool)-
     fetch_with_trust(world,address,dns,allow_file,"")
 }
 pub fn fetch_with_trust(world:&mut World,address:&str,dns:&str,allow_file:bool,trust_file:&str)->Result<Response,String>{
-    fetch_impl(world,address,dns,allow_file,trust_file,true,LIMIT)
+    fetch_impl(world,address,dns,allow_file,trust_file,true,LIMIT,&mut None)
+}
+pub fn fetch_navigation(world:&mut World,address:&str,dns:&str,allow_file:bool,trust_file:&str,progress:File)->Result<Response,String>{
+    fetch_impl(world,address,dns,allow_file,trust_file,true,LIMIT,&mut Some(progress))
 }
 // Same native HTTPS implementation for the bounded stylesheet worker. Stdout is its result channel.
 pub fn fetch_style(world:&mut World,address:&str,dns:&str,allow_file:bool,trust_file:&str)->Result<Response,String>{
-    fetch_impl(world,address,dns,allow_file,trust_file,false,1048576usize)
+    fetch_impl(world,address,dns,allow_file,trust_file,false,1048576usize,&mut None)
 }
-fn fetch_impl(world:&mut World,address:&str,dns:&str,mut allow_file:bool,trust_file:&str,trace:bool,body_limit:usize)->Result<Response,String>{
+fn fetch_impl(world:&mut World,address:&str,dns:&str,mut allow_file:bool,trust_file:&str,trace:bool,body_limit:usize,progress:&mut Option<File>)->Result<Response,String>{
     let mut current=entered_address(address);let mut redirects=0usize;let mut require_tls=false;
     loop{
         let u=parse(current.as_str())?;
@@ -509,7 +518,7 @@ fn fetch_impl(world:&mut World,address:&str,dns:&str,mut allow_file:bool,trust_f
         }
         // Receiving any HTTP hop removes local-file authority for the rest of this redirect chain.
         allow_file=false;
-        let (headers,body)=request(world,&u,dns,trust_file,trace,body_limit)?;
+        let (headers,body)=request(world,&u,dns,trust_file,trace,body_limit,progress)?;
         if headers.status==301u16 || headers.status==302u16 || headers.status==303u16 || headers.status==307u16 || headers.status==308u16{
             if headers.location.is_empty(){return Err("HTTP redirect has no Location".to_string());}
             if redirects>=5{return Err("More than five HTTP redirects".to_string());}

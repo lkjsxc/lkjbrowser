@@ -54,8 +54,9 @@ pub struct State {
     hover: u8, pressed: u8, grab: i32, x: i32, y: i32,
     /// Set when the pointer pressed empty toolbar: the window should start an interactive move.
     pub moving: bool,
-    /// Address being fetched while navigation blocks the event loop; empty otherwise.
+    /// Address of the pending navigation.
     pub loading: String,
+    pub loading_tick: usize,
 }
 
 struct Plan { back: i32, forward: i32, reload: i32, close: i32, field: i32, field_width: i32 }
@@ -109,9 +110,8 @@ fn scroll_for(view: &View, y: i32, grab: i32) -> i32 {
 }
 
 impl State {
-    pub fn new() -> State { State { hover: PAGE, pressed: PAGE, grab: 0i32, x: 0i32, y: 0i32, moving: false, loading: String::new() } }
+    pub fn new() -> State { State { hover: PAGE, pressed: PAGE, grab: 0i32, x: 0i32, y: 0i32, moving: false, loading: String::new(), loading_tick: 0usize } }
     fn enabled(&self, view: &View, id: u8) -> bool {
-        if !self.loading.is_empty() { return false; }
         if id == BACK { view.can_back } else if id == FORWARD { view.can_forward } else { true }
     }
     /// The pointer moved. Dragging the scrollbar scrolls; over chrome no page link is hovered.
@@ -136,8 +136,7 @@ impl State {
         }
         Action::Consumed
     }
-    /// What releasing the button here would do, without changing anything.
-    pub fn release_action(&self, view: &View, x: i32, y: i32) -> Action {
+    fn release_action(&self, view: &View, x: i32, y: i32) -> Action {
         let id = self.pressed;
         if id == PAGE || id == SCROLLBAR || target(view, x, y) != id || !self.enabled(view, id) { return Action::None; }
         if id == BACK { Action::Back } else if id == FORWARD { Action::Forward }
@@ -259,7 +258,7 @@ fn button(state: &State, canvas: &mut Canvas, view: &View, id: u8, x: i32) -> u3
 fn field(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View, p: &Plan) {
     let x = p.field; let width = p.field_width; let right = x + width - 16i32;
     let outline = Shape::round(x * 16i32, FIELD_TOP * 16i32, width * 16i32, FIELD_HEIGHT * 16i32, FIELD_HEIGHT * 8i32);
-    if view.editing && state.loading.is_empty() {
+    if view.editing {
         // Focus: a soft halo outside, white paper, and a firm accent ring.
         canvas.shape(&Shape::frame((x - 3i32) * 16i32, (FIELD_TOP - 3i32) * 16i32, (width + 6i32) * 16i32, (FIELD_HEIGHT + 6i32) * 16i32, (FIELD_HEIGHT + 6i32) * 8i32, 48i32), ACCENT, 44u8);
         canvas.shape(&outline, PAPER, 255u8);
@@ -291,8 +290,13 @@ fn field(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View, p: &P
     canvas.shape(&outline, FIELD, 255u8);
     if state.hover == ADDRESS && state.loading.is_empty() { canvas.shape(&outline, INK, 10u8); }
     if !state.loading.is_empty() {
-        let text = fit(font, state.loading.as_str(), TEXT, right - x - 16i32);
+        let hint = "Esc to cancel";
+        let hint_width = font.text_width(hint, SMALL);
+        let show_hint = width >= 280i32;
+        let room = right - x - 16i32 - if show_hint { hint_width + 16i32 } else { 0i32 };
+        let text = fit(font, state.loading.as_str(), TEXT, room);
         canvas.text(font, text.as_str(), TEXT, x + 16i32, BASELINE, MUTED);
+        if show_hint { canvas.text(font, hint, SMALL, right - hint_width, BASELINE, MUTED); }
         return;
     }
     let mut start = x + 16i32;
@@ -373,16 +377,11 @@ pub fn paint(state: &State, canvas: &mut Canvas, font: &mut Font, view: &View) {
     icon_close(canvas, p.close + middle, CENTRE, color);
     field(state, canvas, font, view, &p);
     if !state.loading.is_empty() {
-        // Navigation blocks the loop, so progress is one honest still frame: a line that has set off.
-        let solid = view.width * 2i32 / 5i32; let fade = view.width / 5i32;
-        canvas.rect(0i32, HEIGHT - 2i32, solid, 2i32, ACCENT);
-        let mut i = 0i32;
-        while i < fade {
-            let alpha = (255i32 * (fade - i) / fade) as u8;
-            canvas.blend(solid + i, HEIGHT - 2i32, ACCENT, alpha);
-            canvas.blend(solid + i, HEIGHT - 1i32, ACCENT, alpha);
-            i += 1i32;
-        }
+        // A pending request has no known completion fraction.
+        let width = view.width / 4i32;
+        let tick = (state.loading_tick % 24usize) as i32;
+        let x = tick.min(24i32 - tick) * (view.width - width) / 12i32;
+        canvas.rect(x, HEIGHT - 2i32, width, 2i32, ACCENT);
     }
 }
 

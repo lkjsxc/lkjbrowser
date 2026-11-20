@@ -1,0 +1,182 @@
+//! Same-executable native fetches. Wayland polls the owned child without waiting on network I/O.
+use crate::{net,resources};
+use crate::crypto::transport::{CONNECT_FINISHED,CONNECT_TIMEOUT,DNS_CONNECT,ORIGIN_CONNECT,connect_timeout};
+
+const FETCH_TIMEOUT:usize=45000000000usize;
+const METADATA_LIMIT:usize=262144usize;
+// UTF-8 replacement and escaping text/plain increase the input byte count.
+const SOURCE_LIMIT:usize=6usize*net::LIMIT+128usize;
+
+pub struct Fetched {
+    pub url:String,
+    pub media_type:String,
+    pub body:Vec<u8>,
+    pub styles:String,
+}
+
+fn io_error(errno:i64)->String{format!("Navigation worker I/O: {} ({})",std::io::errno_name(errno),errno)}
+fn invalid_result()->String{"Invalid navigation worker result".to_string()}
+
+fn write_field(file:&mut File,bytes:&[u8])->Result<(),String>{
+    let n=bytes.len();
+    let length=[(n>>24usize) as u8,(n>>16usize) as u8,(n>>8usize) as u8,n as u8];
+    file.write_all(&length).map_err(|e:i64|->String{io_error(e)})?;
+    file.write_all(bytes).map_err(|e:i64|->String{io_error(e)})
+}
+fn read_exact(file:&mut File,bytes:&mut [u8])->Result<(),String>{
+    let mut at=0usize;
+    while at<bytes.len(){
+        let n=file.read(&mut bytes[at..]).map_err(|e:i64|->String{io_error(e)})?;
+        if n==0usize{return Err(invalid_result());}
+        at+=n;
+    }
+    Ok(())
+}
+fn read_field(file:&mut File,limit:usize)->Result<Vec<u8>,String>{
+    let mut length=[0u8;4];read_exact(file,&mut length)?;
+    let n=((length[0] as usize)<<24usize)|((length[1] as usize)<<16usize)
+        |((length[2] as usize)<<8usize)|(length[3] as usize);
+    if n>limit{return Err(invalid_result());}
+    let mut bytes=vec![0u8;n];read_exact(file,&mut bytes)?;Ok(bytes)
+}
+pub fn utf8(bytes:Vec<u8>)->Result<String,String>{
+    String::from_utf8(bytes).map_err(|_|->String{invalid_result()})
+}
+fn read_result(file:&mut File,document:bool)->Result<Fetched,String>{
+    file.rewind().map_err(|e:i64|->String{io_error(e)})?;
+    let mut kind=[0u8;1];read_exact(file,&mut kind)?;
+    if kind[0]==0u8{return Err(utf8(read_field(file,METADATA_LIMIT)?)?);}
+    if kind[0]!=1u8{return Err(invalid_result());}
+    let url=utf8(read_field(file,SOURCE_LIMIT)?)?;
+    let media_type=utf8(read_field(file,METADATA_LIMIT)?)?;
+    let body=read_field(file,if document{SOURCE_LIMIT}else{net::LIMIT})?;
+    let styles=utf8(read_field(file,if document{resources::ALL_STYLES_LIMIT}else{0usize})?)?;
+    Ok(Fetched{url,media_type,body,styles})
+}
+
+fn fetch(world:&mut World,args:&[Vec<u8>])->Result<Fetched,String>{
+    let allow_file=args[1]==b"1"[..].to_vec();
+    let width=net::text(&args[2]).as_str().parse::<i32>().map_err(|_|->String{invalid_result()})?;
+    let mut request=world.stdin_file().map_err(|e:i64|->String{io_error(e)})?;
+    let address=utf8(read_field(&mut request,SOURCE_LIMIT)?)?;
+    let dns=utf8(read_field(&mut request,METADATA_LIMIT)?)?;
+    let trust=utf8(read_field(&mut request,METADATA_LIMIT)?)?;
+    let response=net::fetch_navigation(world,address.as_str(),dns.as_str(),allow_file,trust.as_str(),request)?;
+    if width==0i32{
+        return Ok(Fetched{url:response.url,media_type:response.content_type,body:response.body,styles:String::new()});
+    }
+    world.stdout().write(format!("HTTP_RESPONSE status={} bytes={} url={}\n",response.status,response.body.len(),response.url).as_bytes());
+    let text=net::document_text(&response.body,response.content_type.as_str())?;
+    let (source,styles)=if response.content_type.to_ascii_lowercase().starts_with("text/plain"){
+        (format!("<html><head><title>Text document</title></head><body><pre>{}</pre></body></html>",crate::escape(text.as_str())),String::new())
+    }else{
+        let local=allow_file && response.url.starts_with("file://");
+        let styles=resources::stylesheets(world,text.as_str(),response.url.as_str(),dns.as_str(),local,trust.as_str(),width);
+        (text,styles)
+    };
+    Ok(Fetched{url:response.url,media_type:String::new(),body:source.into_bytes(),styles})
+}
+
+pub fn worker(world:&mut World,args:&[Vec<u8>])->Result<(),String>{
+    if args.len()!=3usize{return Err("Invalid navigation worker arguments".to_string());}
+    // Stdin contains the request followed by connect events. Stdout carries
+    // diagnostics and stderr carries the result. All three are anonymous files.
+    let mut output=world.stderr_file().map_err(|e:i64|->String{io_error(e)})?;
+    match fetch(world,args){
+        Ok(page)=>{
+            output.write_all(&[1u8]).map_err(|e:i64|->String{io_error(e)})?;
+            write_field(&mut output,page.url.as_bytes())?;
+            write_field(&mut output,page.media_type.as_bytes())?;
+            write_field(&mut output,&page.body)?;
+            write_field(&mut output,page.styles.as_bytes())
+        }
+        Err(problem)=>{
+            output.write_all(&[0u8]).map_err(|e:i64|->String{io_error(e)})?;
+            write_field(&mut output,problem.as_bytes())
+        }
+    }
+}
+
+pub struct Fetch {
+    child:Child,
+    output:File,
+    log:File,
+    progress:File,
+    clock:Clock,
+    deadline:usize,
+    connect_deadline:usize,
+    connect_stage:u8,
+    document:bool,
+}
+impl Fetch {
+    pub fn start(world:&mut World,address:&str,dns:&str,trust:&str,allow_file:bool,width:i32)->Result<Fetch,String>{
+        let mut clock=world.clock();
+        let deadline=clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})?+FETCH_TIMEOUT;
+        let executable=world.executable().map_err(|e:i64|->String{io_error(e)})?;
+        let mut input=world.temporary_file().map_err(|e:i64|->String{io_error(e)})?;
+        let log=world.temporary_file().map_err(|e:i64|->String{io_error(e)})?;
+        let output=world.temporary_file().map_err(|e:i64|->String{io_error(e)})?;
+        let result=world.temporary_file().map_err(|e:i64|->String{io_error(e)})?;
+        write_field(&mut input,address.as_bytes())?;
+        write_field(&mut input,dns.as_bytes())?;
+        write_field(&mut input,trust.as_bytes())?;
+        let events_at=input.seek(0i64,1u8).map_err(|e:i64|->String{io_error(e)})?;
+        input.rewind().map_err(|e:i64|->String{io_error(e)})?;
+        // Reopen at an independent offset so polling never changes the child's write position.
+        let mut progress=input.readonly().map_err(|e:i64|->String{io_error(e)})?;
+        progress.seek(events_at as i64,0u8).map_err(|e:i64|->String{io_error(e)})?;
+        let allow=if allow_file{"1"}else{"0"};
+        let args=vec![b"--fetch-navigation"[..].to_vec(),allow.as_bytes().to_vec(),format!("{}",width).into_bytes()];
+        let mut process=world.process();
+        let child=process.spawn_file(&executable,&args,&input,&log,&output,&result).map_err(|e:i64|->String{io_error(e)})?;
+        Ok(Fetch{child,output,log,progress,clock,deadline,connect_deadline:0usize,connect_stage:CONNECT_FINISHED,document:width!=0i32})
+    }
+    fn read_progress(&mut self)->Result<(),String>{
+        loop{
+            let mut event=[0u8;9];
+            let n=self.progress.read(&mut event).map_err(|e:i64|->String{io_error(e)})?;
+            if n==0usize{return Ok(());}
+            if n!=event.len(){return Err(invalid_result());}
+            let stage=event[0];
+            if stage!=CONNECT_FINISHED && stage!=DNS_CONNECT && stage!=ORIGIN_CONNECT{return Err(invalid_result());}
+            let mut timestamp=0usize;let mut i=0usize;
+            while i<8usize{timestamp|=(event[i+1usize] as usize)<<(i*8usize);i+=1usize;}
+            self.connect_stage=stage;
+            self.connect_deadline=timestamp+CONNECT_TIMEOUT;
+        }
+    }
+    fn log_result(&mut self,world:&mut World)->Result<(),String>{
+        self.log.rewind().map_err(|e:i64|->String{io_error(e)})?;
+        let mut bytes=[0u8;8192];let mut total=0usize;
+        while total<METADATA_LIMIT{
+            let n=self.log.read(&mut bytes).map_err(|e:i64|->String{io_error(e)})?;
+            if n==0usize{break;}
+            world.stdout().write(&bytes[..n]);total+=n;
+        }
+        Ok(())
+    }
+    pub fn poll(&mut self,world:&mut World)->Result<Option<Fetched>,String>{
+        let now=self.clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})?;
+        if now>=self.deadline{return Err("Navigation deadline exceeded".to_string());}
+        self.read_progress()?;
+        if self.connect_stage!=CONNECT_FINISHED && now>=self.connect_deadline{
+            return Err(connect_timeout(self.connect_stage));
+        }
+        match self.child.try_wait().map_err(|e:i64|->String{io_error(e)})?{
+            None=>Ok(None),
+            Some(status)=>{
+                self.log_result(world)?;
+                if status!=0i64{return Err(format!("Navigation worker exited with status {}",status));}
+                Ok(Some(read_result(&mut self.output,self.document)?))
+            }
+        }
+    }
+    pub fn wait(&mut self,world:&mut World)->Result<Fetched,String>{
+        let mut ready=world.readiness().map_err(|e:i64|->String{io_error(e)})?;
+        loop{
+            if let Some(response)=self.poll(world)?{return Ok(response);}
+            let now=self.clock.nanoseconds().map_err(|e:i64|->String{io_error(e)})?;
+            let _=ready.wait(&mut self.clock,now+10000000usize).map_err(|e:i64|->String{io_error(e)})?;
+        }
+    }
+}

@@ -1,6 +1,7 @@
 //! lkjbrowser: native UI, navigation and rendering are lkjscript.
 mod crypto;
 mod net;
+mod navigation;
 mod resources;
 mod font;
 mod paint;
@@ -99,10 +100,8 @@ fn error_html(address:&str,problem:&str)->String{
         format!("The certificate for {} uses a constraint this browser cannot check.",host)
     }else if lower.contains("invalid signature") || lower.contains("signature did not verify"){
         format!("The certificate or handshake signature from {} is wrong.",host)
-    }else if problem.contains("ECONNREFUSED"){
+    }else if problem.starts_with("TCP connect") && problem.contains("ECONNREFUSED"){
         "The server is not accepting connections at this address. Check the address or try again later.".to_string()
-    }else if problem.contains("deadline") || problem.contains("ETIMEDOUT"){
-        "The server took too long to respond. Try again later.".to_string()
     }else if problem.contains("Open regular file") && (problem.contains("EINVAL") || problem.contains("ELOOP")){
         "This address does not point to a regular file. Choose a normal file and try again.".to_string()
     }else if problem.contains("ENOENT"){
@@ -141,11 +140,18 @@ impl Modifiers{
 }
 struct HistoryEntry {url:String,allow_file:bool}
 struct LoadedImage { src:String,image:png::Image }
+enum HistoryMove { Push, Stay, Traverse(usize) }
+struct Navigation {
+    address:String,allow_file:bool,history:HistoryMove,started:usize,scroll:i32,
+}
+struct PendingNavigation {request:Navigation,fetch:navigation::Fetch}
+struct PendingImage {source:String,url:String,fetch:navigation::Fetch}
 struct Browser {
     fonts:Fonts,page:layout::Page,document:html::Document,computed:Vec<css::Style>,url:String,address:address::Editor,source:String,title:String,status:String,
     width:i32,height:i32,scroll:i32,editing:bool,modifiers:Modifiers,
     history:Vec<HistoryEntry>,history_at:usize,hover:String,dns:String,images:Vec<LoadedImage>,image_sizes:Vec<layout::ImageSize>,file_authority:bool,
     trust_file:String,paint_started:Option<usize>,styles:String,image_attempted:Vec<String>,chrome:chrome::State,
+    interactive:bool,pending:Option<PendingNavigation>,pending_image:Option<PendingImage>,initial_scroll:i32,
 }
 impl Browser {
     fn new(fonts:Fonts,width:i32,height:i32,dns:String)->Browser{
@@ -156,7 +162,8 @@ impl Browser {
             title:String::new(),status:String::new(),width,height,scroll:0i32,editing:false,
             modifiers:Modifiers{shift:0u8,ctrl:0u8,alt:0u8},history:Vec::new(),history_at:0usize,
             hover:String::new(),dns,images:Vec::new(),image_sizes:Vec::new(),file_authority:true,
-            trust_file:String::new(),paint_started:None,styles:String::new(),image_attempted:Vec::new(),chrome:chrome::State::new()}
+            trust_file:String::new(),paint_started:None,styles:String::new(),image_attempted:Vec::new(),chrome:chrome::State::new(),
+            interactive:false,pending:None,pending_image:None,initial_scroll:0i32}
     }
     fn max_scroll(&self)->i32{
         let value=self.page.height-(self.height-TOP-BOTTOM);
@@ -187,138 +194,215 @@ impl Browser {
         }
     }
 
-    fn navigate(&mut self,world:&mut World,address:&str,remember:bool){
-        self.navigate_authorized(world,address,remember,true);
+    fn navigate(&mut self,world:&mut World,address:&str){
+        self.navigate_authorized(world,address,HistoryMove::Push,true);
     }
     fn local_files_allowed(&self)->bool{
         (self.url.starts_with("file://") && self.file_authority) || self.url=="about:welcome"
     }
-    fn navigate_authorized(&mut self,world:&mut World,address:&str,remember:bool,allow_file:bool){
-        let mut clock=world.clock();self.paint_started=Some(clock.nanoseconds().unwrap());
-        let normalized=if address=="about:welcome"{address.to_string()}else{net::entered_address(address)};
-        let address=normalized.as_str();
-        self.file_authority=allow_file;
-        let mut final_address=address.to_string();
-        let source=if address=="about:welcome"{
-            self.status="Ready".to_string();welcome()
-        }else{
-            match net::fetch_with_trust(world,address,self.dns.as_str(),allow_file,self.trust_file.as_str()){
-                Ok(response)=>{
-                    final_address=response.url;
-                    world.stdout().write(format!("HTTP_RESPONSE status={} bytes={} url={}\n",response.status,response.body.len(),final_address).as_bytes());
-                    self.status=if final_address.starts_with("https://"){"Verified HTTPS".to_string()}else{String::new()};
-                    match net::document_text(&response.body,response.content_type.as_str()){
-                        Ok(text)=>{
-                            if response.content_type.to_ascii_lowercase().starts_with("text/plain"){
-                                format!("<html><head><title>Text document</title></head><body><pre>{}</pre></body></html>",escape(text.as_str()))
-                            }else{text}
-                        }
-                        Err(problem)=>{
-                            self.status="Unable to load this address".to_string();
-                            world.stdout().write(format!("NAV_ERROR {}: {}\n",address,problem).as_bytes());
-                            error_html(address,problem.as_str())
-                        }
-                    }
-                }
-                Err(problem)=>{
-                    self.status="Unable to load this address".to_string();
-                    world.stdout().write(format!("NAV_ERROR {}: {}\n",address,problem).as_bytes());
-                    error_html(address,problem.as_str())
+    fn cancel_navigation(&mut self)->bool{
+        // Only the current request owns its child and anonymous output. Dropping
+        // it kills and reaps it, so there is no queue of stale results to deliver.
+        if self.pending.is_none(){return false;}
+        drop(self.pending.take());self.chrome.loading.clear();true
+    }
+    fn navigate_authorized(&mut self,world:&mut World,address:&str,history:HistoryMove,allow_file:bool){
+        self.cancel_navigation();drop(self.pending_image.take());
+        let mut clock=world.clock();
+        let address=if address=="about:welcome"{address.to_string()}else{net::entered_address(address)};
+        let request=Navigation{address,allow_file,history,started:clock.nanoseconds().unwrap(),scroll:self.initial_scroll};
+        self.initial_scroll=0i32;
+        self.discard_address();
+        if request.address=="about:welcome"{
+            let page=navigation::Fetched{url:request.address.clone(),media_type:String::new(),body:welcome().into_bytes(),styles:OWN_PAGE_STYLE.to_string()};
+            self.finish_navigation(world,request,Ok(page));
+            return;
+        }
+        let fetch=navigation::Fetch::start(world,request.address.as_str(),self.dns.as_str(),self.trust_file.as_str(),allow_file,self.width);
+        match fetch{
+            Ok(mut fetch)=>{
+                if self.interactive{
+                    self.chrome.loading=request.address.clone();
+                    self.chrome.loading_tick=0usize;
+                    self.pending=Some(PendingNavigation{request,fetch});
+                }else{
+                    let result=fetch.wait(world);
+                    self.finish_navigation(world,request,result);
                 }
             }
+            Err(problem)=>self.finish_navigation(world,request,Err(problem)),
+        }
+    }
+    fn poll_navigation(&mut self,world:&mut World)->bool{
+        if let Some(mut pending)=self.pending.take(){
+            let result=match pending.fetch.poll(world){
+                Ok(None)=>{self.pending=Some(pending);return false;}
+                Ok(Some(page))=>Ok(page),
+                Err(problem)=>Err(problem),
+            };
+            drop(pending.fetch);
+            self.finish_navigation(world,pending.request,result);
+            return true;
+        }
+        false
+    }
+    fn finish_navigation(&mut self,world:&mut World,request:Navigation,result:Result<navigation::Fetched,String>){
+        self.chrome.loading.clear();
+        self.paint_started=Some(request.started);
+        self.file_authority=request.allow_file;
+        let result=result.and_then(|page:navigation::Fetched|->Result<(String,String,String),String>{
+            Ok((page.url,navigation::utf8(page.body)?,page.styles))
+        });
+        let (url,source,styles)=match result{
+            Ok((url,source,styles))=>{
+                self.status=if url.starts_with("https://"){"Verified HTTPS".to_string()}else{String::new()};
+                (url,source,styles)
+            }
+            Err(problem)=>{
+                self.status="Unable to load this address".to_string();
+                world.stdout().write(format!("NAV_ERROR {}: {}\n",request.address,problem).as_bytes());
+                let source=error_html(request.address.as_str(),problem.as_str());
+                (request.address,source,OWN_PAGE_STYLE.to_string())
+            }
         };
-        self.source=source;self.url=final_address;self.address.reset(self.url.as_str(),false);
+        self.url=url;self.source=source;self.styles=styles;
+        if !self.editing{self.address.reset(self.url.as_str(),false);}
         self.images.clear();self.image_sizes.clear();self.image_attempted.clear();
-        self.load_styles(world);
         self.rebuild_document();
-        self.scroll=0i32;self.editing=false;self.hover.clear();
+        self.scroll=0i32;self.hover.clear();
         self.relayout();
-        self.load_images(world);
+        if !self.interactive{self.load_images(world);}
         if let Some((_,fragment))=self.url.as_str().split_once('#'){
             self.scroll=self.page.anchor(fragment).max(0i32).min(self.max_scroll());
         }
-        if remember {
-            if !self.history.is_empty(){self.history.truncate(self.history_at+1usize);}
-            self.history.push(HistoryEntry{url:self.url.clone(),allow_file});self.history_at=self.history.len()-1usize;
+        self.move_scroll(request.scroll);
+        match request.history{
+            HistoryMove::Push=>{
+                if !self.history.is_empty(){self.history.truncate(self.history_at+1usize);}
+                self.history.push(HistoryEntry{url:self.url.clone(),allow_file:request.allow_file});
+                self.history_at=self.history.len()-1usize;
+            }
+            HistoryMove::Traverse(index)=>{self.history_at=index;}
+            HistoryMove::Stay=>{}
         }
     }
-    fn load_styles(&mut self,world:&mut World){
-        let allowed=self.local_files_allowed();
-        self.styles=resources::stylesheets(world,self.source.as_str(),self.url.as_str(),self.dns.as_str(),allowed,self.trust_file.as_str(),self.width);
+    fn visible_images(&self)->Vec<String>{
+        let mut sources:Vec<String>=Vec::new();
+        for command in &self.page.commands{
+            if let layout::Command::Image(img)=command{
+                if !img.src.is_empty() && img.width>0 && img.height>0
+                    && !sources.contains(&img.src) && !self.image_attempted.contains(&img.src)
+                    && img.y+img.height>self.scroll && img.y<self.scroll+self.height-TOP-BOTTOM{
+                    sources.push(img.src.clone());
+                }
+            }
+        }
+        sources
     }
-
-    fn load_images(&mut self,world:&mut World){
-        let allowed=self.local_files_allowed();
-        loop{
-            let mut sources:Vec<String>=Vec::new();
-            for command in &self.page.commands{
-                if let layout::Command::Image(img)=command{
-                    if !img.src.is_empty() && img.width>0 && img.height>0
-                        && !sources.contains(&img.src) && !self.image_attempted.contains(&img.src)
-                        && img.y+img.height>self.scroll && img.y<self.scroll+self.height-TOP-BOTTOM{
-                        sources.push(img.src.clone());
+    fn accept_image(&mut self,world:&mut World,source:String,url:&str,result:Result<navigation::Fetched,String>)->bool{
+        match result{
+            Ok(response)=>{
+                match images::decode(&response.body){
+                    Ok(image)=>{
+                        world.stdout().write(format!("IMAGE decoded width={} height={} url={}\n",image.width,image.height,url).as_bytes());
+                        self.image_sizes.push(layout::ImageSize{src:source.clone(),width:image.width as i32,height:image.height as i32});
+                        self.images.push(LoadedImage{src:source,image});
+                        true
+                    }
+                    Err(problem)=>{
+                        world.stdout().write(format!("IMAGE unavailable {} url={}\n",problem,url).as_bytes());
+                        if response.media_type.to_ascii_lowercase().contains("image/svg+xml"){
+                            if let Some((width,height))=images::svg_dimensions(&response.body){
+                                self.image_sizes.push(layout::ImageSize{src:source,width,height});return true;
+                            }
+                        }
+                        false
                     }
                 }
             }
+            Err(problem)=>{
+                world.stdout().write(format!("IMAGE unavailable {} url={}\n",problem,url).as_bytes());false
+            }
+        }
+    }
+    fn fetch_image(&self,world:&mut World,url:&str)->Result<navigation::Fetch,String>{
+        navigation::Fetch::start(world,url,self.dns.as_str(),self.trust_file.as_str(),self.local_files_allowed(),0i32)
+    }
+    fn load_images(&mut self,world:&mut World){
+        loop{
+            let sources=self.visible_images();
             if sources.is_empty(){break;}
             let mut changed=false;
             for source in sources{
                 self.image_attempted.push(source.clone());
                 let url=net::resolve(self.url.as_str(),source.as_str());
                 if self.url.starts_with("https://") && !url.starts_with("https://"){continue;}
-                match net::fetch_with_trust(world,url.as_str(),self.dns.as_str(),allowed,self.trust_file.as_str()){
-                    Ok(response)=>{
-                        match images::decode(&response.body){
-                            Ok(image)=>{
-                                world.stdout().write(format!("IMAGE decoded width={} height={} url={}\n",image.width,image.height,url).as_bytes());
-                                self.image_sizes.push(layout::ImageSize{src:source.clone(),width:image.width as i32,height:image.height as i32});
-                                self.images.push(LoadedImage{src:source,image});
-                                changed=true;
-                            }
-                            Err(problem)=>{
-                                if response.content_type.to_ascii_lowercase().contains("image/svg+xml"){
-                                    if let Some((width,height))=images::svg_dimensions(&response.body){
-                                        self.image_sizes.push(layout::ImageSize{src:source.clone(),width,height});
-                                        changed=true;
-                                    }
-                                }
-                                world.stdout().write(format!("IMAGE unavailable {} url={}\n",problem,url).as_bytes());
-                            }
-                        }
-                    }
-                    Err(problem)=>{world.stdout().write(format!("IMAGE unavailable {} url={}\n",problem,url).as_bytes());}
-                }
+                let result=match self.fetch_image(world,url.as_str()){
+                    Ok(mut fetch)=>fetch.wait(world),Err(problem)=>Err(problem),
+                };
+                if self.accept_image(world,source,url.as_str(),result){changed=true;}
             }
             if changed{self.relayout_images();}
         }
     }
+    fn poll_images(&mut self,world:&mut World)->bool{
+        if self.pending.is_some(){return false;}
+        let mut changed=false;
+        if let Some(mut pending)=self.pending_image.take(){
+            let result=match pending.fetch.poll(world){
+                Ok(None)=>{self.pending_image=Some(pending);return false;}
+                Ok(Some(image))=>Ok(image),
+                Err(problem)=>Err(problem),
+            };
+            drop(pending.fetch);
+            self.image_attempted.push(pending.source.clone());
+            changed=self.accept_image(world,pending.source,pending.url.as_str(),result);
+            if changed{self.relayout_images();}
+        }
+        for source in self.visible_images(){
+            let url=net::resolve(self.url.as_str(),source.as_str());
+            if self.url.starts_with("https://") && !url.starts_with("https://"){
+                self.image_attempted.push(source);continue;
+            }
+            match self.fetch_image(world,url.as_str()){
+                Ok(fetch)=>{self.pending_image=Some(PendingImage{source,url,fetch});break;}
+                Err(problem)=>{
+                    self.image_attempted.push(source.clone());
+                    self.accept_image(world,source,url.as_str(),Err(problem));
+                }
+            }
+        }
+        changed
+    }
 
     fn follow(&mut self,world:&mut World,href:&str){
         if href.starts_with('#'){
+            self.cancel_navigation();
             self.scroll=self.page.anchor(&href[1..]).max(0i32).min(self.max_scroll());
             self.url=net::resolve(self.url.as_str(),href);self.address.reset(self.url.as_str(),false);
         }else{
             let address=if href.starts_with("about:"){href.to_string()}else{net::resolve(self.url.as_str(),href)};
             let allowed=self.local_files_allowed();
-            self.navigate_authorized(world,address.as_str(),true,allowed);
+            self.navigate_authorized(world,address.as_str(),HistoryMove::Push,allowed);
         }
     }
     fn back(&mut self,world:&mut World){
         if self.history_at>0usize{
-            self.history_at-=1usize;let address=self.history[self.history_at].url.clone();
-            let allowed=self.history[self.history_at].allow_file;
-            self.navigate_authorized(world,address.as_str(),false,allowed);
+            let index=self.history_at-1usize;let address=self.history[index].url.clone();
+            let allowed=self.history[index].allow_file;
+            self.navigate_authorized(world,address.as_str(),HistoryMove::Traverse(index),allowed);
         }
     }
     fn forward(&mut self,world:&mut World){
         if self.history_at+1usize<self.history.len(){
-            self.history_at+=1usize;let address=self.history[self.history_at].url.clone();
-            let allowed=self.history[self.history_at].allow_file;
-            self.navigate_authorized(world,address.as_str(),false,allowed);
+            let index=self.history_at+1usize;let address=self.history[index].url.clone();
+            let allowed=self.history[index].allow_file;
+            self.navigate_authorized(world,address.as_str(),HistoryMove::Traverse(index),allowed);
         }
     }
     fn reload(&mut self,world:&mut World){
-        let address=self.url.clone();let allowed=self.file_authority;self.navigate_authorized(world,address.as_str(),false,allowed);
+        let address=self.url.clone();let allowed=self.file_authority;
+        if !address.is_empty(){self.navigate_authorized(world,address.as_str(),HistoryMove::Stay,allowed);}
     }
     fn chrome_view(&self)->chrome::View{
         // The bubble shows where a link leads, not how the page spelled it.
@@ -331,49 +415,19 @@ impl Browser {
             can_back:self.history_at>0usize,can_forward:self.history_at+1usize<self.history.len(),
             scroll:self.scroll,max_scroll:self.max_scroll(),page_height:self.page.height}
     }
-    /// The address this event is about to fetch, so a loading frame can be shown before the fetch blocks.
-    fn about_to_load(&self,event:Event)->String{
-        match event{
-            Event::Key(key,true)=>{
-                if self.modifiers.ctrl!=0u8 && key==19u32{return self.url.clone();}
-                if self.editing && key==28u32{return net::entered_address(self.address.text.as_str());}
-                if (self.modifiers.alt!=0u8 || (!self.editing && self.modifiers.ctrl!=0u8)) && key==105u32 && self.history_at>0usize{
-                    return self.history[self.history_at-1usize].url.clone();
-                }
-                if self.modifiers.alt!=0u8 && key==106u32 && self.history_at+1usize<self.history.len(){
-                    return self.history[self.history_at+1usize].url.clone();
-                }
-            }
-            Event::Click(x,y,_)=>{
-                let view=self.chrome_view();
-                let mut probe=chrome::State::new();
-                if let chrome::Action::None=probe.press(&view,x,y){
-                    let href=self.page.hit(x,y-TOP+self.scroll);
-                    if !href.is_empty() && !href.starts_with('#') && !href.starts_with("about:"){return net::resolve(self.url.as_str(),href.as_str());}
-                }
-            }
-            Event::Release(x,y)=>{
-                let view=self.chrome_view();
-                match self.chrome.release_action(&view,x,y){
-                    chrome::Action::Back=>{return self.history[self.history_at-1usize].url.clone();}
-                    chrome::Action::Forward=>{return self.history[self.history_at+1usize].url.clone();}
-                    chrome::Action::Reload=>{return self.url.clone();}
-                    _=>{}
-                }
-            }
-            _=>{}
-        }
-        String::new()
+    fn select_displayed_address(&mut self){
+        let address=if self.pending.is_some(){self.chrome.loading.as_str()}else{self.url.as_str()};
+        self.address.reset(address,true);
     }
     fn edit_address(&mut self){
-        if !self.editing {self.address.reset(self.url.as_str(),true);}
+        if !self.editing {self.select_displayed_address();}
         else {self.address.select_all();}
         self.editing=true;self.address.cancel_pointer();self.reveal_address();
     }
     /// Use the compositor's event time: delivery can be delayed by navigation or painting.
     fn press_address(&mut self,x:i32,y:i32,time:u32){
         let entering=!self.editing;
-        if entering{self.address.reset(self.url.as_str(),true);self.editing=true;self.reveal_address();}
+        if entering{self.select_displayed_address();self.editing=true;self.reveal_address();}
         let (start,room)=chrome::address_area(self.width);
         self.address.press(&self.fonts.normal,start,room,x,y,time as usize,entering);
     }
@@ -389,6 +443,7 @@ impl Browser {
         if !pressed{return true;}
         let ctrl=self.modifiers.ctrl!=0u8;let shift=self.modifiers.shift!=0u8;let alt=self.modifiers.alt!=0u8;
         if ctrl && (key==16u32 || key==17u32){return false;}
+        if key==1u32 && self.cancel_navigation(){return true;}
         // History chords precede address movement, including while editing.
         if alt && key==105u32{self.back(world);return true;}
         if alt && key==106u32{self.forward(world);return true;}
@@ -400,7 +455,7 @@ impl Browser {
                 if self.address.text!=self.url{self.address.reset(self.url.as_str(),true);}
                 else{self.discard_address();}
             }else if key==28u32{
-                let address=self.address.text.clone();self.navigate(world,address.as_str(),true);
+                let address=self.address.text.clone();self.navigate(world,address.as_str());
             }else if alt{
                 // A shortcut modifier never inserts the physical key's printable character.
             }else if key==105u32{self.address.left(ctrl,shift);}
@@ -557,7 +612,7 @@ impl Browser {
                     self.event(world,Event::Click(x,y,time));
                     if command=="click"{self.event(world,Event::Release(x,y));}
                 }
-            }else if command=="loading"{self.chrome.loading=arg.to_string();}else if command=="open"{self.navigate(world,arg,true);}
+            }else if command=="loading"{self.chrome.loading=arg.to_string();}else if command=="open"{self.navigate(world,arg);}
             else if command=="follow"{self.follow(world,arg);}
             else if command=="back"{self.back(world);}
             else if command=="address"{self.editing=true;self.address.reset(arg,false);self.reveal_address();}
@@ -656,6 +711,7 @@ fn deliver_clipboard(app:&mut Browser,window:&mut wayland::Wayland,pending:&mut 
 fn run(world:&mut World)->Result<(),String>{
     let args=world.args();
     if !args.is_empty() && args[0]==b"--fetch-style"[..].to_vec(){return resources::style_worker(world,&args);}
+    if !args.is_empty() && args[0]==b"--fetch-navigation"[..].to_vec(){return navigation::worker(world,&args);}
     let opt=options(args)?;
     if opt.help{
         world.stdout().write(b"lkjbrowser [URL] [--headless] [--screenshot FILE.png] [--layout FILE] [--script FILE]\n  --wayland PORT --frame-file FILE  connect through the temporary descriptor bridge\n  --width N --height N --scroll N --max-ms N --font-dir DIR --dns IPV4\n  --trust-file FILE  use this explicit PEM trust bundle for all HTTPS origins\n  --live-script FILE  replay timestamped events while the Wayland window is open\nUse tools/wayland-run.sh URL on a real Wayland desktop.\n");
@@ -664,10 +720,15 @@ fn run(world:&mut World)->Result<(),String>{
     let faces=fonts(world,opt.font_dir.as_str())?;
     let mut app=Browser::new(faces,opt.width,opt.height,opt.dns.clone());
     app.trust_file=opt.trust_file.clone();
-    app.navigate(world,opt.url.as_str(),true);
-    app.move_scroll(opt.scroll);
+    app.interactive=opt.port!=0u16 && opt.script.is_empty();
+    if app.interactive && opt.url!="about:welcome"{
+        app.navigate_authorized(world,"about:welcome",HistoryMove::Stay,true);
+        app.paint_started=None;
+    }
+    app.initial_scroll=opt.scroll;
+    app.navigate(world,opt.url.as_str());
     if !opt.script.is_empty(){let bytes=net::read_path(world,opt.script.as_str())?;app.replay(world,net::text(&bytes).as_str())?;}
-    app.load_images(world);
+    if !app.interactive{app.load_images(world);}
     let mut canvas=app.paint();save(world,&mut app,&opt,&canvas)?;
     if opt.port==0u16 {
         report_paint(world,&mut app,"headless");
@@ -685,6 +746,7 @@ fn run(world:&mut World)->Result<(),String>{
     frame.write_all(&wayland::cursor_bytes()).unwrap();
     let title=format!("{} — lkjbrowser",app.title);
     let mut window=wayland::Wayland::open(world,opt.port,opt.width,opt.height,title.as_str())?;
+    app.interactive=true;
     let mut window_title=app.title.clone();
     let timeline=if opt.live_script.is_empty(){Vec::new()}else{
         let bytes=net::read_path(world,opt.live_script.as_str())?;schedule(net::text(&bytes).as_str())?
@@ -729,21 +791,18 @@ fn run(world:&mut World)->Result<(),String>{
                     }
                 }
             }
-            let loading=app.about_to_load(event);
-            if !loading.is_empty(){
-                // The fetch blocks this loop: show where we are going before it starts.
-                app.chrome.loading=loading;
-                let slot=if window.available(0u32){0u32}else{1u32};
-                if window.available(slot){
-                    frame.seek((slot as usize*slot_size) as i64,0u8).unwrap();
-                    frame.write_all(&app.paint().bgra()).unwrap();
-                    window.present(slot)?;
-                }
-                app.chrome.loading.clear();
-            }
-            if !app.event(world,event){alive=false;}
+            if !app.event(world,event){alive=false;break;}
             if app.chrome.take_move(){window.start_move()?;}
             changed=true;
+        }
+        if !alive{break;}
+        // Consume queued input first so Escape or a newer request wins even when
+        // the worker completed in the same compositor poll.
+        if app.poll_navigation(world){changed=true;}
+        if app.poll_images(world){changed=true;}
+        if let Some(pending)=&app.pending{
+            let tick=(clock.nanoseconds().unwrap()-pending.request.started)/100000000usize;
+            if tick!=app.chrome.loading_tick{app.chrome.loading_tick=tick;changed=true;}
         }
         if deliver_clipboard(&mut app,&mut window,&mut pending_paste){changed=true;}
         if elapsed-last_drag_tick>=50usize{
@@ -758,7 +817,6 @@ fn run(world:&mut World)->Result<(),String>{
                 window.set_title(format!("{} — lkjbrowser",app.title).as_str())?;
                 window_title=app.title.clone();
             }
-            app.load_images(world);
             canvas=app.paint();save(world,&mut app,&opt,&canvas)?;dirty=true;
         }
     }
