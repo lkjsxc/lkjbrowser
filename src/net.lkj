@@ -5,7 +5,7 @@ pub fn document_text(bytes:&[u8],content_type:&str)->Result<String,String>{conte
 const LIMIT: usize = 16777216usize;
 use crate::crypto::transport::Stream;
 use crate::crypto::{tls,x509};
-pub const SYSTEM_TRUST:&str="/etc/ssl/certs/ca-certificates.crt";
+const SYSTEM_TRUST:&str="/etc/ssl/certs/ca-certificates.crt";
 
 pub struct Url {
     pub scheme: String,
@@ -404,16 +404,19 @@ impl Transport{
     fn close(&mut self){if let Transport::Secure(s)=self{let _=s.close();}}
 }
 fn read_trust_bundle(world:&mut World,trust_file:&str)->Result<Vec<u8>,String>{
-    match read_path(world,trust_file){
+    // An empty path represents an omitted --trust-file, including in the stylesheet worker.
+    let system=trust_file.is_empty();
+    let path=if system{SYSTEM_TRUST}else{trust_file};
+    match read_path(world,path){
         Ok(bytes)=>Ok(bytes),
         Err(problem)=>{
             // Arch's compatibility path is a symlink to this fixed OS-managed PEM.
-            if trust_file==SYSTEM_TRUST{
+            if system{
                 if let Ok(bytes)=read_path(world,"/etc/ca-certificates/extracted/tls-ca-bundle.pem"){
                     return Ok(bytes);
                 }
             }
-            Err(format!("Read trust bundle {}: {}",trust_file,problem))
+            Err(format!("Read trust bundle {}: {}",path,problem))
         }
     }
 }
@@ -483,7 +486,7 @@ pub fn fetch(world:&mut World,address:&str,dns:&str)->Result<Response,String>{
     fetch_authorized(world,address,dns,true)
 }
 pub fn fetch_authorized(world:&mut World,address:&str,dns:&str,allow_file:bool)->Result<Response,String>{
-    fetch_with_trust(world,address,dns,allow_file,SYSTEM_TRUST)
+    fetch_with_trust(world,address,dns,allow_file,"")
 }
 pub fn fetch_with_trust(world:&mut World,address:&str,dns:&str,allow_file:bool,trust_file:&str)->Result<Response,String>{
     fetch_impl(world,address,dns,allow_file,trust_file,true,LIMIT)

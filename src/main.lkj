@@ -156,7 +156,7 @@ impl Browser {
             title:String::new(),status:String::new(),width,height,scroll:0i32,editing:false,
             modifiers:Modifiers{shift:0u8,ctrl:0u8,alt:0u8},history:Vec::new(),history_at:0usize,
             hover:String::new(),dns,images:Vec::new(),image_sizes:Vec::new(),file_authority:true,
-            trust_file:net::SYSTEM_TRUST.to_string(),paint_started:None,styles:String::new(),image_attempted:Vec::new(),chrome:chrome::State::new()}
+            trust_file:String::new(),paint_started:None,styles:String::new(),image_attempted:Vec::new(),chrome:chrome::State::new()}
     }
     fn max_scroll(&self)->i32{
         let value=self.page.height-(self.height-TOP-BOTTOM);
@@ -572,7 +572,7 @@ struct Options {
 }
 fn options(args:Vec<Vec<u8>>)->Result<Options,String>{
     let mut opt=Options{url:"about:welcome".to_string(),screenshot:String::new(),dump:String::new(),
-        script:String::new(),live_script:String::new(),font_dir:String::new(),dns:String::new(),frame_file:String::new(),trust_file:net::SYSTEM_TRUST.to_string(),
+        script:String::new(),live_script:String::new(),font_dir:String::new(),dns:String::new(),frame_file:String::new(),trust_file:String::new(),
         port:0u16,width:1000i32,height:760i32,scroll:0i32,max_ms:0usize,help:false};
     let mut i=0usize;
     while i<args.len(){
@@ -588,7 +588,10 @@ fn options(args:Vec<Vec<u8>>)->Result<Options,String>{
             else if arg=="--live-script"{opt.live_script=value;}
             else if arg=="--font-dir"{opt.font_dir=value;}
             else if arg=="--dns"{opt.dns=value;}
-            else if arg=="--trust-file"{opt.trust_file=value;}
+            else if arg=="--trust-file"{
+                if value.is_empty(){return Err("--trust-file requires a nonempty path".to_string());}
+                opt.trust_file=value;
+            }
             else if arg=="--frame-file"{opt.frame_file=value;}
             else if arg=="--wayland"{opt.port=value.as_str().parse::<u16>().map_err(|_|->String{"Invalid bridge port".to_string()})?;}
             else if arg=="--width"{opt.width=value.as_str().parse::<i32>().map_err(|_|->String{"Invalid width".to_string()})?;}
